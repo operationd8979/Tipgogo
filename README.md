@@ -1,2 +1,2 @@
-# tipgo
-ứng dụng gửi nhận yêu cầu bán đồ cũ, xin đi nhờ, mua đồ hộ
+# TIPGOGO
+# ứng dụng gửi nhận yêu cầu đi quá giang, cho đồ cũ, vận chuyển hay mua hàng hộ.
