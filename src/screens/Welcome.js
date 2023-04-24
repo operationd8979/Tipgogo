@@ -45,51 +45,45 @@ function Welcome(props) {
                     flexDirection: 'row',
                     height: 50,
                     justifyContent: 'flex-start',
-                    alignItems: 'center'
+                    alignItems: 'center',
+                    marginStart: 10,
                 }}>
+                    
                     <Text style={{
-                        color: 'white',
+                        color: "black",
                         fontSize: fontSizes.h2,
                         fontWeight: 'bold'
-                    }}>LogoCompany.co</Text>
+                    }}>TipGogo.co</Text>
                     <View style={{ flex: 1 }} />
                     <Icon name={'question-circle'}
-                        color={'white'}
+                        color={'black'}
                         size={20}
                         style={{
                             marginEnd: 20
                         }}
                     />
-                    {/*<Image source={icons.question}
-                        style={{
-                            width: 25,
-                            height: 25,
-                            tintColor: 'white',
-                            marginEnd: 10
-                        }}
-                    />*/}
                 </View>
             </View>
             <View style={{
                 flex: 25,
                 //backgroundColor: 'blue',
-                justifyContent: 'center',
+                //justifyContent: 'center',
                 alignItems: 'center',
             }}>
                 <Text style={{
                     marginBottom: 7,
-                    color: 'white',
+                    color: 'black',
                     fontSize: fontSizes.h4
                 }}>Welcome to</Text>
                 <Text style={{
                     marginBottom: 7,
-                    color: 'white',
+                    color: 'black',
                     fontSize: fontSizes.h3,
                     fontWeight: 'bold'
                 }}>TipGoCompany.CO!</Text>
                 <Text style={{
                     marginBottom: 7,
-                    color: 'white',
+                    color: 'black',
                     fontSize: fontSizes.h4
                 }}>Please select your account type</Text>
             </View>
@@ -103,6 +97,7 @@ function Welcome(props) {
                         title={option.lable}
                         isSelected={selectedOption === option.value}
                         onPress={() => setSelectedOption(option.value)}
+                        color={"rgba(255,255,255,0.8)"}
                     />)}
             </View>
             <View style={{
@@ -110,18 +105,18 @@ function Welcome(props) {
                 //backgroundColor: 'purple'
             }}>
                 <UIButton 
-                    onPress={()=> navigate('UItab')}
+                    onPress={()=> navigate('Login')}
                     title={'login'.toUpperCase()} 
                 />
                 <TouchableOpacity 
                     onPress={()=>{
-                        alert('bấm đăng ký');
+                        navigate('Register')
                     }}
                     style={{
                         padding:5
                 }}>
                     <Text style={{
-                        color: 'white',
+                        color: 'black',
                         fontSize: fontSizes.h5,
                         alignSelf: 'center',
                     }}>Want to register new Account ?</Text>

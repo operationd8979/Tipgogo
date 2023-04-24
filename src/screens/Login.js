@@ -27,7 +27,7 @@ const Login = (props) => {
 
     const {email,password} = formData
 
-    const isValidationOK = () => email.length > 0 && password.length > 0 && isValidEmail(email) && isValidPassword(password)
+    const isValidationOK = () => isValidEmail(email) && isValidPassword(password)
 
     const [keyboardIsShow, setKeyboardIsShow] = useState(false)
     useEffect(() => {
@@ -77,7 +77,7 @@ const Login = (props) => {
             }}>
                 <Text style={{
                     color: 'black',
-                    fontSize: fontSizes.m3,
+                    fontSize: fontSizes.m4,
                     fontWeight: 'bold',
                 }}>Already have an Account?</Text>
             </View>
@@ -88,14 +88,15 @@ const Login = (props) => {
             }}>
                 <Image source={logo}
                     style={{
-                        width: 200,
-                        height: 200,
+                        width: 210,
+                        height: 210,
                         resizeMode: 'contain',
                         backgroundColor: primary,
-                        borderTopLeftRadius: 130,
-                        borderTopRightRadius: 80,
-                        borderBottomLeftRadius: 90,
-                        borderBottomRightRadius: 60,
+                        borderTopLeftRadius: 60,
+                        borderTopRightRadius: 130,
+                        borderBottomLeftRadius: 112,
+                        borderBottomRightRadius: 70,
+                        marginEnd:15
                     }} />
             </View>
         </View>
@@ -110,6 +111,7 @@ const Login = (props) => {
             }}>Email:</Text>
             <TextInput
                 onChangeText={handleEmailChange}
+                autoCorrect={false}
                 placeholder='example@gmail.com'
                 placeholderTextColor={placeholder}
                 style={{
@@ -133,6 +135,7 @@ const Login = (props) => {
             }}>Passowrd:</Text>
             <TextInput
                 onChangeText={handlePasswordChange}
+                autoCorrect={false}
                 placeholder='Enter your password!'
                 placeholderTextColor={placeholder}
                 secureTextEntry={true}
@@ -155,7 +158,7 @@ const Login = (props) => {
             <CLButton title="LOGIN"
                 disabled= {!isValidationOK()}
                 onPress={() => {
-                    alert(`Email=${email}+Password=${password}`)
+                    navigate('UItab')
                 }}
                 colorBG={isValidationOK()? primary : inactive}
                 colorBD={'white'}
@@ -166,6 +169,9 @@ const Login = (props) => {
                 radius={17}
             />
             <TouchableOpacity
+                onPress={()=>{
+                    navigate('Register')
+                }}
                 style={{
                     padding: 5
                 }}>

@@ -10,6 +10,10 @@ const { logo } = images;
 const { primary, placeholder, facebook, google, inactive } = colors;
 
 const Register = (props) => {
+
+    const {navigation,route} = props
+    const {navigate,goBack} = navigation
+
     const MIN_PASSWORD_LENGTH = 5;
     const EMAIL_ERROR_MESSAGE = 'Email not in correct format!';
     const PASSWORD_ERROR_MESSAGE = `Password must be at least ${MIN_PASSWORD_LENGTH} characters!`;
@@ -23,7 +27,8 @@ const Register = (props) => {
 
     const { email, password } = formData
 
-    const isValidationOK = () => true
+    const isValidationOK = () => isValidEmail(email)&&isValidPassword(password)
+    //const isValidationOK = () => true
 
     const [keyboardIsShow, setKeyboardIsShow] = useState(false)
     useEffect(() => {
@@ -74,7 +79,7 @@ const Register = (props) => {
             }}>
                 <Text style={{
                     color: 'white',
-                    fontSize: fontSizes.m5,
+                    fontSize: fontSizes.m4,
                     fontWeight: 'bold',
                 }}>Here's first step with us!</Text>
             </View>
@@ -85,14 +90,15 @@ const Register = (props) => {
             }}>
                 <Image source={logo}
                     style={{
-                        width: 140,
-                        height: 140,
+                        width: 200,
+                        height: 200,
                         resizeMode: 'contain',
                         backgroundColor: 'white',
-                        borderTopLeftRadius: 130,
-                        borderTopRightRadius: 80,
-                        borderBottomLeftRadius: 90,
-                        borderBottomRightRadius: 60,
+                        borderTopLeftRadius: 60,
+                        borderTopRightRadius: 130,
+                        borderBottomLeftRadius: 112,
+                        borderBottomRightRadius: 70,
+                        marginEnd:18
                     }} />
             </View>
         </View>
@@ -114,6 +120,7 @@ const Register = (props) => {
                     color: primary,
                 }}>Email:</Text>
                 <TextInput
+                    autoCorrect={false}
                     onChangeText={handleEmailChange}
                     placeholder='example@gmai.com'
                     placeholderTextColor={placeholder}
@@ -127,29 +134,30 @@ const Register = (props) => {
                     fontSize: fontSizes.h5
                 }}>{errorEmail}</Text>
             </View>
-            {/*<View style={{
+            <View style={{
                 flex: 15,
                 backgroundColor: 'white',
                 marginHorizontal: 15
             }}>
                 <Text style={{
-                    fontSize: fontSizes.h3,
+                    fontSize: fontSizes.h4,
                     color: primary,
-                }}>Phone:</Text>
+                }}>FullName:</Text>
                 <TextInput
-                    onChangeText={handlePasswordChange}
-                    placeholder='+84...'
+                    //onChangeText={handleEmailChange}
+                    autoCorrect={false}
+                    placeholder='Enter your name!'
                     placeholderTextColor={placeholder}
-                    secureTextEntry={true}
                     style={{
                         color: 'black'
                     }}
                 />
                 <View style={{ height: 1, backgroundColor: primary }} />
                 <Text style={{
-                    color: 'red'
-                }}>{errorPassword}</Text>
-            </View> */}
+                    color: 'red',
+                    fontSize: fontSizes.h5
+                }}>{errorEmail}</Text>
+            </View>
             <View style={{
                 flex: 15,
                 backgroundColor: 'white',
@@ -161,7 +169,9 @@ const Register = (props) => {
                 }}>Password:</Text>
                 <TextInput
                     onChangeText={handlePasswordChange}
+                    autoCorrect={false}
                     placeholder='Enter your password!'
+                    secureTextEntry={true}
                     placeholderTextColor={placeholder}
                     style={{
                         color: 'black'
@@ -184,6 +194,7 @@ const Register = (props) => {
                 }}>ReType-Passowrd:</Text>
                 <TextInput
                     onChangeText={handlePasswordChange}
+                    autoCorrect={false}
                     placeholder='Re-Enter your password!'
                     placeholderTextColor={placeholder}
                     secureTextEntry={true}
@@ -206,7 +217,7 @@ const Register = (props) => {
                 <CLButton title="Register"
                     disabled={!isValidationOK()}
                     onPress={() => {
-                        alert(`Email=${email}+Password=${password}`)
+                        navigate('Login')
                     }}
                     colorBG={isValidationOK() ? primary : inactive}
                     colorBD={'white'}
@@ -246,7 +257,7 @@ const Register = (props) => {
                     flexDirection: 'row',
                     justifyContent: 'center',
                 }}>
-                    <Icon name='facebook' size={45} color={facebook} backgroundColor={"white"} style={{borderRadius:90}}/>
+                    <Icon name='facebook' size={45} color={facebook}/>
                     <View style={{ width: 15 }} />
                     <Icon name='google' size={45} color={google} />
                 </View>

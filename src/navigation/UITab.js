@@ -1,5 +1,5 @@
 const { createBottomTabNavigator } = require("@react-navigation/bottom-tabs")
-import {FoodList,ProductList,Setting} from '../screens'
+import {RequestList,Setting} from '../screens'
 import {colors, fontSizes} from '../constants'
 import Icon from 'react-native-vector-icons/FontAwesome5'
 
@@ -23,12 +23,11 @@ const UItab = (props) => {
         tabBarLabelStyle : {fontSize:fontSizes.h5},
         tabBarIcon: ({focused})=>{
             let screenName = route.name
-            let iconName = "facebook"
+            let iconName = route.name == "Requests"? "motorcycle" : route.name == "Setting" ? "user" : ""
             return <Icon name={iconName} size={30} color={focused?primary:inactive}/>
         }
     })}>
-        <Tab.Screen name="FoodList" component={FoodList} />
-        <Tab.Screen name="ProductList" component={ProductList} />
+        <Tab.Screen name="Requests" component={RequestList} />
         <Tab.Screen name="Setting" component={Setting} />
     </Tab.Navigator>
 }

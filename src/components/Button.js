@@ -8,7 +8,7 @@ const UIButton = (props) =>{
     return <TouchableOpacity
         onPress={onPress}
         style={{
-            borderColor: 'white',
+            borderColor: 'black',
             borderWidth: 1,
             height: 45,
             borderRadius: 10,
@@ -16,7 +16,7 @@ const UIButton = (props) =>{
             marginVertical: 10,
             justifyContent: 'center',
             alignItems: 'center',
-            backgroundColor: isSelected== true? 'white':color
+            backgroundColor: isSelected== true? 'white': color
         }}>
         {
             isSelected==true &&
@@ -30,7 +30,8 @@ const UIButton = (props) =>{
             />  
         }
         <Text style={{
-            color: isSelected== true? colors.primary: 'white',
+            color: isSelected== true? colors.primary: 'black',
+            fontWeight:'500'
         }}>{title}</Text>
     </TouchableOpacity>
 }
