@@ -1,34 +1,56 @@
 import React, { useState, useEffect, useCallback } from "react";
-import { Text, Image, View, Keyboard, KeyboardAvoidingView, TextInput } from "react-native"
+import { Text, Image, View, Keyboard, KeyboardAvoidingView, TextInput ,Alert} from "react-native"
 import Icon from "react-native-vector-icons/FontAwesome5"
+import {KeyboardAwareScrollView} from 'react-native-keyboard-aware-scroll-view';
 
-import { CLButton } from "../components"
-import { colors, fontSizes, images } from "../constants"
-import { isValidEmail, isValidPassword } from "../utilies"
+import { CLButton } from "../../components"
+import { colors, fontSizes, images } from "../../constants"
+import i18n from "../../../i18n";
+
+import useRegister from './useRegister'
+
+import * as Keychain from 'react-native-keychain';
 
 const { logo } = images;
 const { primary, placeholder, facebook, google, inactive } = colors;
 
+async function getToken() {
+    try {
+      const result = await Keychain.getInternetCredentials('token');
+      if (result) {
+        return result.password;
+      } else {
+        console.log('No token found in Keychain');
+      }
+    } catch (error) {
+      console.log('Could not get token:', error);
+    }
+  }
+
 const Register = (props) => {
+
+    const {
+        email,
+        setEmail,
+        emailError,
+        fullname,
+        setFullname,
+        fullnameError,
+        password,
+        setPassword,
+        passwordError,
+        repassword,
+        setRePassword,
+        repasswordError,
+        showPassword,
+        setShowPassword,
+        registerAction,
+        validateCredentials,
+    } = useRegister()
+    
 
     const {navigation,route} = props
     const {navigate,goBack} = navigation
-
-    const MIN_PASSWORD_LENGTH = 5;
-    const EMAIL_ERROR_MESSAGE = 'Email not in correct format!';
-    const PASSWORD_ERROR_MESSAGE = `Password must be at least ${MIN_PASSWORD_LENGTH} characters!`;
-
-    const [errorEmail, setErrorEmail] = useState('')
-    const [errorPassword, setErrorPassword] = useState('')
-    const [formData, setFormData] = useState({
-        email: '',
-        password: '',
-    })
-
-    const { email, password } = formData
-
-    const isValidationOK = () => isValidEmail(email)&&isValidPassword(password)
-    //const isValidationOK = () => true
 
     const [keyboardIsShow, setKeyboardIsShow] = useState(false)
     useEffect(() => {
@@ -42,24 +64,11 @@ const Register = (props) => {
             Keyboard.removeAllListeners('keyboardDidShow')
             Keyboard.removeAllListeners('keyboardDidHide')
         }
-    }, [])
+    }, [keyboardIsShow])
 
-    const handleEmailChange = useCallback((text) => {
-        setErrorEmail(isValidEmail(text) ? '' : EMAIL_ERROR_MESSAGE)
-        setFormData({
-            ...formData,
-            email: text
-        })
-    }, [])
-    const handlePasswordChange = useCallback((text) => {
-        setErrorPassword(isValidPassword(text) ? '' : PASSWORD_ERROR_MESSAGE)
-        setFormData({
-            ...formData,
-            password: text
-        })
-    }, [])
+    const isValidationOK = () => true
 
-    return <KeyboardAvoidingView
+    return <KeyboardAwareScrollView
         style={{
             paddingTop: 60,
             backgroundColor: primary,
@@ -81,7 +90,7 @@ const Register = (props) => {
                     color: 'white',
                     fontSize: fontSizes.m4,
                     fontWeight: 'bold',
-                }}>Here's first step with us!</Text>
+                }}>{i18n.t('r_tile')}</Text>
             </View>
             <View style={{
                 //backgroundColor:'green',
@@ -118,21 +127,22 @@ const Register = (props) => {
                 <Text style={{
                     fontSize: fontSizes.h4,
                     color: primary,
-                }}>Email:</Text>
+                }}>{i18n.t('r_email')}</Text>
                 <TextInput
                     autoCorrect={false}
-                    onChangeText={handleEmailChange}
-                    placeholder='example@gmai.com'
+                    placeholder={i18n.t('r_placehold_email')}
                     placeholderTextColor={placeholder}
                     style={{
                         color: 'black'
                     }}
+                    value= {email}
+                    onChangeText={e=>setEmail(e)}
                 />
                 <View style={{ height: 1, backgroundColor: primary }} />
                 <Text style={{
                     color: 'red',
                     fontSize: fontSizes.h5
-                }}>{errorEmail}</Text>
+                }}>{emailError}</Text>
             </View>
             <View style={{
                 flex: 15,
@@ -142,21 +152,22 @@ const Register = (props) => {
                 <Text style={{
                     fontSize: fontSizes.h4,
                     color: primary,
-                }}>FullName:</Text>
+                }}>{i18n.t('r_fullname')}</Text>
                 <TextInput
-                    //onChangeText={handleEmailChange}
                     autoCorrect={false}
-                    placeholder='Enter your name!'
+                    placeholder={i18n.t('r_placehold_name')}
                     placeholderTextColor={placeholder}
                     style={{
                         color: 'black'
                     }}
+                    value= {fullname}
+                    onChangeText={e=>setFullname(e)}
                 />
                 <View style={{ height: 1, backgroundColor: primary }} />
                 <Text style={{
                     color: 'red',
                     fontSize: fontSizes.h5
-                }}>{errorEmail}</Text>
+                }}>{fullnameError}</Text>
             </View>
             <View style={{
                 flex: 15,
@@ -166,46 +177,64 @@ const Register = (props) => {
                 <Text style={{
                     fontSize: fontSizes.h4,
                     color: primary,
-                }}>Password:</Text>
+                }}>{i18n.t('r_password')}</Text>
+                <View style={{
+                    flexDirection: 'row',
+                    alignItems:'center'
+                }}>
+                    <TextInput
+                        autoCorrect={false}
+                        placeholder={i18n.t('r_placehold_password')}
+                        placeholderTextColor={placeholder}
+                        style={{
+                            color: 'black',
+                            flex:9,
+                        }}
+                        secureTextEntry={showPassword}
+                        value= {password}
+                        onChangeText={e=>setPassword(e)}
+                    />
+                    <Icon
+                        onPress={() => setShowPassword(!showPassword)}
+                        name={showPassword ? 'eye' : 'eye-slash'}
+                        size={24}
+                        color={primary}
+                        style={{
+                            flex:1,
+                            padding:10,
+                        }}
+                    />
+                </View>
+                <View style={{ height: 1, backgroundColor: primary }} />
+                <Text style={{
+                    color: 'red',
+                    fontSize: fontSizes.h5
+                }}>{passwordError}</Text>
+            </View>
+            <View style={{
+                flex: 15,
+                backgroundColor: 'white',
+                marginHorizontal: 15
+            }}>
+                <Text style={{
+                    fontSize: fontSizes.h4,
+                    color: primary,
+                }}>{i18n.t('r_repassword')}</Text>
                 <TextInput
-                    onChangeText={handlePasswordChange}
                     autoCorrect={false}
-                    placeholder='Enter your password!'
+                    placeholder={i18n.t('r_placehold_repassword')}
+                    placeholderTextColor={placeholder}
                     secureTextEntry={true}
-                    placeholderTextColor={placeholder}
                     style={{
                         color: 'black'
                     }}
-                />
-                <View style={{ height: 1, backgroundColor: primary }} />
-                <Text style={{
-                    color: 'red',
-                    fontSize: fontSizes.h5
-                }}>{errorPassword}</Text>
-            </View>
-            <View style={{
-                flex: 15,
-                backgroundColor: 'white',
-                marginHorizontal: 15
-            }}>
-                <Text style={{
-                    fontSize: fontSizes.h4,
-                    color: primary,
-                }}>ReType-Passowrd:</Text>
-                <TextInput
-                    onChangeText={handlePasswordChange}
-                    autoCorrect={false}
-                    placeholder='Re-Enter your password!'
-                    placeholderTextColor={placeholder}
-                    secureTextEntry={true}
-                    style={{
-                        color: 'black'
-                    }}
+                    value={repassword}
+                    onChangeText={e=>setRePassword(e)}
                 />
                 <View style={{ height: 1, backgroundColor: primary }} />
                 <Text style={{
                     color: 'red'
-                }}>{errorPassword}</Text>
+                }}>{repasswordError}</Text>
             </View>
             <View style={{
                 flex: 10,
@@ -214,12 +243,13 @@ const Register = (props) => {
                 <View style={{
                     flex: 1
                 }} />
-                <CLButton title="Register"
+                <CLButton title={i18n.t('register')}
                     disabled={!isValidationOK()}
-                    onPress={() => {
-                        navigate('Login')
+                    onPress={async () => {
+                        registerAction()
                     }}
                     colorBG={isValidationOK() ? primary : inactive}
+                    //colorBG={primary}
                     colorBD={'white'}
                     colorT={'white'}
                     sizeF={fontSizes.h4}
@@ -250,7 +280,7 @@ const Register = (props) => {
                         alignSelf: 'center',
                         fontSize: fontSizes.h4,
                         marginHorizontal: 10
-                    }}>Use other methods?</Text>
+                    }}>{i18n.t('r_method')}</Text>
                     <View style={{ height: 1, backgroundColor: 'white', flex: 1 }} />
                 </View>
                 <View style={{
@@ -263,7 +293,7 @@ const Register = (props) => {
                 </View>
             </View>
         {keyboardIsShow == true && <View style={{ flex: 1 }} />}
-    </KeyboardAvoidingView>
+    </KeyboardAwareScrollView>
 }
 
 export default Register

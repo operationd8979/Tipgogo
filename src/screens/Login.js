@@ -1,13 +1,36 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Text, View, ImageBackground, Image, TouchableOpacity, TextInput, KeyboardAvoidingView, Platform, Keyboard } from "react-native";
+import { Text, View, ImageBackground, Image, TouchableOpacity, TextInput, KeyboardAvoidingView, Platform, Keyboard , Alert  } from "react-native";
 import { images, fontSizes, colors } from "../constants"
 import { CLButton } from '../components';
 import Icon from 'react-native-vector-icons/FontAwesome5'
 import {KeyboardAwareScrollView} from 'react-native-keyboard-aware-scroll-view'
 import {isValidEmail,isValidPassword} from '../utilies'
+import i18n from '../../i18n';
+
+import * as Keychain from 'react-native-keychain';
+
+import {
+    auth,
+    onAuthStateChanged,
+} from "../../firebase/firebase"
+import AsyncStorage from '@react-native-async-storage/async-storage'
+
 
 const { logo } = images;
 const { primary, placeholder, facebook, google, inactive } = colors;
+
+async function getToken() {
+    try {
+      const result = await Keychain.getInternetCredentials('token');
+      if (result) {
+        return result.password;
+      } else {
+        console.log('No token found in Keychain');
+      }
+    } catch (error) {
+      console.log('Could not get token:', error);
+    }
+  }
 
 const Login = (props) => {
 
@@ -27,10 +50,19 @@ const Login = (props) => {
 
     const {email,password} = formData
 
-    const isValidationOK = () => isValidEmail(email) && isValidPassword(password)
+    const isValidationOK = () => true
 
     const [keyboardIsShow, setKeyboardIsShow] = useState(false)
     useEffect(() => {
+
+        onAuthStateChanged(auth, (responseUser) => {
+            debugger
+            if(responseUser) {                                             
+                AsyncStorage.setItem("token", JSON.stringify(responseUser.accessToken))  
+                navigate('UItab')  
+            } 
+        })
+
         //componentDidMount
         const ShowKeyboard = ()=> setKeyboardIsShow(true);
         const HideKeyboard = ()=> setKeyboardIsShow(false);
@@ -79,7 +111,7 @@ const Login = (props) => {
                     color: 'black',
                     fontSize: fontSizes.m4,
                     fontWeight: 'bold',
-                }}>Already have an Account?</Text>
+                }}>{i18n.t('l_tile')}</Text>
             </View>
             <View style={{
                 //backgroundColor:'green',
@@ -108,11 +140,11 @@ const Login = (props) => {
             <Text style={{
                 fontSize: fontSizes.h3,
                 color: primary,
-            }}>Email:</Text>
+            }}>{i18n.t('r_email')}</Text>
             <TextInput
                 onChangeText={handleEmailChange}
                 autoCorrect={false}
-                placeholder='example@gmail.com'
+                placeholder={i18n.t('r_placehold_email')}
                 placeholderTextColor={placeholder}
                 style={{
                     color: 'black'
@@ -132,11 +164,11 @@ const Login = (props) => {
             <Text style={{
                 fontSize: fontSizes.h3,
                 color: primary,
-            }}>Passowrd:</Text>
+            }}>{i18n.t('r_password')}</Text>
             <TextInput
                 onChangeText={handlePasswordChange}
                 autoCorrect={false}
-                placeholder='Enter your password!'
+                placeholder={i18n.t('r_placehold_password')}
                 placeholderTextColor={placeholder}
                 secureTextEntry={true}
                 style={{
@@ -155,10 +187,11 @@ const Login = (props) => {
             <View style={{
                 flex: 1
             }} />
-            <CLButton title="LOGIN"
+            <CLButton title={i18n.t('login').toUpperCase()}
                 disabled= {!isValidationOK()}
                 onPress={() => {
-                    navigate('UItab')
+                    //navigate('UItab')
+                    Alert.alert("Token", `abc` , [{text: 'Ok'}])
                 }}
                 colorBG={isValidationOK()? primary : inactive}
                 colorBD={'white'}
@@ -179,7 +212,7 @@ const Login = (props) => {
                     color: primary,
                     alignSelf: 'center',
                     fontSize: fontSizes.h4,
-                }}>New user? Register now</Text>
+                }}>{i18n.t('l_desUnder')}</Text>
             </TouchableOpacity>
             <View style={{
                 flex: 1
@@ -202,7 +235,7 @@ const Login = (props) => {
                     alignSelf: 'center',
                     fontSize: fontSizes.h4,
                     marginHorizontal: 10
-                }}>Use other methods?</Text>
+                }}>{i18n.t('r_method')}</Text>
                 <View style={{ height: 1, backgroundColor: 'black', flex: 1 }} />
             </View>
             <View style={{

@@ -4,12 +4,16 @@ import Icon from "react-native-vector-icons/FontAwesome5"
 import { colors, fontSizes, icons, images } from "../../constants"
 import RequestItem from "./RequestItem";
 import Category from "./Category";
+
+import AsyncStorage from '@react-native-async-storage/async-storage'
 /** 
  - ListView from a map of objects
  - FlatList
  */
 const RequestList = (props) => {
     //list of foods = state
+
+    let token1 = AsyncStorage.getItem("token");
 
     const {hitchhiking,secondHand,helpBuy} = images
 
@@ -168,8 +172,9 @@ const RequestList = (props) => {
                 horizontal={true}
                 renderItem={({ item }) => <Category
                     category={item}
-                    onPress={() => {
-                        alert(`you press item's name: ${item.name}`)
+                    onPress={async () => {
+                        let stringUser = await AsyncStorage.getItem("token")
+                        alert(`you press item's name: ${stringUser}`)
                     }} />}
                 style={{
                     flex: 1

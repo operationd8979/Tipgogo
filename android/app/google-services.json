@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "20407314904",
+    "project_id": "tipgogo-3a1a9",
+    "storage_bucket": "tipgogo-3a1a9.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:20407314904:android:72454c12ac3279b7d1eaad",
+        "android_client_info": {
+          "package_name": "com.tipgogo"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "20407314904-st4jis6chcr9h58b81d2r50fbourempq.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAjeBTt4AwQhHXaXqKQG6NoZwogPGVY1iU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "20407314904-st4jis6chcr9h58b81d2r50fbourempq.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

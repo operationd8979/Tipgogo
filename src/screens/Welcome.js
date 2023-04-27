@@ -3,11 +3,16 @@ import { Text, Image, View, ImageBackground, TouchableOpacity } from 'react-nati
 import Icon from 'react-native-vector-icons/FontAwesome5'
 //component = function
 //create a variable which reference to a function
+import i18n from '../../i18n'
 import { images, icons, colors, fontSizes } from '../constants'
 import { UIButton } from '../components'
 
+import {
+    auth,
+    onAuthStateChanged,
+} from "../../firebase/firebase"
 
-
+import AsyncStorage from '@react-native-async-storage/async-storage'
 
 function Welcome(props) {
 
@@ -20,12 +25,15 @@ function Welcome(props) {
     const { primary } = colors;
 
     const options = [
-        {lable:'Influncer',value:'1'},
-        {lable:'Business',value:'2'},
-        {lable:'Individual',value:'3'},
+        {lable: i18n.t('w_item1'),value: 1},
+        {lable: i18n.t('w_item2'),value: 2},
+        {lable: i18n.t('w_item3'),value: 3},
     ];
     
-    const [selectedOption, setSelectedOption] = useState(null);
+    const [selectedOption, setSelectedOption] = useState(1);
+
+
+
     return <View style={{
         backgroundColor: 'white',
         flex: 100
@@ -74,7 +82,7 @@ function Welcome(props) {
                     marginBottom: 7,
                     color: 'black',
                     fontSize: fontSizes.h4
-                }}>Welcome to</Text>
+                }}>{i18n.t('welcome')}</Text>
                 <Text style={{
                     marginBottom: 7,
                     color: 'black',
@@ -85,7 +93,7 @@ function Welcome(props) {
                     marginBottom: 7,
                     color: 'black',
                     fontSize: fontSizes.h4
-                }}>Please select your account type</Text>
+                }}>{i18n.t('w_descripstion')}</Text>
             </View>
             <View style={{
                 flex: 40,
@@ -96,7 +104,10 @@ function Welcome(props) {
                         key={option.value}
                         title={option.lable}
                         isSelected={selectedOption === option.value}
-                        onPress={() => setSelectedOption(option.value)}
+                        onPress={() => {
+                            setSelectedOption(option.value)
+                            i18n.locale = (option.value == 1? 'en': option.value == 2? 'vi' : 'jp')
+                        }}
                         color={"rgba(255,255,255,0.8)"}
                     />)}
             </View>
@@ -106,7 +117,7 @@ function Welcome(props) {
             }}>
                 <UIButton 
                     onPress={()=> navigate('Login')}
-                    title={'login'.toUpperCase()} 
+                    title={i18n.t('login').toUpperCase()} 
                 />
                 <TouchableOpacity 
                     onPress={()=>{
@@ -119,13 +130,13 @@ function Welcome(props) {
                         color: 'black',
                         fontSize: fontSizes.h5,
                         alignSelf: 'center',
-                    }}>Want to register new Account ?</Text>
+                    }}>{i18n.t('w_desUnder')}</Text>
                     <Text style={{
                         color: primary,
                         fontSize: fontSizes.h5,
                         alignSelf: 'center',
                         textDecorationLine: 'underline'
-                    }}>Register</Text>
+                    }}>{i18n.t('register')}</Text>
                 </TouchableOpacity>
 
             </View>

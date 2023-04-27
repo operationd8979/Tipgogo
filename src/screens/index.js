@@ -1,6 +1,6 @@
 import Welcome from "./Welcome";
 import Login from "./Login";
-import Register from "./Resigter";
+import Register from "./Register/Resigter";
 import RequestList from "./RequestScreen/RequestList";
 import Category from "./RequestScreen/Category";
 import ProductList from "./ProductGrid/ProductList";
