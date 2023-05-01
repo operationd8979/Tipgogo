@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from "react";
-import { Text, Image, View, Keyboard, KeyboardAvoidingView, TextInput ,Alert} from "react-native"
+import { Text, Image, View, TextInput, Alert, ActivityIndicator } from "react-native"
 import Icon from "react-native-vector-icons/FontAwesome5"
-import {KeyboardAwareScrollView} from 'react-native-keyboard-aware-scroll-view';
+import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 
 import { CLButton } from "../../components"
 import { colors, fontSizes, images } from "../../constants"
@@ -9,23 +9,8 @@ import i18n from "../../../i18n";
 
 import useRegister from './useRegister'
 
-import * as Keychain from 'react-native-keychain';
-
 const { logo } = images;
 const { primary, placeholder, facebook, google, inactive } = colors;
-
-async function getToken() {
-    try {
-      const result = await Keychain.getInternetCredentials('token');
-      if (result) {
-        return result.password;
-      } else {
-        console.log('No token found in Keychain');
-      }
-    } catch (error) {
-      console.log('Could not get token:', error);
-    }
-  }
 
 const Register = (props) => {
 
@@ -45,34 +30,28 @@ const Register = (props) => {
         showPassword,
         setShowPassword,
         registerAction,
-        validateCredentials,
     } = useRegister()
-    
 
-    const {navigation,route} = props
-    const {navigate,goBack} = navigation
 
-    const [keyboardIsShow, setKeyboardIsShow] = useState(false)
-    useEffect(() => {
-        //componentDidMount
-        const ShowKeyboard = () => setKeyboardIsShow(true);
-        const HideKeyboard = () => setKeyboardIsShow(false);
+    const { navigation, route } = props
+    const { navigate, goBack } = navigation
 
-        Keyboard.addListener('keyboardDidShow', ShowKeyboard)
-        Keyboard.addListener('keyboardDidHide', HideKeyboard)
-        return () => {
-            Keyboard.removeAllListeners('keyboardDidShow')
-            Keyboard.removeAllListeners('keyboardDidHide')
-        }
-    }, [keyboardIsShow])
+    const [showIndicator,setShowIndicator] = useState(false)
 
-    const isValidationOK = () => true
+    const startLoading = () =>{
+        setShowIndicator(true);
+        setTimeout(()=>{
+            setShowIndicator(false);
+        }, 1500)
+    }
+
 
     return <KeyboardAwareScrollView
+        enableResetScrollToCoords={true}
+        contentContainerStyle={{ flexGrow: 1 }}
         style={{
-            paddingTop: 60,
+            paddingTop: 15,
             backgroundColor: primary,
-            flex: 1,
         }}>
         <View style={{
             flex: 30,
@@ -107,7 +86,7 @@ const Register = (props) => {
                         borderTopRightRadius: 130,
                         borderBottomLeftRadius: 112,
                         borderBottomRightRadius: 70,
-                        marginEnd:18
+                        marginEnd: 18
                     }} />
             </View>
         </View>
@@ -135,8 +114,8 @@ const Register = (props) => {
                     style={{
                         color: 'black'
                     }}
-                    value= {email}
-                    onChangeText={e=>setEmail(e)}
+                    value={email}
+                    onChangeText={setEmail}
                 />
                 <View style={{ height: 1, backgroundColor: primary }} />
                 <Text style={{
@@ -160,8 +139,8 @@ const Register = (props) => {
                     style={{
                         color: 'black'
                     }}
-                    value= {fullname}
-                    onChangeText={e=>setFullname(e)}
+                    value={fullname}
+                    onChangeText={setFullname}
                 />
                 <View style={{ height: 1, backgroundColor: primary }} />
                 <Text style={{
@@ -180,7 +159,7 @@ const Register = (props) => {
                 }}>{i18n.t('r_password')}</Text>
                 <View style={{
                     flexDirection: 'row',
-                    alignItems:'center'
+                    alignItems: 'center'
                 }}>
                     <TextInput
                         autoCorrect={false}
@@ -188,11 +167,11 @@ const Register = (props) => {
                         placeholderTextColor={placeholder}
                         style={{
                             color: 'black',
-                            flex:9,
+                            flex: 9,
                         }}
                         secureTextEntry={showPassword}
-                        value= {password}
-                        onChangeText={e=>setPassword(e)}
+                        value={password}
+                        onChangeText={e => setPassword(e)}
                     />
                     <Icon
                         onPress={() => setShowPassword(!showPassword)}
@@ -200,8 +179,8 @@ const Register = (props) => {
                         size={24}
                         color={primary}
                         style={{
-                            flex:1,
-                            padding:10,
+                            flex: 1,
+                            padding: 10,
                         }}
                     />
                 </View>
@@ -224,12 +203,12 @@ const Register = (props) => {
                     autoCorrect={false}
                     placeholder={i18n.t('r_placehold_repassword')}
                     placeholderTextColor={placeholder}
-                    secureTextEntry={true}
+                    secureTextEntry={showPassword}
                     style={{
                         color: 'black'
                     }}
                     value={repassword}
-                    onChangeText={e=>setRePassword(e)}
+                    onChangeText={setRePassword}
                 />
                 <View style={{ height: 1, backgroundColor: primary }} />
                 <Text style={{
@@ -243,13 +222,13 @@ const Register = (props) => {
                 <View style={{
                     flex: 1
                 }} />
+                <ActivityIndicator size={'large'} animating={showIndicator}/>
                 <CLButton title={i18n.t('register')}
-                    disabled={!isValidationOK()}
                     onPress={async () => {
-                        registerAction()
+                        startLoading();
+                        registerAction();
                     }}
-                    colorBG={isValidationOK() ? primary : inactive}
-                    //colorBG={primary}
+                    colorBG={primary}
                     colorBD={'white'}
                     colorT={'white'}
                     sizeF={fontSizes.h4}
@@ -261,38 +240,37 @@ const Register = (props) => {
                     flex: 1
                 }} />
             </View>
-            
+
         </View>
         <View style={{
-                flex: 20,
-                //backgroundColor: 'purple',
+            flex: 20,
+            //backgroundColor: 'purple',
+        }}>
+            <View style={{
+                flexDirection: 'row',
+                height: 30,
+                alignItems: 'center',
+                marginHorizontal: 20,
+                //backgroundColor:'green'
             }}>
-                <View style={{
-                    flexDirection: 'row',
-                    height: 30,
-                    alignItems: 'center',
-                    marginHorizontal: 20,
-                    //backgroundColor:'green'
-                }}>
-                    <View style={{ height: 1, backgroundColor: 'white', flex: 1 }} />
-                    <Text style={{
-                        color: 'white',
-                        alignSelf: 'center',
-                        fontSize: fontSizes.h4,
-                        marginHorizontal: 10
-                    }}>{i18n.t('r_method')}</Text>
-                    <View style={{ height: 1, backgroundColor: 'white', flex: 1 }} />
-                </View>
-                <View style={{
-                    flexDirection: 'row',
-                    justifyContent: 'center',
-                }}>
-                    <Icon name='facebook' size={45} color={facebook}/>
-                    <View style={{ width: 15 }} />
-                    <Icon name='google' size={45} color={google} />
-                </View>
+                <View style={{ height: 1, backgroundColor: 'white', flex: 1 }} />
+                <Text style={{
+                    color: 'white',
+                    alignSelf: 'center',
+                    fontSize: fontSizes.h4,
+                    marginHorizontal: 10
+                }}>{i18n.t('r_method')}</Text>
+                <View style={{ height: 1, backgroundColor: 'white', flex: 1 }} />
             </View>
-        {keyboardIsShow == true && <View style={{ flex: 1 }} />}
+            <View style={{
+                flexDirection: 'row',
+                justifyContent: 'center',
+            }}>
+                <Icon name='facebook' size={45} color={facebook} />
+                <View style={{ width: 15 }} />
+                <Icon name='google' size={45} color={google} />
+            </View>
+        </View>
     </KeyboardAwareScrollView>
 }
 

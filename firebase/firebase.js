@@ -10,6 +10,9 @@ import {
     getDatabase,
     ref,
     set,
+    child,
+    get,
+    onValue,
 } from "firebase/database"
 
 
@@ -30,11 +33,14 @@ const firebaseDatabase = getDatabase()
 
 export {
     auth,
-    firebaseDatabase,
     createUserWithEmailAndPassword,
     signInWithEmailAndPassword,
     sendEmailVerification,
     onAuthStateChanged,
+    firebaseDatabase,
     ref,
     set,
+    child,
+    get,
+    onValue,
 }

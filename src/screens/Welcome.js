@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Text, Image, View, ImageBackground, TouchableOpacity } from 'react-native'
 import Icon from 'react-native-vector-icons/FontAwesome5'
 //component = function
@@ -7,18 +7,63 @@ import i18n from '../../i18n'
 import { images, icons, colors, fontSizes } from '../constants'
 import { UIButton } from '../components'
 
+import { useFocusEffect } from '@react-navigation/native';
+import { StackActions } from '@react-navigation/native'
+
 import {
     auth,
     onAuthStateChanged,
+    firebaseDatabase,
+    ref,
+    set,
 } from "../../firebase/firebase"
-
 import AsyncStorage from '@react-native-async-storage/async-storage'
+
 
 function Welcome(props) {
 
     const {navigation,route} = props
     const {navigate,goBack} = navigation
-
+    const [selectedOption, setSelectedOption] = useState(1);
+    
+    useFocusEffect(()=>{
+        console.log("useEffect_welcomeScreen running!")
+        const unsubscribe = onAuthStateChanged(auth, async (responseUser) => {
+            if (responseUser) {
+                navigation.dispatch(StackActions.replace('UItab'))
+                console.log("Auth successfully!");
+                let oldToken = await AsyncStorage.getItem("token")
+                if(oldToken != responseUser.accessToken){
+                    AsyncStorage.setItem("token", responseUser.accessToken).then(()=>{
+                        console.log("Set Token successfully!");  
+                    }).catch(()=>{
+                        console.log("Error set Token!");  
+                    })
+                    let userapp = {
+                        userId: responseUser.uid,                
+                        email: responseUser.email,
+                        emailVerified: responseUser.emailVerified,
+                        accessToken: responseUser.accessToken
+                    }             
+                    set(ref(
+                        firebaseDatabase,
+                        `users/${userapp.userId}`
+                      ), userapp)
+                        .then(() => {
+                            console.log("Data written to Firebase Realtime Database.");
+                        })
+                        .catch((error) => {
+                            console.error("Error writing data to Firebase Realtime Database: ", error);
+                        });
+                }
+            }
+            else{
+                console.log("Authing fail")
+            }
+        })
+        return unsubscribe();
+    })
+    
     //state => when a state is changed => UI is reloaded
     //like getter/setter
     const { background } = images;
@@ -30,9 +75,7 @@ function Welcome(props) {
         {lable: i18n.t('w_item3'),value: 3},
     ];
     
-    const [selectedOption, setSelectedOption] = useState(1);
-
-
+    
 
     return <View style={{
         backgroundColor: 'white',
@@ -116,12 +159,14 @@ function Welcome(props) {
                 //backgroundColor: 'purple'
             }}>
                 <UIButton 
-                    onPress={()=> navigate('Login')}
+                    onPress={()=>{
+                        navigate('Login');
+                    }}
                     title={i18n.t('login').toUpperCase()} 
                 />
                 <TouchableOpacity 
                     onPress={()=>{
-                        navigate('Register')
+                        navigate('Register');
                     }}
                     style={{
                         padding:5
@@ -144,32 +189,4 @@ function Welcome(props) {
     </View>
 }
 export default Welcome
-
-//import { sum2Number, substract2Number,PI } from '../utilies/Calculation';
-//read object,variable,functions from other modules
-/*
-const Welcome = (props) =>{
-    //destructuring an object
-    const {x,y} = props
-    const {person} = props
-    //destructuring person object
-    const {name,age,email} = person
-    const {products} = props
-
-    debugger
-    //JSX
-    //const => let => var
-    return <View style={{
-        
-    }}>
-        <Text>value of x = {x}, value of y = {y}</Text>
-        <Text>Name = {name}, email = {email}, age = {age}</Text>
-        {products.map(eachProducts => 
-            <Text>{eachProducts.productName}, {eachProducts.year}</Text>)}
-        <Text>sum 2 and 3 = {sum2Number(2,3)}</Text>
-        <Text>10 - 8 = {substract2Number(10,8)}</Text>
-        <Text>PI = {PI}</Text>
-    </View>
-}
-*/
 

@@ -1,5 +1,5 @@
 import { useState, useContext } from 'react'
-import { emailRegex, passRegex, nameRegex } from '../../utilies/regx'
+import { emailRegex, passRegex, nameRegex } from '../../utilies'
 import { useNavigation, useRoute } from '@react-navigation/native'
 import i18n from '../../../i18n'
 import { Alert } from 'react-native'
@@ -10,39 +10,14 @@ import {
   createUserWithEmailAndPassword,
   sendEmailVerification,
   onAuthStateChanged,
+  ref,
+  set,
 } from "../../../firebase/firebase"
+
+import { StackActions } from '@react-navigation/native'
 
 import * as Keychain from 'react-native-keychain';
 import AsyncStorage from '@react-native-async-storage/async-storage'
-
-async function saveToken(token) {
-  try {
-    await Keychain.setGenericPassword('token', token);
-    console.log('Token saved successfully');
-  } catch (error) {
-    console.log("Could not save token:", error);
-  }
-}
-async function getToken() {
-  try {
-    const result = await Keychain.getInternetCredentials('token');
-    if (result) {
-      return result.password;
-    } else {
-      console.log('No token found in Keychain');
-    }
-  } catch (error) {
-    console.log('Could not get token:', error);
-  }
-}
-async function deleteToken() {
-  try {
-    await Keychain.resetGenericPassword();
-    console.log('Token deleted successfully');
-  } catch (error) {
-    console.log("Could not delete token:", error);
-  }
-}
 
 const useRegister = () => {
 
@@ -64,6 +39,7 @@ const useRegister = () => {
     setEmailError(null)
     setPasswordError(null)
     setFullnameError(null)
+    setRePasswordError(null)
 
     if (!email) {
       setEmailError(i18n.t('emailErr1'))
@@ -72,14 +48,14 @@ const useRegister = () => {
       setEmailError(i18n.t('emailErr2'))
       result = false
     }
-
+    /*
     if (!password) {
       setPasswordError(i18n.t('passErr1'))
       result = false
     } else if (passRegex.test(password) !== true) {
       setPasswordError(i18n.t('passErr2'))
       result = false
-    }
+    }*/
 
     if (!fullname) {
       setFullnameError(i18n.t('fullnameErr1'))
@@ -102,40 +78,58 @@ const useRegister = () => {
 
   function registerAction() {
     if (validateCredentials()) {
-      createUserWithEmailAndPassword(auth, email, password).then((userCreate) => {
-        const user = userCreate.user;
-        signInWithEmailAndPassword(auth, email, password)
-          .then((userLogin) => {
-            sendEmailVerification(user)
+      createUserWithEmailAndPassword(auth, email, password).then((userCredential) => {
+        console.log('Create account sucessfully!');
+        sendEmailVerification(userCredential.user)
               .then(() => {
                 console.log('Email verification sent');
               })
               .catch((error) => {
-                console.log(error);
+                console.error("Error send email verification: ", error);
               });
-            onAuthStateChanged(auth, (responseUser) => { 
-              if(responseUser) {     
-                  //saveToken(responseUser.accessToken).then(()=>{debugger});   
-                  AsyncStorage.setItem(
-                    'token',
-                    responseUser.accessToken,
-                  ) 
-                  /*                                       
-                  firebaseSet(firebaseDatabaseRef(
-                      firebaseDatabase,
-                      `users/${responseUser.uid}`
-                  ), user)*/             
-              } 
+        navigation.dispatch(StackActions.replace('UItab'));
+        signInWithEmailAndPassword(auth, email, password)
+          .then(() => {
+            console.log("Logined to app");
+            onAuthStateChanged(auth, (responseUser) => {
+              if (responseUser) {
+                console.log("Auth successfully!");
+                AsyncStorage.setItem(
+                  'token',
+                  responseUser.accessToken,
+                ).then(() => {
+                  console.log("Set Token successfully!");
+                }).catch(() => {
+                  console.error("Error set Token!");
+                })
+                let userapp = {
+                  userId: responseUser.uid,
+                  email: responseUser.email,
+                  emailVerified: responseUser.emailVerified,
+                  accessToken: responseUser.accessToken
+                }
+                set(ref(
+                  firebaseDatabase,
+                  `users/${userapp.userId}`
+                ), userapp)
+                  .then(() => {
+                    console.log("Data written to Firebase Realtime Database.");
+                  })
+                  .catch((error) => {
+                    console.error("Error writing data to Firebase Realtime Database: ", error);
+                  });
+              }
             })
           })
           .catch((error) => {
             console.log(error);
           });
-          navigation.navigate('Login')
-      }).catch((error)=>{
-        Alert.alert(error.name, error.message , [{text: 'Ok'}])
+      }).catch((error) => {
+        console.error("Error create account: ", error);
+        Alert.alert(error.name, error.message, [{ text: 'Ok' }])
       })
-  }}
+    }
+  }
   return {
     email,
     setEmail,

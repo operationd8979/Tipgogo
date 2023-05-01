@@ -4,7 +4,7 @@ export const vi = {
     w_item1: 'Tiếng anh',
     w_item2: 'Tiếng việt',
     w_item3: 'Tiếng nhật',
-    w_login: 'Đăng nhập',
-    w_register: 'Đăng ký',
+    login: 'Đăng nhập',
+    register: 'Đăng ký',
     w_desUnder: 'Bạn chưa có tài khoản?'
 }

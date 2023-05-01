@@ -1,5 +1,5 @@
 import React from "react";
-import { Text, Image, View, TouchableOpacity, Keyboard, KeyboardAvoidingView, TextInput, ImageBackground, ScrollView, FlatList } from "react-native"
+import { Text, Image, View, TouchableOpacity } from "react-native"
 
 const Category = (props) => {
     const {category,onPress} = props

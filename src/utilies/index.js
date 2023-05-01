@@ -1,7 +1,8 @@
 import {} from './Calculation'
-import { isValidEmail, isValidPassword } from './Validations'
+import { emailRegex, passRegex, phoneRegex, nameRegex } from './regx'
 export{
-    isValidEmail,
-    isValidPassword,
-    
+    emailRegex,
+    passRegex,
+    phoneRegex,
+    nameRegex,
 }

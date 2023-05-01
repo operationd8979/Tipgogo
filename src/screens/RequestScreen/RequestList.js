@@ -11,7 +11,6 @@ import AsyncStorage from '@react-native-async-storage/async-storage'
  - FlatList
  */
 const RequestList = (props) => {
-    //list of foods = state
 
     let token1 = AsyncStorage.getItem("token");
 
@@ -91,9 +90,9 @@ const RequestList = (props) => {
     ])
 
     const [searchText, setSearchText] = useState('')
-    const filterFoods = useCallback(() => foods.filter(eachFood => eachFood.name.toLowerCase().includes(searchText.toLowerCase())))
+    const filterRequest = useCallback(() => foods.filter(eachFood => eachFood.name.toLowerCase().includes(searchText.toLowerCase())))
     
-    const renderNoFoodFound = () => {
+    const renderNotFound = () => {
         return (
             <View style={{ flex: 1, justifyContent: 'center' }}>
                 <Text style={{
@@ -107,16 +106,16 @@ const RequestList = (props) => {
         );
     };
 
-    const renderFoodList = () => {
+    const renderRequestList = () => {
         return (
             <FlatList
-                data={filterFoods()}
+                data={filterRequest()}
                 renderItem={({ item }) => <RequestItem
                     onPress={() => {
                         alert(`you press item's name: ${item.name}`)
                     }}
                     food={item} />}
-                keyExtractor={eachFood => eachFood.name}
+                keyExtractor={eachRequest => eachRequest.name}
             />
         );
     };
@@ -181,10 +180,7 @@ const RequestList = (props) => {
                 }} />
             <View style={{ height: 1, backgroundColor: colors.inactive }} />
         </View>
-        {/*<ScrollView>
-            {foods.map(eachfood =><FoodItem food={eachfood} key={eachfood.name}/>)}
-        </ScrollView>*/}
-        {filterFoods().length > 0 ? renderFoodList() : renderNoFoodFound()}
+        {filterRequest().length > 0 ? renderRequestList() : renderNotFound()}
     </View>
 }
 export default RequestList

@@ -1,5 +1,5 @@
 import React from "react";
-import { Text, Image, View, TouchableOpacity, Keyboard, KeyboardAvoidingView, TextInput, ImageBackground } from "react-native"
+import { Text, Image, View, TouchableOpacity } from "react-native"
 import Icon from "react-native-vector-icons/FontAwesome5"
 
 import { colors, fontSizes, icons, images } from "../../constants"
@@ -11,7 +11,7 @@ const RequestItem = ({ onPress, food: { name, price, socialNetWorks, status, url
             case "available":
               return colors.success;
             case "ended request":
-              return colors.alert;
+              return colors.zalert;
             case "on process":
               return colors.warning;
             default:
