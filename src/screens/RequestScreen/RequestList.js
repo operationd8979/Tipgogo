@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { Text, Image, View, TouchableOpacity, Keyboard, KeyboardAvoidingView, TextInput, ImageBackground, ScrollView, FlatList } from "react-native"
 import Icon from "react-native-vector-icons/FontAwesome5"
-import { colors, fontSizes, icons, images } from "../../constants"
+import { colors, fontSizes, icons, images, normalize } from "../../constants"
 import RequestItem from "./RequestItem";
 import Category from "./Category";
 
@@ -15,6 +15,8 @@ const RequestList = (props) => {
     let token1 = AsyncStorage.getItem("token");
 
     const {hitchhiking,secondHand,helpBuy} = images
+
+    const {primary,zalert,success,warning,inactive} = colors
 
     const [categories, setCategories] = useState([
         {
@@ -125,7 +127,17 @@ const RequestList = (props) => {
         flex: 1
     }}>
         <View style={{ height: 100 }}>
-            <Text style={{ color: 'black', alignSelf: 'center', fontSize: fontSizes.h2 }}>Request List</Text>
+            <View style={{
+                marginHorizontal: 5
+            }}>
+                <Text style={{
+                    color: 'black',
+                    fontSize: normalize(18),
+                    fontWeight: 'bold',
+                    padding: 10
+                }}>Request List</Text>
+                <View style={{ height: 1, backgroundColor: primary }} />
+            </View>
             <View style={{
                 flexDirection: 'row',
                 alignItems: 'center',
@@ -149,14 +161,14 @@ const RequestList = (props) => {
                         flex: 1,
                         height: 45,
                         borderRadius: 5,
-                        opacity: 0.7,
+                        opacity: 0.6,
                         color: 'black',
                         paddingStart: 30
                     }}
                 />
                 <Icon name={"bars"}
                     size={30}
-                    color={'black'}
+                    color={primary}
                     marginStart={5}
                 />
             </View>
@@ -165,7 +177,7 @@ const RequestList = (props) => {
             height: 100,
             //backgroundColor:'purple'
         }}>
-            <View style={{ height: 1, backgroundColor: colors.inactive }} />
+            <View style={{ height: 1, backgroundColor: primary }} />
             <FlatList
                 data={categories}
                 horizontal={true}
@@ -178,7 +190,7 @@ const RequestList = (props) => {
                 style={{
                     flex: 1
                 }} />
-            <View style={{ height: 1, backgroundColor: colors.inactive }} />
+            <View style={{ height: 1, backgroundColor: primary }} />
         </View>
         {filterRequest().length > 0 ? renderRequestList() : renderNotFound()}
     </View>

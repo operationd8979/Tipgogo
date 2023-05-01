@@ -1,4 +1,4 @@
-import {initializeApp} from 'firebase/app'
+import {initializeApp}  from 'firebase/app'
 import {
     getAuth,
     onAuthStateChanged,
@@ -13,6 +13,7 @@ import {
     child,
     get,
     onValue,
+    orderByChild,
 } from "firebase/database"
 
 
@@ -28,8 +29,11 @@ const firebaseConfig = {
 }
 
 const app = initializeApp(firebaseConfig)
+
 const auth = getAuth()
+
 const firebaseDatabase = getDatabase()
+
 
 export {
     auth,
@@ -43,4 +47,5 @@ export {
     child,
     get,
     onValue,
+    orderByChild,
 }

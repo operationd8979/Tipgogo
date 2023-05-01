@@ -7,6 +7,7 @@ import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view
 import i18n from '../../../i18n';
 
 import userLogin  from './useLogin';
+import { StackActions } from '@react-navigation/native';
 
 
 const { logo } = images;
@@ -171,6 +172,7 @@ const Login = (props) => {
             />
             <TouchableOpacity
                 onPress={() => {
+                    //navigation.dispatch(StackActions.replace('Register'));
                     navigate('Register')
                 }}
                 style={{
