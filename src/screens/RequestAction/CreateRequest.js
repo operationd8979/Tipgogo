@@ -13,6 +13,7 @@ import { TextInput } from "react-native-gesture-handler";
 
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
+
 import {
     auth,
     firebaseDatabase,
@@ -29,10 +30,12 @@ import {
 
 import MapView, { PROVIDER_GOOGLE, Marker, Callout } from 'react-native-maps'; // remove PROVIDER_GOOGLE import if not using Google Maps
 
-const relatitude= 37.78825
-const relongitude= -122.4324
-const relatitudeDelta= 0.015
-const relongitudeDelta= 0.0121
+const relatitude = 37.78825
+const relongitude = -122.4324
+const relatitudeDelta = 0.015
+const relongitudeDelta = 0.0121
+
+
 
 const CreateRequest = () => {
 
@@ -45,6 +48,7 @@ const CreateRequest = () => {
     const [title, setTitle] = useState("");
     const [price, setPrice] = useState(null);
 
+
     const data = [
         { label: 'One', value: '1' },
         { label: 'Two', value: '2' },
@@ -52,6 +56,7 @@ const CreateRequest = () => {
         { label: 'Four', value: '4' },
         { label: 'Five', value: '5' },
     ];
+
 
     const handlePostRequest = async () => {
         const accessToken = await AsyncStorage.getItem('token');
@@ -191,7 +196,7 @@ const CreateRequest = () => {
                 flex: 48,
                 marginHorizontal: 5
             }}>
-                <MapView
+                {/* <MapView
                     provider={PROVIDER_GOOGLE} // remove if not using Google Maps
                     style={styles.map}
                     customMapStyle={mapDarkStyle}
@@ -215,8 +220,7 @@ const CreateRequest = () => {
                         <Callout tooltip>
                         </Callout>
                     </Marker>
-
-                </MapView>
+                </MapView> */}
                 {/* <View>
                     {!!selected && (
                         <Text>

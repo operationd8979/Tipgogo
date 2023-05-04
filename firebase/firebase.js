@@ -15,6 +15,7 @@ import {
     onValue,
     orderByChild,
 } from "firebase/database"
+import {getStorage, ref as storageRef, uploadBytes } from "firebase/storage"
 
 
 const firebaseConfig = {
@@ -34,6 +35,8 @@ const auth = getAuth()
 
 const firebaseDatabase = getDatabase()
 
+const storage = getStorage(app);
+
 
 export {
     auth,
@@ -48,4 +51,7 @@ export {
     get,
     onValue,
     orderByChild,
+    storage,
+    storageRef,
+    uploadBytes
 }
