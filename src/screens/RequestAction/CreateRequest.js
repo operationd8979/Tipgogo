@@ -1,4 +1,4 @@
-import React, { useState } from "react"
+import React, { useState, useRef } from "react"
 import { View, Text, Switch, TouchableOpacity, StyleSheet, ScrollView, Modal } from "react-native"
 import { colors, fontSizes, icons, images, normalize } from "../../constants"
 import Icon from 'react-native-vector-icons/FontAwesome5'
@@ -27,6 +27,8 @@ import {
     orderByChild,
 } from "../../../firebase/firebase"
 
+import { Camera, useCameraDevices } from 'react-native-vision-camera'
+
 
 import MapView, { PROVIDER_GOOGLE, Marker, Callout } from 'react-native-maps'; // remove PROVIDER_GOOGLE import if not using Google Maps
 
@@ -39,9 +41,16 @@ const relongitudeDelta = 0.0121
 
 const CreateRequest = () => {
 
+    const camera = useRef(null);
+
+    const devices = useCameraDevices('ultra-wide-angle-camera')
+    const device = devices.back
+
     const { primary, zalert, warning, success, inactive } = colors
 
     const [typeRequest, setTypeRequest] = useState(1);
+
+    const [modalVisible, setModalVisible] = useState(false);
 
     const [selected, setSelected] = useState(false);
 
@@ -98,6 +107,8 @@ const CreateRequest = () => {
                 console.error("Error writing data to Firebase Realtime Database: ", error);
             });
     }
+
+
 
     return (
         <View style={{
@@ -193,10 +204,50 @@ const CreateRequest = () => {
                 />
             </View>
             <View style={{
-                flex: 48,
+                flex: 18,
                 marginHorizontal: 5
             }}>
-                {/* <MapView
+                <CLButton title="Open camera" onPress={() => setModalVisible(true)} />
+                <Modal visible={modalVisible} animationType="slide">
+                    <View style={{ flex: 1, justifyContent: 'center' }}>
+                        {modalVisible && device && (
+                            <View style={styles.container}>
+                                <Camera
+                                    ref={camera}
+                                    style={{ height: "80%", width: "100%" }}
+                                    device={device}
+                                    isActive={true}
+                                    preset="medium"
+                                    photo={true}
+                                />
+                                <TouchableOpacity >
+                                    <View
+                                        style={{
+                                            borderWidth: 2,
+                                            borderColor: "white",
+                                            height: 50,
+                                            width: 50,
+                                            borderRadius: 30,
+                                            display: "flex",
+                                            justifyContent: "center",
+                                            alignItems: "center",
+                                            marginBottom: 20,
+                                            alignSelf: 'center',
+                                        }}
+                                    />
+                                </TouchableOpacity>
+                                {/*<Button title="Close Camera" onPress={handleCloseCamera} />*/}
+                            </View>
+                        )}
+                        <CLButton title="Close Modal" onPress={() => setModalVisible(false)} />
+                    </View>
+                </Modal>
+            </View>
+            <View style={{
+                flex: 30,
+                marginHorizontal: 5
+            }}>
+                <MapView
                     provider={PROVIDER_GOOGLE} // remove if not using Google Maps
                     style={styles.map}
                     customMapStyle={mapDarkStyle}
@@ -220,7 +271,7 @@ const CreateRequest = () => {
                         <Callout tooltip>
                         </Callout>
                     </Marker>
-                </MapView> */}
+                </MapView>
                 {/* <View>
                     {!!selected && (
                         <Text>
@@ -284,6 +335,10 @@ const styles = StyleSheet.create({
     },
     map: {
         ...StyleSheet.absoluteFillObject,
+    },
+    container: {
+        flex: 1,
+        backgroundColor: 'black',
     },
 });
 

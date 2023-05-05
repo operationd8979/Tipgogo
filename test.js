@@ -3,7 +3,7 @@ import { enableLatestRenderer } from 'react-native-maps';
 import { StyleSheet, View, Text, Button, TouchableOpacity, Image } from 'react-native'
 import { Camera, useCameraDevices } from 'react-native-vision-camera'
 import { useEffect, useState, useRef } from 'react';
-import {storage, storageRef, uploadBytes } from './firebase/firebase';
+import { storage, storageRef, uploadBytes } from './firebase/firebase';
 const RNFS = require('react-native-fs');
 import * as storagefb from 'firebase/storage';
 import { Buffer } from 'buffer';
@@ -17,18 +17,28 @@ async function uploadImage(file) {
   // })
   const imageBuffer = new Uint8Array(Buffer.from(file, 'base64'));
   debugger
-  storagefb.uploadBytes(ref, imageBuffer,{ contentType: 'image/jpeg' }).then(()=>{
+  storagefb.uploadBytes(ref, imageBuffer, { contentType: 'image/jpeg' }).then(() => {
     debugger
     console.log("uploaded picture");
-  }).catch((error)=>{
+  }).catch((error) => {
     debugger
     console.error(error.message);
   })
 }
 
+const checkCameraPermission = async () => {
+  const cameraPermission = await Camera.getCameraPermissionStatus();
+  if (cameraPermission !== 'authorized') {
+    const newPermission = await Camera.requestCameraPermission();
+    if (newPermission !== 'authorized') {
+      Alert.alert('Camera permission denied');
+    }
+  }
+  else {
+  }
+}
 
 const Test = () => {
-
 
   const handlePressCamera = async () => {
     try {
@@ -39,16 +49,16 @@ const Test = () => {
       const photo = await camera.current.takePhoto({});
       console.log(photo);
       ///data/user/0/com.tipgogo/cache/mrousavy7566095890664061440.jpg
-      const filePath = "file://"+photo.path;
-      const newFilePath = RNFS.ExternalDirectoryPath + "/MyTest.jpg";
-      RNFS.copyFile(filePath,newFilePath).then(async()=>{
+      const filePath = "file://" + photo.path;
+      const newFilePath = RNFS.ExternalDirectoryPath + photo.path;
+      RNFS.copyFile(filePath, newFilePath).then(async () => {
         console.log(`move done!New Path:${filePath} to ${newFilePath}`);
-        const fileData = await RNFS.readFile(filePath,'base64');
+        const fileData = await RNFS.readFile(filePath, 'base64');
         //const fileInfo = await RNFS.stat(newFilePath);
         console.log(fileData)
         handleCloseCamera();
-        uploadImage(fileData);
-      }).catch((error)=>{
+        //uploadImage(fileData);
+      }).catch((error) => {
         console.error(error);
       })
     } catch (e) {
@@ -59,21 +69,8 @@ const Test = () => {
   const camera = useRef(null);
 
 
-  useEffect(() => {   
-    // const checkCameraPermission = async () => {
-    //   const cameraPermission = await Camera.getCameraPermissionStatus();
-    //   if (cameraPermission !== 'authorized') {
-    //     const newPermission = await Camera.requestCameraPermission();
-    //     if (newPermission !== 'authorized') {
-    //       Alert.alert('Camera permission denied');
-    //     }
-    //   }
-    //   else {
-    //   }
-    // }
-    // checkCameraPermission();
-    const ref = storagefb;
-    console.log(ref);
+  useEffect(() => {
+    checkCameraPermission();
   }, []);
 
   const [showCamera, setShowCamera] = useState(false);
@@ -85,15 +82,15 @@ const Test = () => {
   const handleCloseCamera = () => {
     setShowCamera(false);
   };
-  
+
 
 
   const handleTakePicture = async () => {
-    if (!device||!camera){
+    if (!device || !camera) {
       console.log("no picture")
       return;
-    } 
-    else{
+    }
+    else {
       // const picture = await camera.current.takeSnapshot({
       //   quality: 85,
       //   skipMetadata: true
@@ -134,12 +131,12 @@ const Test = () => {
                 borderColor: "white",
                 height: 50,
                 width: 50,
-                borderRadius:30,
+                borderRadius: 30,
                 display: "flex",
                 justifyContent: "center",
                 alignItems: "center",
                 marginBottom: 20,
-                alignSelf:'center',
+                alignSelf: 'center',
               }}
             />
           </TouchableOpacity>
