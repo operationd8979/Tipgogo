@@ -1,4 +1,4 @@
-import {RequestList,Setting,CreateRequest} from '../screens'
+import {RequestList,Setting,CreateRequest,Register} from '../screens'
 import {colors, fontSizes} from '../constants'
 import Icon from 'react-native-vector-icons/FontAwesome5'
 const { createBottomTabNavigator } = require("@react-navigation/bottom-tabs")

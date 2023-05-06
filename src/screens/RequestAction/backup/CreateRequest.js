@@ -1,14 +1,22 @@
-import React, { useState, useRef, useEffect, useContext } from "react"
-import { View, Text, Switch, TouchableOpacity, StyleSheet, ScrollView, Modal, Alert, Platform , Image } from "react-native"
-import { colors, fontSizes, icons, images, normalize, split } from "../../constants"
+import React, { useState, useRef, useEffect } from "react"
+import { View, Text, Switch, TouchableOpacity, StyleSheet, ScrollView, Modal, Alert } from "react-native"
+import { colors, fontSizes, icons, images, normalize } from "../../constants"
 import Icon from 'react-native-vector-icons/FontAwesome5'
 import { Dimensions } from 'react-native';
+
 import { StackActions } from '@react-navigation/native'
+
 import { Dropdown, CLButton } from '../../components'
+
 import { Picker } from '@react-native-picker/picker'
 import { TextInput } from "react-native-gesture-handler";
+
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view'
+
+
+
+
 import {
     auth,
     firebaseDatabase,
@@ -20,19 +28,13 @@ import {
     get,
     set,
     orderByChild,
-    uploadBytes,
-    getDownloadURL,
-    storageRef,
-    storage
 } from "../../../firebase/firebase"
+
 import { Camera, useCameraDevices } from 'react-native-vision-camera'
+
+
 import MapView, { PROVIDER_GOOGLE, Marker, Callout } from 'react-native-maps'; // remove PROVIDER_GOOGLE import if not using Google Maps
 import { isEnabled } from "react-native/Libraries/Performance/Systrace";
-import { UserPositionContext } from '../../context/UserPositionContext';
-import { check,PERMISSIONS, request } from "react-native-permissions";
-import Geolocation from '@react-native-community/geolocation';
-
-const RNFS = require('react-native-fs');
 
 const relatitude = 37.78825
 const relongitude = -122.4324
@@ -50,109 +52,20 @@ const checkCameraPermission = async () => {
     else{
         console.log("Camera already use!")
     }
-}
-
-const checkLocationPermission = async () => {
-    try {
-        const granted = await check(PERMISSIONS.ANDROID.ACCESS_FINE_LOCATION);
-        if (granted === 'granted') {
-            console.log("Location is enabled");
-        } else {
-          const permissionStatus = await request(PERMISSIONS.ANDROID.ACCESS_FINE_LOCATION);
-          if (permissionStatus === 'granted') {
-                console.log("Location is enabled");
-          } else {
-            console.error("Location is not enabled");
-          }
-        }
-      } catch (error) {
-        console.error(error);
-    }
-}
-
-async function uploadImage(uri) {
-
-    console.log("UPloading!");
-    const ref = storageRef(storage, "2077.jpg");
-  
-    const fileData = await fetch(uri);
-    const bytes = await fileData.blob();
-    
-    uploadBytes(ref, bytes, { contentType: 'image/jpeg' }).then((snapshot) => {
-      console.log("uploaded picture");
-      getDownloadURL(snapshot.ref).then((url)=>{
-        console.log(url);
-      }).catch((error)=>{
-        console.error(error);
-      })
-    }).catch((error) => {
-      console.error(error);
-    })
   }
 
 const CreateRequest = () => {
 
-    const [photoPath,setPhotoPath] = useState(null);
-
-    const [currentLocation, setCurrentLocation] = useState({
-        latitude: relatitude,
-        longitude: relongitude,
-    });
-
-    useEffect(()=>{
-        console.log('Check camera permission');
+    useFEffect(()=>{
+        console.log("Check camera permission!")
         checkCameraPermission();
     },[modalVisible])
 
-    useEffect(()=>{
-        checkLocationPermission()
-        Geolocation.getCurrentPosition(
-            position=>{
-                const latitude = position.coords.latitude;
-                const longitude = position.coords.longitude;
-                console.log(`latitude=${latitude}`);
-                console.log(`longitude=${longitude}`);
-                setCurrentLocation({ latitude, longitude });
-            },
-            error=>{
-                console.error('Error getting current location:', error);
-            },
-            { enableHighAccuracy: true, timeout: 15000, maximumAge: 10000 }
-        )
-    },[])
-
-    const handlePressCamera = async () => {
-        try {
-          const photo = await camera.current.takePhoto({});
-          const filePath = "file://" + photo.path;
-          const newFilePath = RNFS.ExternalDirectoryPath + "abc.jpg";
-          RNFS.copyFile(filePath, newFilePath).then(async () => {
-            console.log(`move done!New Path:${filePath} to ${newFilePath}`);
-            setModalVisible(false)
-            const uri = "file://"+newFilePath;
-            setPhotoPath(uri)
-            uploadImage(uri);
-          }).catch((error) => {
-            console.error(error);
-          })
-        } catch (e) {
-          console.error(e)
-        }
-      };
-
-
-    
-    
-    const { userPosition, updateUserPosition } = useContext(UserPositionContext);
-
-    const handleUpdatePosition = () => {
-        const newPosition = { latitude: 123, longitude: 456 };
-        updateUserPosition(newPosition);
-    };
-
     const camera = useRef(null);
+
     const devices = useCameraDevices('ultra-wide-angle-camera')
     const device = devices.back
+
     const [titleAmount, setTitleAmount] = useState("Pay");
     const [isEnabledFree, setIsEnabledFree] = useState(false);
     const toggleSwitchPrice = () => {
@@ -162,11 +75,16 @@ const CreateRequest = () => {
     }
 
     const { primary, zalert, warning, success, inactive } = colors
+
     const [typeRequest, setTypeRequest] = useState(1);
+
     const [modalVisible, setModalVisible] = useState(false);
+
     const [selected, setSelected] = useState(false);
+
     const [title, setTitle] = useState("");
     const [price, setPrice] = useState(null);
+
 
     const data = [
         { label: 'One', value: '1' },
@@ -194,12 +112,10 @@ const CreateRequest = () => {
             .orderByChild('accessToken')
             .equalTo(accessToken)
             .once('value'), async (snapshot) => {
-                debugger
                 console.log('getted database!')
                 userID = Object.keys(snapshot.val())[0];
                 email = snapshot.val.email;
             })
-        debugger
         let request = {
             name: email,
             title: title,
@@ -225,8 +141,7 @@ const CreateRequest = () => {
         >
             <View style={{
                 flex: 6,
-                marginHorizontal: split.s4,
-                marginVertical: split.s5,
+                marginHorizontal: 5,
                 //backgroundColor:'red',
             }}>
                 <Text style={{
@@ -239,10 +154,9 @@ const CreateRequest = () => {
             </View>
             <View style={{
                 flex: 10,
+                marginHorizontal: 5,
                 justifyContent: 'center',
                 alignItems: 'center',
-                marginHorizontal: split.s5,
-                marginVertical: split.s5,
                 //backgroundColor:'red',
             }}>
                 <View style={{
@@ -274,14 +188,12 @@ const CreateRequest = () => {
                 flex: 8,
                 alignItems: 'center',
                 flexDirection: 'row',
-                marginHorizontal: split.s5,
-                marginVertical: split.s5,
                 //backgroundColor:'red'
             }}>
                 <Text style={{
                     fontSize: fontSizes.h5,
                     position: 'absolute',
-                    left: split.s1,
+                    left: 17,
                     color: "black",
                 }}>Tiêu đề :</Text>
                 <TextInput style={{
@@ -289,7 +201,7 @@ const CreateRequest = () => {
                     borderColor: 'black',
                     borderRadius: 15,
                     width: 390,
-                    paddingStart: "15%",
+                    paddingStart: 50,
                     marginHorizontal: 10,
                 }}
                     value={title}
@@ -302,8 +214,6 @@ const CreateRequest = () => {
                 alignItems: 'center',
                 flexDirection: 'row',
                 justifyContent: 'space-between',
-                marginHorizontal: split.s5,
-                marginVertical: split.s5,
                 //backgroundColor:'red'
             }}>
                 <TextInput
@@ -341,9 +251,7 @@ const CreateRequest = () => {
                 flex: 16,
                 marginHorizontal: 5,
                 flexDirection: 'row',
-                marginHorizontal: split.s5,
-                marginVertical: split.s5,
-                height: normalize(70),
+                marginBottom: "2%",
                 //backgroundColor:"red",
             }}>
                 {/*onPress,title,colorBG,colorBD,colorT,sizeF,sizeBT,sizeB,radius,disabled*/}
@@ -356,36 +264,19 @@ const CreateRequest = () => {
                     colorBG="#b0e0e6"
                     colorT="#000080"
                 />
-                {
-                    photoPath && <Image 
-                    style={{
-                        width:"20%",
-                        height: "80%",
-                        alignSelf: "center",
-                    }}
-                    defaultSource={require('../../assets/helpbuy.jpg')}
-                    source={{uri: "file://"+ photoPath}}
-                />
-                }
                 <Modal visible={modalVisible} animationType="slide">
                     <View style={{ flex: 1, justifyContent: 'center' }}>
                         {modalVisible && device && (
                             <View style={styles.container}>
                                 <Camera
                                     ref={camera}
-                                    style={{ 
-                                        height: "85%", 
-                                        width: "100%", 
-                                        marginBottom: split.s3,
-                                    }}
+                                    style={{ height: 200, width: 200 }}
                                     device={device}
                                     isActive={true}
                                     preset="medium"
                                     photo={true}
                                 />
-                                <TouchableOpacity 
-                                    onPress={handlePressCamera}
-                                >
+                                <TouchableOpacity >
                                     <View
                                         style={{
                                             borderWidth: 2,
@@ -412,15 +303,13 @@ const CreateRequest = () => {
                 flex: 30,
                 marginHorizontal: 5,
                 alignItems: "center",
-                height: normalize(120),
-                marginHorizontal: split.s5,
-                marginVertical: split.s5,
+                marginBottom: "2%",
             }}>
                 <Text style={{
                     fontSize: fontSizes.h4,
                     position: 'absolute',
-                    right: split.s4,
-                    top: split.s1,
+                    left: 17,
+                    top: 10,
                     color: "black",
                 }}>| Ghi chú |</Text>
                 <TextInput
@@ -433,7 +322,6 @@ const CreateRequest = () => {
                         paddingHorizontal: 10,
                         marginHorizontal: 10,
                         color: 'black',
-                        paddingEnd:"20%",
                     }}
 
                     autoCorrect={false}
@@ -442,45 +330,50 @@ const CreateRequest = () => {
             </View>
             <View style={{
                 flex: 30,
-                height: normalize(180),
-                marginHorizontal: split.s5,
-                marginVertical: split.s5,
+                height: 350,
+                marginHorizontal: 5
             }}>
                 <MapView
                     provider={PROVIDER_GOOGLE} // remove if not using Google Maps
                     style={styles.map}
                     customMapStyle={mapStandardStyle}
-                    // initialRegion={{
-                    //         latitude: currentLocation.latitude,
-                    //         longitude: currentLocation.longitude,
-                    //         latitudeDelta: 0.015,
-                    //         longitudeDelta: 0.0121,
-                    // }}
                     region={{
-                        latitude: currentLocation.latitude,
-                        longitude: currentLocation.longitude,
-                        latitudeDelta: 0.008,
-                        longitudeDelta: 0.011,
+                        latitude: 37.78825,
+                        longitude: -122.4324,
+                        latitudeDelta: 0.015,
+                        longitudeDelta: 0.0121,
                     }}
                 >
                     <Marker
                         key={1}
-                        coordinate={currentLocation}
-                        tile={"User"}
-                        description={"Current Location of User"}
+                        coordinate={{
+                            latitude: 37.78825,
+                            longitude: -122.4324,
+                        }}
+                        tile={"gà rán"}
+                        description={"Shop bán gà rán ngon nhứt nách"}
                     //image={{uri: 'https://img.freepik.com/premium-vector/red-geolocation-icon_74669-526.jpg'}}
                     >
                         <Callout tooltip>
                         </Callout>
                     </Marker>
                 </MapView>
+                {/* <View>
+                    {!!selected && (
+                        <Text>
+                            Selected: label = {selected.label} and value = {selected.value}
+                        </Text>
+                    )}
+                    <Dropdown label="Select Item" data={data} onSelect={setSelected} />
+                    <Text>This is the rest of the form.</Text>
+                </View> */}
             </View>
             <View style={{
                 flex: 20,
+                marginHorizontal: 5,
                 flexDirection: 'row',
-                justifyContent: 'space-between',
-                marginHorizontal: split.s5,
-                marginVertical: split.s5,
+                justifyContent: 'center'
+                //backgroundColor:'red'
             }}>
                 <CLButton
                     title={"Preview"}
@@ -505,6 +398,8 @@ const CreateRequest = () => {
                     }}
                 />
             </View>
+            
+
         </KeyboardAwareScrollView>
     );
 }
@@ -536,6 +431,193 @@ const styles = StyleSheet.create({
 });
 
 
+const mapDarkStyle = [
+    {
+        "elementType": "geometry",
+        "stylers": [
+            {
+                "color": "#212121"
+            }
+        ]
+    },
+    {
+        "elementType": "labels.icon",
+        "stylers": [
+            {
+                "visibility": "off"
+            }
+        ]
+    },
+    {
+        "elementType": "labels.text.fill",
+        "stylers": [
+            {
+                "color": "#757575"
+            }
+        ]
+    },
+    {
+        "elementType": "labels.text.stroke",
+        "stylers": [
+            {
+                "color": "#212121"
+            }
+        ]
+    },
+    {
+        "featureType": "administrative",
+        "elementType": "geometry",
+        "stylers": [
+            {
+                "color": "#757575"
+            }
+        ]
+    },
+    {
+        "featureType": "administrative.country",
+        "elementType": "labels.text.fill",
+        "stylers": [
+            {
+                "color": "#9e9e9e"
+            }
+        ]
+    },
+    {
+        "featureType": "administrative.land_parcel",
+        "stylers": [
+            {
+                "visibility": "off"
+            }
+        ]
+    },
+    {
+        "featureType": "administrative.locality",
+        "elementType": "labels.text.fill",
+        "stylers": [
+            {
+                "color": "#bdbdbd"
+            }
+        ]
+    },
+    {
+        "featureType": "poi",
+        "elementType": "labels.text.fill",
+        "stylers": [
+            {
+                "color": "#757575"
+            }
+        ]
+    },
+    {
+        "featureType": "poi.park",
+        "elementType": "geometry",
+        "stylers": [
+            {
+                "color": "#181818"
+            }
+        ]
+    },
+    {
+        "featureType": "poi.park",
+        "elementType": "labels.text.fill",
+        "stylers": [
+            {
+                "color": "#616161"
+            }
+        ]
+    },
+    {
+        "featureType": "poi.park",
+        "elementType": "labels.text.stroke",
+        "stylers": [
+            {
+                "color": "#1b1b1b"
+            }
+        ]
+    },
+    {
+        "featureType": "road",
+        "elementType": "geometry.fill",
+        "stylers": [
+            {
+                "color": "#2c2c2c"
+            }
+        ]
+    },
+    {
+        "featureType": "road",
+        "elementType": "labels.text.fill",
+        "stylers": [
+            {
+                "color": "#8a8a8a"
+            }
+        ]
+    },
+    {
+        "featureType": "road.arterial",
+        "elementType": "geometry",
+        "stylers": [
+            {
+                "color": "#373737"
+            }
+        ]
+    },
+    {
+        "featureType": "road.highway",
+        "elementType": "geometry",
+        "stylers": [
+            {
+                "color": "#3c3c3c"
+            }
+        ]
+    },
+    {
+        "featureType": "road.highway.controlled_access",
+        "elementType": "geometry",
+        "stylers": [
+            {
+                "color": "#4e4e4e"
+            }
+        ]
+    },
+    {
+        "featureType": "road.local",
+        "elementType": "labels.text.fill",
+        "stylers": [
+            {
+                "color": "#616161"
+            }
+        ]
+    },
+    {
+        "featureType": "transit",
+        "elementType": "labels.text.fill",
+        "stylers": [
+            {
+                "color": "#757575"
+            }
+        ]
+    },
+    {
+        "featureType": "water",
+        "elementType": "geometry",
+        "stylers": [
+            {
+                "color": "#000000"
+            }
+        ]
+    },
+    {
+        "featureType": "water",
+        "elementType": "labels.text.fill",
+        "stylers": [
+            {
+                "color": "#3d3d3d"
+            }
+        ]
+    }
+];
+
 const mapStandardStyle = [
     {
         "elementType": "labels.icon",
@@ -549,13 +631,3 @@ const mapStandardStyle = [
 
 
 export default CreateRequest;
-
-{/* <View>
-        {!!selected && (
-            <Text>
-                Selected: label = {selected.label} and value = {selected.value}
-            </Text>
-        )}
-        <Dropdown label="Select Item" data={data} onSelect={setSelected} />
-        <Text>This is the rest of the form.</Text>
-    </View> */}

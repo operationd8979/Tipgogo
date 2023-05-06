@@ -3,26 +3,31 @@ import { enableLatestRenderer } from 'react-native-maps';
 import { StyleSheet, View, Text, Button, TouchableOpacity, Image } from 'react-native'
 import { Camera, useCameraDevices } from 'react-native-vision-camera'
 import { useEffect, useState, useRef } from 'react';
-import { storage, storageRef, uploadBytes } from './firebase/firebase';
+import { storage, storageRef, uploadBytes, getDownloadURL } from './firebase/firebase';
 const RNFS = require('react-native-fs');
 import * as storagefb from 'firebase/storage';
 import { Buffer } from 'buffer';
+import RNFetchBlob from 'rn-fetch-blob';
+import { error } from 'console';
 
 async function uploadImage(file) {
-  const ref = storageRef(storage, "fileNew.jpg");
-  // uploadBytes(ref, file,{ contentType: 'image/jpeg' }).then(()=>{
-  //   console.log("uploaded picture");
-  // }).catch((error)=>{
-  //   console.error(error.message);
-  // })
-  const imageBuffer = new Uint8Array(Buffer.from(file, 'base64'));
-  debugger
-  storagefb.uploadBytes(ref, imageBuffer, { contentType: 'image/jpeg' }).then(() => {
-    debugger
+
+  console.log("UPloading!");
+  const ref = storageRef(storage, "2077.jpg");
+
+  const uri = "file://"+file;
+  const fileData = await fetch(uri);
+  const bytes = await fileData.blob();
+  
+  storagefb.uploadBytes(ref, bytes, { contentType: 'image/jpeg' }).then((snapshot) => {
     console.log("uploaded picture");
+    getDownloadURL(snapshot.ref).then((url)=>{
+      console.log(url);
+    }).catch((error)=>{
+      console.error(error);
+    })
   }).catch((error) => {
-    debugger
-    console.error(error.message);
+    console.error(error);
   })
 }
 
@@ -50,14 +55,15 @@ const Test = () => {
       console.log(photo);
       ///data/user/0/com.tipgogo/cache/mrousavy7566095890664061440.jpg
       const filePath = "file://" + photo.path;
-      const newFilePath = RNFS.ExternalDirectoryPath + photo.path;
+      const newFilePath = RNFS.ExternalDirectoryPath + "abc.jpg";
       RNFS.copyFile(filePath, newFilePath).then(async () => {
         console.log(`move done!New Path:${filePath} to ${newFilePath}`);
-        const fileData = await RNFS.readFile(filePath, 'base64');
+        //const fileData = await RNFS.readFile(newFilePath, 'base64')
+        //console.log(fileData)
         //const fileInfo = await RNFS.stat(newFilePath);
-        console.log(fileData)
+        //console.log(fileInfo)
         handleCloseCamera();
-        //uploadImage(fileData);
+        uploadImage(newFilePath);
       }).catch((error) => {
         console.error(error);
       })
@@ -67,7 +73,6 @@ const Test = () => {
   };
 
   const camera = useRef(null);
-
 
   useEffect(() => {
     checkCameraPermission();
@@ -82,8 +87,6 @@ const Test = () => {
   const handleCloseCamera = () => {
     setShowCamera(false);
   };
-
-
 
   const handleTakePicture = async () => {
     if (!device || !camera) {

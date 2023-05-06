@@ -15,7 +15,7 @@ import {
     onValue,
     orderByChild,
 } from "firebase/database"
-import {getStorage, ref as storageRef, uploadBytes } from "firebase/storage"
+import {getStorage, ref as storageRef, uploadBytes, getDownloadURL} from "firebase/storage"
 
 
 const firebaseConfig = {
@@ -28,6 +28,7 @@ const firebaseConfig = {
     appId: "1:20407314904:android:72454c12ac3279b7d1eaad",
     measurementId: "G-MEASUREMENT_ID",
 }
+
 
 const app = initializeApp(firebaseConfig)
 
@@ -53,5 +54,6 @@ export {
     orderByChild,
     storage,
     storageRef,
-    uploadBytes
+    uploadBytes,
+    getDownloadURL,
 }

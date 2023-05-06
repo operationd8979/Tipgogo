@@ -36,18 +36,18 @@ const UIButton = (props) =>{
     </TouchableOpacity>
 }
 const CLButton = (props) =>{
-    const {onPress,title,colorBG,colorBD,colorT,sizeF,sizeBT,sizeB,radius,disabled} = props
+    const {onPress,title,colorBG,colorBD,colorT,sizeF,sizeBT,sizeB,radius,disabled,height} = props
     return <TouchableOpacity
         onPress={onPress}
         disabled={disabled}
         style={{
             borderColor: colorBD,
             borderWidth: sizeB? sizeB: 1,
-            height: 45,
+            height: height? height: 45,
             width: sizeBT? sizeBT: '90%',
             borderRadius: radius?radius:30,
-            marginHorizontal: 17,
-            marginVertical: 10,
+            marginHorizontal: 14,
+            marginVertical: 8,
             justifyContent: 'center',
             alignItems: 'center',
             alignSelf: 'center',
