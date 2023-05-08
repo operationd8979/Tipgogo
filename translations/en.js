@@ -29,4 +29,15 @@ export const en = {
     fullnameErr2: 'Invalid Full Name!',
     mobileErr1: 'Phone number is required!',
     mobileErr2: 'Invalid Phone number',
+    
+    titleErr1: 'Title is required',
+    titleErr2: 'Invalid Title!',
+    priceErr1: 'Price is required',
+    priceErr2:'Invalid Price. Price must be a number.',
+    desErr1: 'Description is required',
+    desErr2: 'Invalid Description!',
+    photoErr1: 'Photo is required!',
+    photoErr2: 'Invalid Photo!',
+    locationErr1: 'Location is required!',
+    locationErr2: 'Invalid Location',
 }

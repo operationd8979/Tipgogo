@@ -1,9 +1,32 @@
 import React, { useState, useEffect, useCallback } from "react";
-import { Text, Image, View, TouchableOpacity, Keyboard, KeyboardAvoidingView, TextInput, ImageBackground, ScrollView, FlatList } from "react-native"
+import { Text, Image, View, TouchableOpacity, Keyboard, KeyboardAvoidingView, TextInput, ImageBackground, ScrollView, FlatList, Modal, StyleSheet } from "react-native"
 import Icon from "react-native-vector-icons/FontAwesome5"
-import { colors, fontSizes, icons, images, normalize } from "../../constants"
+import { colors, fontSizes, icons, images, normalize, split } from "../../constants"
 import RequestItem from "./RequestItem";
 import Category from "./Category";
+import { Dropdown, CLButton } from '../../components'
+import {
+    auth,
+    firebaseDatabase,
+    signInWithEmailAndPassword,
+    createUserWithEmailAndPassword,
+    sendEmailVerification,
+    onAuthStateChanged,
+    ref,
+    get,
+    set,
+    orderByChild,
+    uploadBytes,
+    getDownloadURL,
+    storageRef,
+    storage,
+    app,
+    onValue,
+    child,
+    equalTo,
+    query,
+} from "../../../firebase/firebase"
+import useMap from '../FullMap/FullMap'
 
 import AsyncStorage from '@react-native-async-storage/async-storage'
 /** 
@@ -12,11 +35,23 @@ import AsyncStorage from '@react-native-async-storage/async-storage'
  */
 const RequestList = (props) => {
 
+    const {
+        checkLocationPermission,
+        getCurrentPosition,
+        FullMap,
+        currentLocation,
+        setCurrentLocation,
+        geo1,
+        setGeo1,
+        geo2,
+        setGeo2,
+    } = useMap();
+
     let token1 = AsyncStorage.getItem("token");
 
-    const {hitchhiking,secondHand,helpBuy} = images
+    const { hitchhiking, secondHand, helpBuy } = images
 
-    const {primary,zalert,success,warning,inactive} = colors
+    const { primary, zalert, success, warning, inactive } = colors
 
     const [categories, setCategories] = useState([
         {
@@ -31,70 +66,46 @@ const RequestList = (props) => {
             name: 'Delivery',
             url: helpBuy
         },
-        
-    ])
-    const [foods, setFoods] = useState([
-        {
-            name: 'Điện thoại quay số cũ',
-            url: 'https://img.huffingtonpost.com/asset/5b9cc6b7240000310094d104.jpeg',
-            status: 'available',
-            price: "300.000",
-            adress: '150 Xa Lộ Hà Nội, P.Thái Xanh, Quận 9',
-            socialNetWorks: {
-                facebook: 'http://www.facebook.com/duypham',
-                youtube: 'http://www.youtube.com/nghiatran__/',
-                instagram: 'http://www.instagram.com/nghiatran__/',
-            },
-        },
-        {
-            name: 'Gách thuốc cũ thời Pháp',
-            url: 'https://i.pinimg.com/550x/c2/a4/41/c2a44189e5a33701af152995022db62f.jpg',
-            status: 'ended request',
-            price: "0",
-            adress: '95 Phạm Văn Đồng, P.13, Quận Gò Vấp',
-            socialNetWorks: {
-                instagram: 'http://www.instagram.com/nghiatran__/',
-            },
-        },
-        {
-            name: 'Máy ảnh phim cũ còn dùng được',
-            url: 'https://publisher-ncreg.s3.us-east-2.amazonaws.com/pb-ncregister/swp/hv9hms/media/2020082620088_5f46a585c2bf74d8ccd7e5bajpeg.jpeg',
-            status: 'on process',
-            price: "1.200.000",
-            adress: '90/12/1 Nam Xuân Hòa, P.Trung Mỹ Tây, Quận 12',
-            socialNetWorks: {
-                facebook: 'http://www.facebook.com/duypham',
-                youtube: 'http://www.youtube.com/nghiatran__/',
-            },
-        },
-        {
-            name: 'Đèn dầu nhà ông nội',
-            url: 'https://i.pinimg.com/originals/c0/92/95/c092955257c361b2e90e9b7a434b484c.jpg',
-            status: 'available',
-            price: "400.000",
-            adress: '56 Xa Lộ Hà Nội, P.16, Quận Gò Vấp',
-            socialNetWorks: {
-                facebook: 'http://www.facebook.com/duypham',
-                instagram: 'http://www.instagram.com/nghiatran__/',
-            },
-        },
-        {
-            name: 'Xiên bẩn thơm tho',
-            url: 'https://awol.com.au/wp-content/uploads/2019/11/30624445_2031384813783830_665928700650323968_n-copy.jpg',
-            status: 'ended request',
-            price: 5858.69,
-            adress: '150 Xa Lộ Hà Nội, P.Thái Xanh, Quận 9',
-            socialNetWorks: {
-                facebook: 'http://www.facebook.com/duypham',
-                instagram: 'http://www.instagram.com/nghiatran__/',
-            },
-        },
+
     ])
 
+    const [modalVisible, setModalVisible] = useState(false);
+    const [selectedRequest, setSelectedRequest] = useState(null);
+
+    const [requests, setRequests] = useState([]);
+
+    useEffect(() => {
+        checkLocationPermission();
+        getCurrentPosition();
+        const dbRef = ref(firebaseDatabase, 'request') 
+        onValue(dbRef, async (snapshot) => {
+            if (snapshot.exists()) {
+                let snapshotObject = snapshot.val()
+                setRequests(Object.keys(snapshotObject)
+                    .map(eachKey => {
+                        let eachObject = snapshotObject[eachKey]
+                        return {
+                            //default profile url
+                            requestId: eachKey,
+                            name: eachObject.title,
+                            url: eachObject.photo,
+                            status: eachObject.requestStatus,
+                            price: eachObject.price,
+                            type: eachObject.typeRequest,
+                            des: eachObject.des,
+                            geo: eachObject.geo1,
+                        }
+                    }))
+            } else {
+                console.log('No data available')
+            }
+        })
+    }, [])
+
     const [searchText, setSearchText] = useState('')
-    const filterRequest = useCallback(() => foods.filter(eachFood => eachFood.name.toLowerCase().includes(searchText.toLowerCase())))
-    
-    const renderNotFound = () => {
+    const filterRequest = useCallback(() => requests.filter(eachRequest => eachRequest.name.toLowerCase().includes(searchText.toLowerCase())))
+
+    const renderNotRequest = () => {
         return (
             <View style={{ flex: 1, justifyContent: 'center' }}>
                 <Text style={{
@@ -107,20 +118,24 @@ const RequestList = (props) => {
             </View>
         );
     };
-
     const renderRequestList = () => {
         return (
             <FlatList
                 data={filterRequest()}
                 renderItem={({ item }) => <RequestItem
                     onPress={() => {
-                        alert(`you press item's name: ${item.name}`)
+                        const userID = item.requestId.split("-")[0];
+                        setSelectedRequest(item);
+                        setModalVisible(true);
+                        console.log(item.url)
                     }}
-                    food={item} />}
-                keyExtractor={eachRequest => eachRequest.name}
+                    request={item} />}
+                keyExtractor={eachRequest => eachRequest.requestId}
             />
         );
     };
+
+    
 
     return <View style={{
         backgroundColor: 'white',
@@ -192,7 +207,89 @@ const RequestList = (props) => {
                 }} />
             <View style={{ height: 1, backgroundColor: primary }} />
         </View>
-        {filterRequest().length > 0 ? renderRequestList() : renderNotFound()}
+        <Modal visible={modalVisible} animationType="fade" transparent={true}  >
+            <View style={{ flex: 1, justifyContent: 'center' }}>
+                {modalVisible && selectedRequest && (
+                    <View style={styles.container}>
+                        <View style={{
+                            flexDirection: 'row',
+                            marginBottom: split.s4,
+                        }}>
+                            <Image
+                                style={{
+                                    width: 150,
+                                    height: 150,
+                                    resizeMode: 'cover',
+                                    borderRadius: 15,
+                                    marginRight: 15
+                                }}
+                                source={{ uri: selectedRequest.url }}
+                            />
+                            <View style={{
+                                flex: 1,
+                                //backgroundColor:'green',
+                                marginRight: 10
+                            }}>
+                                <Text style={{
+                                    color: 'black',
+                                    fontSize: fontSizes.h4,
+                                    fontWeight: 'bold'
+                                }}>{selectedRequest.name}</Text>
+                                <View style={{ height: 1, backgroundColor: 'black' }} />
+                                <Text style={{
+                                    color: 'black',
+                                    fontSize: fontSizes.h4,
+                                }}>Price: {selectedRequest.price} vnd</Text>
+                                <Text style={{
+                                    color: 'black',
+                                    fontSize: fontSizes.h4,
+                                }}>Mô tả: {selectedRequest.des}</Text>
+                                <Text style={{
+                                    color: 'black',
+                                    fontSize: fontSizes.h4,
+                                }}>Type: {selectedRequest.type == 1 ? "Hitchiking" : selectedRequest.type == 2 ? "SecondHand" : "Delivery"}</Text>
+                            </View>
+                            
+                        </View>
+                        <View style={{ height: 1, backgroundColor: 'black' }} />
+                        <FullMap geo1={selectedRequest.geo}/>
+
+                    </View>
+                    /*requestId: eachKey,
+                            name: eachObject.title,
+                            url: eachObject.photo,
+                            status: eachObject.requestStatus,
+                            price: eachObject.price,
+                            type: eachObject.typeRequest,
+                            des: eachObject.des,
+                            geo: eachObject.geo1,
+
+                    onPress,title,colorBG,colorBD,colorT,sizeF,sizeBT,sizeB,radius,disabled,height
+                    */
+                )}
+                <View style={{
+                    flexDirection: 'row',
+                    justifyContent: 'center',
+                }}>
+                    <CLButton title="Accept" sizeBT={"35%"} onPress={() => setModalVisible(false)} />
+                    <CLButton title="Close Modal" sizeBT={"35%"} onPress={() => setModalVisible(false)} />
+                </View>
+            </View>
+        </Modal>
+        {filterRequest().length > 0 ? renderRequestList() : renderNotRequest()}
     </View>
 }
+
+
+const styles = StyleSheet.create({
+    container: {
+        height: 400,
+        width: "90%",
+        backgroundColor: 'rgba(255,255,255,0.95)',
+        alignSelf: 'center',
+        padding: split.s4,
+        borderWidth: 1,
+        borderColor: 'black',
+    },
+});
 export default RequestList

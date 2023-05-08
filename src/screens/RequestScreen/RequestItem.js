@@ -4,16 +4,18 @@ import Icon from "react-native-vector-icons/FontAwesome5"
 
 import { colors, fontSizes, icons, images } from "../../constants"
 
-const RequestItem = ({ onPress, food: { name, price, socialNetWorks, status, url, adress } }) => {
+const RequestItem = ({ onPress, request: { name, url, price, des, geo, type, status } }) => {
+
     //debugger
+
     function _getColorFromStatus(status){
-        switch (status.toLowerCase().trim()) {
-            case "available":
+        switch (status) {
+            case 0:
               return colors.success;
-            case "ended request":
-              return colors.zalert;
-            case "on process":
+            case 1:
               return colors.warning;
+            case -1:
+              return colors.zalert;
             default:
               return colors.success;
           }
@@ -59,7 +61,7 @@ const RequestItem = ({ onPress, food: { name, price, socialNetWorks, status, url
                 <Text style={{
                     color: _getColorFromStatus(status),
                     fontSize: fontSizes.h4,
-                }}>{status.toUpperCase()}</Text>
+                }}>{status==0?"AVAILABLE":status==1?"ON PROCESS":"ENDED"}</Text>
             </View>
             <Text style={{
                     color:'black',
@@ -68,8 +70,16 @@ const RequestItem = ({ onPress, food: { name, price, socialNetWorks, status, url
             <Text style={{
                     color:'black',
                     fontSize: fontSizes.h4,
-            }}>Adress: {adress}</Text>
-            <View style={{
+            }}>Mô tả: {des}</Text>
+            <Text style={{
+                    color:'black',
+                    fontSize: fontSizes.h4,
+            }}>Adress: {geo.latitude+"-"+geo.longitude}</Text>
+            <Text style={{
+                    color:'black',
+                    fontSize: fontSizes.h4,
+            }}>Type: {type==1?"Hitchiking":type==2?"SecondHand":"Delivery"}</Text>
+            {/* <View style={{
                 flexDirection:'row',
             }}>
                 {
@@ -92,7 +102,7 @@ const RequestItem = ({ onPress, food: { name, price, socialNetWorks, status, url
                     size={18} 
                     color={colors.inactive}/>
                 } 
-            </View>
+            </View> */}
         </View>
     </TouchableOpacity>
 }

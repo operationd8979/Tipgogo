@@ -14,6 +14,8 @@ import {
     get,
     onValue,
     orderByChild,
+    equalTo,
+    query,
 } from "firebase/database"
 import {getStorage, ref as storageRef, uploadBytes, getDownloadURL} from "firebase/storage"
 
@@ -34,7 +36,7 @@ const app = initializeApp(firebaseConfig)
 
 const auth = getAuth()
 
-const firebaseDatabase = getDatabase()
+const firebaseDatabase = getDatabase(app)
 
 const storage = getStorage(app);
 
@@ -56,4 +58,7 @@ export {
     storageRef,
     uploadBytes,
     getDownloadURL,
+    app,
+    equalTo,
+    query,
 }
