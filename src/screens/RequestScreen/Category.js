@@ -1,5 +1,6 @@
 import React from "react";
 import { Text, Image, View, TouchableOpacity } from "react-native"
+import {split,fontSizes, normalize} from "../../constants"
 
 const Category = (props) => {
     const {category,onPress} = props
@@ -8,15 +9,15 @@ const Category = (props) => {
         onPress = {onPress}
         style={{
             alignItems:'center',
-            margin:10,
+            margin: normalize(9),
     }}>
         <Image
             style={{
-                width: 130,
-                height: 60,
+                width: normalize(100),
+                height: normalize(48),
                 resizeMode: 'cover',
-                borderRadius: 20,
-                marginBottom: 5
+                borderRadius: 35,
+                marginBottom: normalize(4),
             }}
             source={url}
         />

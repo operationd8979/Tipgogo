@@ -1,4 +1,4 @@
-import { Login, Welcome, Register, } from "../screens"
+import { Login, Welcome, Register,RequestDetail } from "../screens"
 import { NavigationContainer } from '@react-navigation/native';
 
 
@@ -20,6 +20,7 @@ const App = (props) => {
           <Stack.Screen name="Welcome" component={Welcome} />
           <Stack.Screen name="Register" component={Register} />
           <Stack.Screen name="Login" component={Login} />
+          <Stack.Screen name="RequestDetail" component={RequestDetail} />
           <Stack.Screen name="UItab" component={UItab} />
         </Stack.Navigator>
       </NavigationContainer>

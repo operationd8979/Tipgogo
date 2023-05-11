@@ -16,8 +16,14 @@ import {
     orderByChild,
     equalTo,
     query,
+    update,
 } from "firebase/database"
-import {getStorage, ref as storageRef, uploadBytes, getDownloadURL} from "firebase/storage"
+import {
+    getStorage, 
+    ref as storageRef, 
+    uploadBytes, 
+    getDownloadURL
+} from "firebase/storage"
 
 
 const firebaseConfig = {
@@ -61,4 +67,5 @@ export {
     app,
     equalTo,
     query,
+    update,
 }

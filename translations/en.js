@@ -5,6 +5,7 @@ export const en = {
     w_item2: 'Vietnamese',
     w_item3: 'Japan',
     login: 'Login',
+    logining: 'login...',
     register: 'Register',
     w_desUnder: 'Want to register new Account?',
     r_tile: 'Here\'s first step with us!',

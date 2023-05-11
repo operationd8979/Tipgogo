@@ -25,6 +25,7 @@ import {
     child,
     equalTo,
     query,
+    update,
 } from "../../../firebase/firebase"
 import useMap from '../FullMap/FullMap'
 
@@ -33,26 +34,21 @@ import AsyncStorage from '@react-native-async-storage/async-storage'
  - ListView from a map of objects
  - FlatList
  */
+
+const getUserIDByTokken= async () => {
+    const accessToken = await AsyncStorage.getItem('token');
+    const dbRef = ref(firebaseDatabase,"users");
+    const dbQuery = query(dbRef,orderByChild("accessToken"),equalTo(accessToken));
+    const data = await get(dbQuery);
+    const userID = Object.keys(data.val())[0];
+    return userID;
+}
+
 const RequestList = (props) => {
-
-    const {
-        checkLocationPermission,
-        getCurrentPosition,
-        FullMap,
-        currentLocation,
-        setCurrentLocation,
-        geo1,
-        setGeo1,
-        geo2,
-        setGeo2,
-    } = useMap();
-
-    let token1 = AsyncStorage.getItem("token");
-
+    
+    //constant
     const { hitchhiking, secondHand, helpBuy } = images
-
     const { primary, zalert, success, warning, inactive } = colors
-
     const [categories, setCategories] = useState([
         {
             name: 'Hitchhiking',
@@ -69,23 +65,31 @@ const RequestList = (props) => {
 
     ])
 
+    let token1 = AsyncStorage.getItem("token");
+
+    //element init
+    const { navigation } = props
+    const { FullMap } = useMap();
+
+    //element function
     const [modalVisible, setModalVisible] = useState(false);
     const [selectedRequest, setSelectedRequest] = useState(null);
-
     const [requests, setRequests] = useState([]);
+    const [searchText, setSearchText] = useState('')
+    const filterRequest = useCallback(() => requests.filter(eachRequest => eachRequest.name.toLowerCase().includes(searchText.toLowerCase())))
 
     useEffect(() => {
-        checkLocationPermission();
-        getCurrentPosition();
+        console.log("__________Init listRequest__________");
         const dbRef = ref(firebaseDatabase, 'request') 
         onValue(dbRef, async (snapshot) => {
             if (snapshot.exists()) {
+                console.log('Importing data to listRequest')
+                const userID = await getUserIDByTokken();
                 let snapshotObject = snapshot.val()
                 setRequests(Object.keys(snapshotObject)
                     .map(eachKey => {
                         let eachObject = snapshotObject[eachKey]
                         return {
-                            //default profile url
                             requestId: eachKey,
                             name: eachObject.title,
                             url: eachObject.photo,
@@ -94,6 +98,7 @@ const RequestList = (props) => {
                             type: eachObject.typeRequest,
                             des: eachObject.des,
                             geo: eachObject.geo1,
+                            accepted: userID==eachObject.requestStatus,
                         }
                     }))
             } else {
@@ -102,9 +107,7 @@ const RequestList = (props) => {
         })
     }, [])
 
-    const [searchText, setSearchText] = useState('')
-    const filterRequest = useCallback(() => requests.filter(eachRequest => eachRequest.name.toLowerCase().includes(searchText.toLowerCase())))
-
+    //func render requests
     const renderNotRequest = () => {
         return (
             <View style={{ flex: 1, justifyContent: 'center' }}>
@@ -125,9 +128,9 @@ const RequestList = (props) => {
                 renderItem={({ item }) => <RequestItem
                     onPress={() => {
                         const userID = item.requestId.split("-")[0];
-                        setSelectedRequest(item);
-                        setModalVisible(true);
-                        console.log(item.url)
+                        //setSelectedRequest(item);
+                        //setModalVisible(true);
+                        handleTapRequest(item);
                     }}
                     request={item} />}
                 keyExtractor={eachRequest => eachRequest.requestId}
@@ -135,29 +138,82 @@ const RequestList = (props) => {
         );
     };
 
-    
+    //func action requests
+    // const handleTapRequest = async(item) =>{
+    //     setSelectedRequest(item);
+    //     setModalVisible(true); 
+    //     const userID = await getUserIDByTokken();    
+    //     if(item.status==userID){
+    //         navigation.navigate("RequestDetail",{request:item});
+    //         handleCloseRequest();
+    //     }
+    // }
+    const handleTapRequest = async(item) =>{
+        if(item.accepted){
+            navigation.navigate("RequestDetail",{request:item});
+        }
+        else{
+            setSelectedRequest(item);
+            setModalVisible(true); 
+        } 
+    }
+
+    const handleCloseRequest = () =>{
+        setModalVisible(false);
+        setSelectedRequest(null);
+    }
+
+    const acceptRequest = async() => {
+        if (selectedRequest) {
+            const { 
+                requestId,
+                status,
+            } = selectedRequest;
+            if (status == 0) {
+                console.log(status);
+                const userID = await getUserIDByTokken();
+                const requestRef = ref(firebaseDatabase, `request/${requestId}`);
+                update(requestRef, { requestStatus: userID })
+                    .then(() => {
+                        console.log("Accepted request! GOGOGO TIP!.");
+                    })
+                    .catch((error) => {
+                        console.error("Error updating request status: ", error);
+                    });
+            }
+            else{
+                alert("Request in process!");
+            }
+        }
+        else{
+            console.error("No request selected!");
+        }
+        setModalVisible(false);
+        setSelectedRequest(null);
+    }
 
     return <View style={{
         backgroundColor: 'white',
         flex: 1
     }}>
-        <View style={{ height: 100 }}>
+        <View style={{ height: normalize(90) }}>
             <View style={{
-                marginHorizontal: 5
+                marginHorizontal: split.s4,
+                marginVertical: split.s5,
             }}>
                 <Text style={{
-                    color: 'black',
+                    color: primary,
                     fontSize: normalize(18),
                     fontWeight: 'bold',
-                    padding: 10
+                    padding: 10,
                 }}>Request List</Text>
                 <View style={{ height: 1, backgroundColor: primary }} />
             </View>
             <View style={{
                 flexDirection: 'row',
                 alignItems: 'center',
-                marginHorizontal: 10,
-                marginTop: 5,
+                marginHorizontal: split.s3,
+                marginTop: split.s6,
             }}>
                 <Icon name={"search"}
                     size={20}
@@ -174,22 +230,22 @@ const RequestList = (props) => {
                     style={{
                         backgroundColor: colors.inactive,
                         flex: 1,
-                        height: 45,
+                        height: normalize(36),
                         borderRadius: 5,
                         opacity: 0.6,
-                        color: 'black',
+                        color: "black",
                         paddingStart: 30
                     }}
                 />
                 <Icon name={"bars"}
                     size={30}
-                    color={primary}
+                    color={"black"}
                     marginStart={5}
                 />
             </View>
         </View>
         <View style={{
-            height: 100,
+            height: normalize(80),
             //backgroundColor:'purple'
         }}>
             <View style={{ height: 1, backgroundColor: primary }} />
@@ -217,18 +273,18 @@ const RequestList = (props) => {
                         }}>
                             <Image
                                 style={{
-                                    width: 150,
-                                    height: 150,
+                                    width: normalize(130),
+                                    height: normalize(130),
                                     resizeMode: 'cover',
                                     borderRadius: 15,
-                                    marginRight: 15
+                                    marginRight: split.s3,
                                 }}
                                 source={{ uri: selectedRequest.url }}
                             />
                             <View style={{
                                 flex: 1,
                                 //backgroundColor:'green',
-                                marginRight: 10
+                                marginRight: split.s3,
                             }}>
                                 <Text style={{
                                     color: 'black',
@@ -252,27 +308,18 @@ const RequestList = (props) => {
                             
                         </View>
                         <View style={{ height: 1, backgroundColor: 'black' }} />
-                        <FullMap geo1={selectedRequest.geo}/>
+                        <FullMap geo1={selectedRequest.geo} screen="RequestList"/>
 
                     </View>
-                    /*requestId: eachKey,
-                            name: eachObject.title,
-                            url: eachObject.photo,
-                            status: eachObject.requestStatus,
-                            price: eachObject.price,
-                            type: eachObject.typeRequest,
-                            des: eachObject.des,
-                            geo: eachObject.geo1,
-
-                    onPress,title,colorBG,colorBD,colorT,sizeF,sizeBT,sizeB,radius,disabled,height
-                    */
                 )}
                 <View style={{
                     flexDirection: 'row',
                     justifyContent: 'center',
                 }}>
-                    <CLButton title="Accept" sizeBT={"35%"} onPress={() => setModalVisible(false)} />
-                    <CLButton title="Close Modal" sizeBT={"35%"} onPress={() => setModalVisible(false)} />
+                    <CLButton title="Accept" sizeBT={"35%"} height={normalize(30)} 
+                    onPress={()=>acceptRequest()} />
+                    <CLButton title="Close Modal" sizeBT={"35%"} height={normalize(30)} 
+                    onPress={() => handleCloseRequest()} />
                 </View>
             </View>
         </Modal>
@@ -283,7 +330,7 @@ const RequestList = (props) => {
 
 const styles = StyleSheet.create({
     container: {
-        height: 400,
+        height: normalize(340),
         width: "90%",
         backgroundColor: 'rgba(255,255,255,0.95)',
         alignSelf: 'center',

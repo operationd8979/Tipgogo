@@ -30,16 +30,14 @@ const Login = (props) => {
     const { navigation, route } = props
     const { navigate, goBack } = navigation
 
-    const [error, setError] = useState('')
-    const [showIndicator,setShowIndicator] = useState(false)
+    const [isLoading, setIsLoading] = useState(false)
 
     const startLoading = () =>{
-        setShowIndicator(true);
+        setIsLoading(true);
         setTimeout(()=>{
-            setShowIndicator(false);
+            setIsLoading(false);
         }, 1500)
     }
-
 
     const isValidationOK = () => true
 
@@ -155,14 +153,14 @@ const Login = (props) => {
             <View style={{
                 flex: 1
             }} />
-            <ActivityIndicator size={'large'} animating={showIndicator}/>
-            <CLButton title={i18n.t('login').toUpperCase()}
-                disabled={!isValidationOK()}
+            <ActivityIndicator size={'large'} animating={isLoading}/>
+            <CLButton title={isLoading? i18n.t('logining').toUpperCase() : i18n.t('login').toUpperCase()}
+                disabled={isLoading}
                 onPress={() => {
                     startLoading();
                     signInAction();
                 }}
-                colorBG={isValidationOK() ? primary : inactive}
+                colorBG={isLoading? inactive : primary}
                 colorBD={'white'}
                 colorT={'white'}
                 sizeF={fontSizes.h4}
@@ -171,6 +169,7 @@ const Login = (props) => {
                 radius={17}
             />
             <TouchableOpacity
+                disabled={isLoading}
                 onPress={() => {
                     //navigation.dispatch(StackActions.replace('Register'));
                     navigate('Register')
@@ -179,7 +178,7 @@ const Login = (props) => {
                     padding: 7,
                 }}>
                 <Text style={{
-                    color: primary,
+                    color: isLoading? inactive : primary,
                     alignSelf: 'center',
                     fontSize: fontSizes.h4,
                 }}>{i18n.t('l_desUnder')}</Text>

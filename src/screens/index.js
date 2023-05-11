@@ -6,6 +6,7 @@ import Category from "./RequestScreen/Category";
 import ProductList from "./ProductGrid/ProductList";
 import Setting from "./Setting";
 import CreateRequest from "./RequestAction/CreateRequest";
+import RequestDetail from "./RequestDetail/RequestDetail";
 
 export {
     Welcome,
@@ -15,5 +16,6 @@ export {
     Category,
     ProductList,
     Setting,
-    CreateRequest
+    CreateRequest,
+    RequestDetail,
 }

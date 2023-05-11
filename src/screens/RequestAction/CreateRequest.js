@@ -39,7 +39,9 @@ import Geolocation from '@react-native-community/geolocation';
 import { FlashMessage } from '../../ui'
 import i18n from '../../../i18n'
 import Geocoder from 'react-native-geocoding';
-import {mapStyle} from '../../utilies'
+import { mapStyle } from '../../utilies'
+import ImageResizer from 'react-native-image-resizer';
+import useMap from '../FullMap/FullMap'
 
 const RNFS = require('react-native-fs');
 
@@ -47,19 +49,6 @@ const relatitude = 37.78825
 const relongitude = -122.4324
 const relatitudeDelta = 0.015
 const relongitudeDelta = 0.0121
-
-Geocoder.init("google map tokken");
-
-const getAddressFromCoordinates = async (latitude, longitude) => {
-    try {
-      const response = await Geocoder.from(latitude, longitude);
-      const address = response.results[0].formatted_address;
-      return address;
-    } catch (error) {
-      console.error('Lỗi:', error);
-      return null;
-    }
-  };
 
 const checkCameraPermission = async () => {
     const cameraPermission = await Camera.getCameraPermissionStatus();
@@ -80,37 +69,26 @@ const checkCameraPermission = async () => {
     }
 }
 
-const checkLocationPermission = async () => {
-    try {
-        const granted = await check(PERMISSIONS.ANDROID.ACCESS_FINE_LOCATION);
-        if (granted === 'granted') {
-            console.log("Location is enabled");
-        } else {
-            const permissionStatus = await request(PERMISSIONS.ANDROID.ACCESS_FINE_LOCATION);
-            if (permissionStatus === 'granted') {
-                console.log("Location is enabled");
-            } else {
-                FlashMessage({
-                    message:
-                        'Tap on this message to open Settings then allow app to use location from permissions.',
-                    onPress: async () => {
-                        await Linking.openSettings()
-                    }
-                })
-            }
-        }
-    } catch (error) {
-        console.error(error);
-    }
-}
+const CreateRequest = (props) => {
 
-const CreateRequest = () => {
+    const mapRef = useRef(null);
+
+    const {
+        currentLocation,
+        pressLocation,
+        setPressLocation,
+        checkLocationPermission,
+        getCurrentPosition,
+    } = useMap();
+
+    const [isLoading, setIsLoading] = useState(false)
 
     const [refreshing, setRefreshing] = useState(false);
     const onRefresh = useCallback(() => {
+        console.log("-------On refreshing------");
+        setIsLoading(true);
         setRefreshing(true);
         setTimeout(() => {
-            getCurrentPosition();
             setPhotoPath(null);
             setPhotoUri(null);
             setTypeRequest(1);
@@ -119,23 +97,23 @@ const CreateRequest = () => {
             setTitleAmount("Pay");
             setIsEnabledFree(false);
             setDes("");
+            handleGetCurrentLocation();
             setRefreshing(false);
+            setIsLoading(false);
         }, 1500);
+        console.log("-------already done------");
     }, []);
 
-    const mapRef = useRef(null);
     //prop's const
     const { primary, zalert, warning, success, inactive } = colors
-    const { userPosition, updateUserPosition } = useContext(UserPositionContext);
 
     //request's const
     const [photoUri, setPhotoUri] = useState(null);
-    const [currentLocation, setCurrentLocation] = useState(null);
+    //const [currentLocation, setCurrentLocation] = useState(null);
     const [typeRequest, setTypeRequest] = useState(1);
     const [title, setTitle] = useState("");
     const [price, setPrice] = useState(null);
     const [des, setDes] = useState("");
-    const [address, setAddress] = useState("");
     //error const request
     const [errorPhotoUri, setErrorPhotoUri] = useState(null);
     const [errorCurrentLocation, setErrorCurrentLocation] = useState(null);
@@ -148,106 +126,83 @@ const CreateRequest = () => {
     const [photoPath, setPhotoPath] = useState(null);
     const [modalVisible, setModalVisible] = useState(false);
     const camera = useRef(null);
+    //const devices = useCameraDevices('ultra-wide-angle-camera')
     const devices = useCameraDevices('ultra-wide-angle-camera')
     const device = devices.back
     const [titleAmount, setTitleAmount] = useState("Pay");
     const [isEnabledFree, setIsEnabledFree] = useState(false);
     const [selected, setSelected] = useState(false);
-    const [showIndicator,setShowIndicator] = useState(false)
+    const [showIndicator, setShowIndicator] = useState(false)
 
-    const data = [
-        { label: 'One', value: '1' },
-        { label: 'Two', value: '2' },
-        { label: 'Three', value: '3' },
-        { label: 'Four', value: '4' },
-        { label: 'Five', value: '5' },
-    ];
+
+    const startLoading = () => {
+        setIsLoading(true);
+        setTimeout(() => {
+            setIsLoading(false);
+        }, 1500)
+    }
 
     useEffect(() => {
-        console.log('------------Init------------');
-        console.log('Check camera permission');
+        console.log('------------Init createRequest------------');
         checkCameraPermission();
-    }, [])
-
-    useEffect(() => {
-        checkLocationPermission()
+        checkLocationPermission();
         getCurrentPosition();
-        
     }, [])
 
-    const getCurrentPosition = () => Geolocation.getCurrentPosition(
-        position => {
-            const latitude = position.coords.latitude;
-            const longitude = position.coords.longitude;
-            console.log(`latitude=${latitude}`);
-            console.log(`longitude=${longitude}`);
-            setCurrentLocation({ latitude, longitude });
-            //setAddress(getAddressFromCoordinates(latitude,longitude));
-        },
-        error => {
-            console.error('Error getting current location:', error);
-        },
-        { enableHighAccuracy: true, timeout: 15000, maximumAge: 10000 }
-    )
+    const handleMapPress = (event) => {
+        if (!isLoading) {
+            const { coordinate } = event.nativeEvent;
+            setPressLocation(coordinate);
+        }
+    };
+
+    const handleGetCurrentLocation = () => {
+        if (!isLoading) {
+            setPressLocation(null);
+            if (currentLocation) {
+                const { latitude, longitude } = currentLocation;
+                const region = {
+                    latitude,
+                    longitude,
+                    latitudeDelta: 0.015,
+                    longitudeDelta: 0.0121,
+                };
+                mapRef.current.animateToRegion(region, 1000);
+            }
+        }
+    };
 
     const handlePressCamera = async () => {
-        console.log('------------Press camera------------');
+        console.log('-------Press camera--------');
         try {
             const photo = await camera.current.takePhoto({});
             const filePath = "file://" + photo.path;
-            const newFilePath = RNFS.ExternalDirectoryPath + `${new Date().getTime()}.jpg`;
-            RNFS.copyFile(filePath, newFilePath).then(async () => {
-                console.log(`move done!New Path:${filePath} to ${newFilePath}`);
-                setModalVisible(false)
-                const uri = "file://" + newFilePath;
-                setPhotoPath(uri);
-            }).catch((error) => {
-                console.error(error);
-            })
+            const resizedImage = await ImageResizer.createResizedImage(filePath, 800, 800, 'JPEG', 80);
+            const { uri: resizedUri, path } = resizedImage;
+            console.log(`uri photo:${resizedUri}`);
+            setModalVisible(false);
+            setPhotoPath(resizedUri);
+            console.log('------Close camera------');
         } catch (e) {
             console.error(e)
         }
     };
 
-    // async function uploadImage(uri) {
-    //     const ref = storageRef(storage, `${new Date().getTime()}.jpg`);
-    //     const fileData = await fetch(uri);
-    //     const bytes = await fileData.blob();
-    //     uploadBytes(ref, bytes, { contentType: 'image/jpeg' }).then((snapshot) => {
-    //         console.log("uploaded picture");
-    //         getDownloadURL(snapshot.ref).then((url) => {
-    //             setPhotoUri(url);
-    //         }).catch((error) => {
-    //             console.error(error);
-    //         })
-    //     }).catch((error) => {
-    //         console.error(error);
-    //     })
-    // }
-
     const uploadImage = async (uri) => {
         try {
-          const ref = storageRef(storage, `${new Date().getTime()}.jpg`);
-          const fileData = await fetch(uri);
-          const bytes = await fileData.blob();
-          const snapshot = await uploadBytes(ref, bytes, { contentType: 'image/jpeg' });
-          console.log("Uploaded picture");
-      
-          const url = await getDownloadURL(snapshot.ref);
-          console.log("Download URL:", url);
-      
-          return url;
+            const ref = storageRef(storage, `${new Date().getTime()}.jpg`);
+            const fileData = await fetch(uri);
+            const bytes = await fileData.blob();
+            const snapshot = await uploadBytes(ref, bytes, { contentType: 'image/jpeg' });
+            const url = await getDownloadURL(snapshot.ref);
+            console.log("Uploaded OK! URL:", url);
+            return url;
         } catch (error) {
-          console.error(error);
-          return null;
+            console.error(error);
+            return null;
         }
-      };
-
-
-    const handleUpdatePosition = () => {
-        const newPosition = { latitude: 123, longitude: 456 };
-        updateUserPosition(newPosition);
     };
+
 
     const toggleSwitchPrice = () => {
         setIsEnabledFree(previousState => !previousState);
@@ -268,12 +223,12 @@ const CreateRequest = () => {
             result = false;
         }
         if (!price) {
-            if(isEnabledFree)
+            if (isEnabledFree)
                 setPrice("0");
-            else{
+            else {
                 setErrorPrice(i18n.t('priceErr1'))
                 result = false;
-            } 
+            }
         }
         if (!des) {
             setErrorDes(i18n.t('desErr1'))
@@ -287,70 +242,46 @@ const CreateRequest = () => {
             setErrorCurrentLocation(i18n.t('locationErr1'))
             result = false;
         }
-        // if (!address) {
-        //     console.error('address is null!')
-        //     result = false;
-        // }
         return result
     }
 
     const handlePostRequest = async () => {
         if (validateCredentials()) {
+            setIsLoading(true);
             console.log('------------Postting request------------');
-            setShowIndicator(true);
             const accessToken = await AsyncStorage.getItem('token');
-            const dbRef = ref(firebaseDatabase,"users");
-            const dbQuery = query(dbRef,orderByChild("accessToken"),equalTo(accessToken));
+            const dbRef = ref(firebaseDatabase, "users");
+            const dbQuery = query(dbRef, orderByChild("accessToken"), equalTo(accessToken));
             const data = await get(dbQuery);
             const userID = Object.keys(data.val())[0];
-            
             const uploadedImageUrl = await uploadImage(photoPath);
             if (!uploadedImageUrl) {
                 console.error("Image upload failed!");
+                setIsLoading(false);
                 return;
             }
-
+            setIsLoading(false);
+            onRefresh();
             let request = {
                 title: title,
                 des: des,
-                price: price,
+                price: price ? parseInt(price) : 0,
                 geo1: currentLocation,
-                geo2: currentLocation,
-                photo:uploadedImageUrl,
+                geo2: pressLocation ? pressLocation : currentLocation,
+                photo: uploadedImageUrl,
                 typeRequest: typeRequest,
-                // address: address,
                 requestStatus: 0,
             }
-            set(ref( firebaseDatabase,`request/${userID}-${title}`), request)
+            set(ref(firebaseDatabase, `request/${userID}-${title}`), request)
                 .then(() => {
                     console.log("Data written to Firebase Realtime Database.");
-                    onRefresh();
-                    setShowIndicator(false);
                 })
                 .catch((error) => {
                     console.error("Error writing data to Firebase Realtime Database: ", error);
-                    setShowIndicator(false);
                 });
         }
 
     }
-
-    const handleMapPress = (event) => {
-        const { coordinate } = event.nativeEvent;
-        setCurrentLocation(coordinate);
-    };
-
-    const handleGetCurrentLocation = () => {
-        const { latitude, longitude } = currentLocation;
-        const region = {
-            latitude,
-            longitude,
-            latitudeDelta: 0.015,
-            longitudeDelta: 0.0121,
-        };
-        mapRef.current.animateToRegion(region, 1000);
-    };
-
 
     return (
         <KeyboardAwareScrollView
@@ -366,13 +297,13 @@ const CreateRequest = () => {
             }}>
                 <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
                     <Text style={{
-                        color: 'black',
+                        color: primary,
                         fontSize: normalize(18),
                         fontWeight: 'bold',
                         padding: 10,
                     }}>Create Request</Text>
                     {/*const {onPress,title,colorBG,colorBD,colorT,sizeF,sizeBT,sizeB,radius,disabled,height} = props*/}
-                    <CLButton title={"Re-New"} sizeBT="20%" radius={7} onPress={onRefresh} />
+                    <CLButton title={"Re-New"} sizeBT="20%" radius={7} onPress={onRefresh} disabled={isLoading} />
                 </View>
 
                 <View style={{ height: 1, backgroundColor: primary }} />
@@ -410,7 +341,7 @@ const CreateRequest = () => {
                     </Picker>
                 </View>
             </View>
-            <View style={{
+            {typeRequest===2&&<View style={{
                 flex: 8,
                 alignItems: 'center',
                 flexDirection: 'row',
@@ -433,14 +364,15 @@ const CreateRequest = () => {
                     marginHorizontal: 10,
                     color: "black",
                 }}
+                    editable={!isLoading}
                     value={title}
                     onChangeText={setTitle}
                     autoCorrect={false}
-                    placeholder={errorTitle? errorTitle: ""}
+                    placeholder={errorTitle ? errorTitle : ""}
                     placeholderTextColor={zalert}
                 />
-            </View>
-            <View style={{
+            </View>}
+            {typeRequest===2&&<View style={{
                 flex: 8,
                 alignItems: 'center',
                 flexDirection: 'row',
@@ -450,7 +382,7 @@ const CreateRequest = () => {
                 //backgroundColor:'red'
             }}>
                 <TextInput
-                    editable={!isEnabledFree}
+                    editable={!isLoading && !isEnabledFree}
                     style={{
                         borderWidth: 1,
                         borderColor: !isEnabledFree ? "black" : success,
@@ -460,11 +392,15 @@ const CreateRequest = () => {
                         marginHorizontal: 10,
                         color: "black",
                     }}
-                    placeholder={!isEnabledFree ? (errorPrice? errorPrice:"Price") : "0 VND"}
+                    placeholder={!isEnabledFree ? (errorPrice ? errorPrice : "Price") : "0 VND"}
                     value={price}
-                    onChangeText={setPrice}
+                    onChangeText={(text) => {
+                        const filteredText = text.replace(/[^0-9]/g, '');
+                        setPrice(filteredText);
+                    }}
                     autoCorrect={false}
-                    placeholderTextColor={!isEnabledFree ? (errorPrice? zalert: inactive) : success}
+                    keyboardType="numeric"
+                    placeholderTextColor={!isEnabledFree ? (errorPrice ? zalert : inactive) : success}
                 />
                 <Text style={{
                     fontSize: fontSizes.h4,
@@ -475,13 +411,14 @@ const CreateRequest = () => {
                     thumbColor={isEnabledFree ? success : "#f4f3f4"}
                     onValueChange={toggleSwitchPrice}
                     value={isEnabledFree}
+                    disabled={isLoading}
                     style={{
                         marginEnd: 10,
                         transform: [{ scaleX: 1.3 }, { scaleY: 1.3 }],
                     }}
                 />
-            </View>
-            <View style={{
+            </View>}
+            {typeRequest===2&&<View style={{
                 flex: 16,
                 marginHorizontal: 5,
                 flexDirection: 'row',
@@ -499,6 +436,7 @@ const CreateRequest = () => {
                     radius={20}
                     colorBG="#b0e0e6"
                     colorT="#000080"
+                    disabled={isLoading}
                 />
                 {
                     photoPath && <Image
@@ -551,7 +489,7 @@ const CreateRequest = () => {
                         <CLButton title="Close Modal" onPress={() => setModalVisible(false)} />
                     </View>
                 </Modal>
-            </View>
+            </View>}
             <View style={{
                 flex: 30,
                 marginHorizontal: 5,
@@ -566,7 +504,7 @@ const CreateRequest = () => {
                     right: split.s4,
                     top: split.s1,
                     color: "black",
-                }}>| Ghi chú |</Text>
+                }}>{typeRequest===1? "| Nội dung |":"| Ghi chú |"}</Text>
                 <TextInput
                     style={{
                         borderWidth: 1,
@@ -579,47 +517,63 @@ const CreateRequest = () => {
                         color: 'black',
                         paddingEnd: "20%",
                     }}
+                    editable={!isLoading}
                     value={des}
                     onChangeText={setDes}
                     autoCorrect={false}
                     multiline={true}
-                    placeholder={errorDes? errorDes: ""}
+                    placeholder={errorDes ? errorDes : ""}
                     placeholderTextColor={zalert}
                 />
             </View>
             {currentLocation && <View style={{
                 flex: 30,
-                height: normalize(180),
+                height: normalize(typeRequest===1?420:180),
                 marginHorizontal: split.s5,
                 marginVertical: split.s5,
             }}>
                 <MapView
                     ref={mapRef}
-                    provider={PROVIDER_GOOGLE} // remove if not using Google Maps
-                    style={styles.map}
+                    provider={PROVIDER_GOOGLE}
+                    style={{
+                        ...StyleSheet.absoluteFillObject,
+                    }}
                     customMapStyle={mapStyle.mapRetroStyle}
                     zoomControlEnabled={true}
                     rotateEnabled={false}
-                    onPress={handleMapPress}
                     initialRegion={{
                         latitude: currentLocation.latitude,
                         longitude: currentLocation.longitude,
                         latitudeDelta: 0.008,
                         longitudeDelta: 0.011,
                     }}
-                //onRegionChange={handleRegionChange}
+                    onPress={handleMapPress}
                 >
                     <Marker
                         key={1}
-                        coordinate={currentLocation}
+                        coordinate={typeRequest === 1 ? (pressLocation || currentLocation) : currentLocation}
                         tile={"User"}
-                        description={"Current Location of User"}
-                    //image={{uri: 'https://img.freepik.com/premium-vector/red-geolocation-icon_74669-526.jpg'}}
+                        description={"Current User Location"}
                     >
                         <Callout tooltip>
                         </Callout>
                     </Marker>
-
+                    {typeRequest===2&&pressLocation&&<Marker
+                        key={2}
+                        coordinate={pressLocation}
+                        tile={"Des"}
+                        description={"Des Location"}
+                    >
+                        <Callout tooltip>
+                        </Callout>
+                    </Marker>
+                    /*<MapViewDirections
+                        origin={currentLocation}
+                        destination={pressLocation}
+                        apikey={GOOGLE_MAPS_APIKEY}
+                        strokeColor={colors.primary}
+                        strokeWidth={4}
+                    />*/}
                 </MapView>
                 <TouchableOpacity
                     style={{
@@ -633,8 +587,24 @@ const CreateRequest = () => {
                 >
                     <Image source={images.iconCurrentLocation} style={{ height: 50, width: 50 }} />
                 </TouchableOpacity>
+            </View>
+            }
+            {typeRequest===1&&<View style={{
+                flex: 8,
+                alignItems: 'center',
+                flexDirection: 'row',
+                justifyContent: 'space-between',
+                marginHorizontal: split.s5,
+                marginVertical: split.s5,
+                //backgroundColor:'red'
+            }}>
+                <Text style={{
+                    color:success,
+                    fontSize: fontSizes.h3,
+
+                }}>Price:</Text>
             </View>}
-            {showIndicator && <ActivityIndicator size={'large'} animating={showIndicator}/>}
+            {showIndicator && <ActivityIndicator size={'large'} animating={showIndicator} />}
             <View style={{
                 flex: 20,
                 flexDirection: 'row',
@@ -650,11 +620,11 @@ const CreateRequest = () => {
                     sizeF={fontSizes.h4}
                     sizeBT={130}
                     radius={15}
-                    onPress={()=>{
+                    disabled={isLoading}
+                    onPress={() => {
                         console.log();
                     }}
                 />
-                
                 <CLButton
                     title={"Post request"}
                     colorBG={primary}
@@ -663,12 +633,13 @@ const CreateRequest = () => {
                     sizeF={fontSizes.h4}
                     sizeBT={130}
                     radius={15}
+                    disabled={isLoading}
                     onPress={() => {
                         handlePostRequest();
                     }}
-                /> 
+                />
             </View>
-            
+
         </KeyboardAwareScrollView>
     );
 }
@@ -698,8 +669,6 @@ const styles = StyleSheet.create({
         backgroundColor: 'black',
     },
 });
-
-
 
 
 export default CreateRequest;

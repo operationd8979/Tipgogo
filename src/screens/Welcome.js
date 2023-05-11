@@ -18,7 +18,46 @@ import {
     set,
 } from "../../firebase/firebase"
 import AsyncStorage from '@react-native-async-storage/async-storage'
+import { check, PERMISSIONS, request } from "react-native-permissions";
+import Geolocation from '@react-native-community/geolocation';
+import { FlashMessage } from '../ui'
 
+const checkLocationPermission = async () => {
+    try {
+        const granted = await check(PERMISSIONS.ANDROID.ACCESS_FINE_LOCATION);
+        if (granted === 'granted') {
+            console.log("Location is enabled");
+        } else {
+            const permissionStatus = await request(PERMISSIONS.ANDROID.ACCESS_FINE_LOCATION);
+            if (permissionStatus === 'granted') {
+                console.log("Location is enabled");
+            } else {
+                FlashMessage({
+                    message:
+                        'Tap on this message to open Settings then allow app to use location from permissions.',
+                    onPress: async () => {
+                        await Linking.openSettings()
+                    }
+                })
+            }
+        }
+    } catch (error) {
+        console.error(error);
+    }
+}
+const getCurrentPositionFromGoogle = () => Geolocation.getCurrentPosition(
+        position => {
+            const latitude = position.coords.latitude;
+            const longitude = position.coords.longitude;
+            console.log(`[Geolocation]:latitude=${latitude},longitude=${longitude}`);     
+            AsyncStorage.setItem('currentLocation', JSON.stringify({ latitude, longitude }));
+            console.log("Updated current location to AsyncStorage!");
+        },
+        error => {
+            console.error('Error getting current location:', error);
+        },
+        //{ enableHighAccuracy: true, timeout: 15000, maximumAge: 10000 }
+)
 
 function Welcome(props) {
 
@@ -27,7 +66,9 @@ function Welcome(props) {
     const [selectedOption, setSelectedOption] = useState(1);
     
     useFocusEffect(()=>{
-        console.log("useEffect_welcomeScreen running!")
+        console.log("----useEffect_welcomeScreen running-----")
+        checkLocationPermission();
+        getCurrentPositionFromGoogle();
         const unsubscribe = onAuthStateChanged(auth, async (responseUser) => {
             if (responseUser) {
                 navigation.dispatch(StackActions.replace('UItab'))
