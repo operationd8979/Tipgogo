@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import { Text, Image, View, TouchableOpacity, Keyboard, KeyboardAvoidingView, TextInput, ImageBackground, ScrollView, FlatList, Modal, StyleSheet } from "react-native"
 import Icon from "react-native-vector-icons/FontAwesome5"
 import { colors, fontSizes, icons, images, normalize, split } from "../../constants"
@@ -45,6 +45,7 @@ const getUserIDByTokken= async () => {
 }
 
 const RequestList = (props) => {
+
     
     //constant
     const { hitchhiking, secondHand, helpBuy } = images
@@ -97,8 +98,11 @@ const RequestList = (props) => {
                             price: eachObject.price,
                             type: eachObject.typeRequest,
                             des: eachObject.des,
-                            geo: eachObject.geo1,
+                            geo1: eachObject.geo1,
+                            geo2: eachObject.geo2,
+                            direction: eachObject.direction,
                             accepted: userID==eachObject.requestStatus,
+                            timestamp: eachObject.timestamp,
                         }
                     }))
             } else {
@@ -271,7 +275,7 @@ const RequestList = (props) => {
                             flexDirection: 'row',
                             marginBottom: split.s4,
                         }}>
-                            <Image
+                            {selectedRequest.type==2&&<Image
                                 style={{
                                     width: normalize(130),
                                     height: normalize(130),
@@ -280,7 +284,7 @@ const RequestList = (props) => {
                                     marginRight: split.s3,
                                 }}
                                 source={{ uri: selectedRequest.url }}
-                            />
+                            />}
                             <View style={{
                                 flex: 1,
                                 //backgroundColor:'green',
@@ -300,16 +304,34 @@ const RequestList = (props) => {
                                     color: 'black',
                                     fontSize: fontSizes.h4,
                                 }}>Mô tả: {selectedRequest.des}</Text>
-                                <Text style={{
-                                    color: 'black',
-                                    fontSize: fontSizes.h4,
-                                }}>Type: {selectedRequest.type == 1 ? "Hitchiking" : selectedRequest.type == 2 ? "SecondHand" : "Delivery"}</Text>
+                                {selectedRequest.type == 1 && <View>
+                                    <Text style={{
+                                        color: 'black',
+                                        fontSize: fontSizes.h4,
+                                    }}>Distance: {selectedRequest.direction.distance.text}</Text>
+                                    <Text style={{
+                                        color: 'black',
+                                        fontSize: fontSizes.h4,
+                                    }}>Duration: {selectedRequest.direction.duration.text}</Text>
+                                    <Text style={{
+                                        color: 'black',
+                                        fontSize: fontSizes.h4,
+                                    }}>Từ: {selectedRequest.direction.startAddress}</Text>
+                                    <Text style={{
+                                        color: 'black',
+                                        fontSize: fontSizes.h4,
+                                    }}>Tới: {selectedRequest.direction.endAddress}</Text>
+                                </View>}
                             </View>
                             
                         </View>
                         <View style={{ height: 1, backgroundColor: 'black' }} />
-                        <FullMap geo1={selectedRequest.geo} screen="RequestList"/>
-
+                        <FullMap 
+                            geo1={selectedRequest.geo1} 
+                            geo2={selectedRequest.geo2} 
+                            direction={selectedRequest.direction}
+                            type={selectedRequest.type}
+                        />
                     </View>
                 )}
                 <View style={{

@@ -14,8 +14,10 @@ import Geocoder from 'react-native-geocoding';
 import MapViewDirections from 'react-native-maps-directions';
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import debounce from 'lodash.debounce';
+import { captureRef } from 'react-native-view-shot';
 
-const GOOGLE_MAPS_APIKEY = 'api direction';
+
+const GOOGLE_MAPS_APIKEY = 'xxxxxxxxxxxxxx';
 
 const LATITUDE = 33.7001019
 const LONGITUDE = 72.9735978
@@ -81,12 +83,31 @@ const useMap = () => {
         }
     }
 
-    const FullMap = (props) => {
+    const FullMap = (props) => { 
 
         //element init map
-        const { screen } = props;
-        const { geo1,geo2 } = props;
+        let { geo1, geo2, lite, direction, type} = props;
         const mapRef = useRef(null);
+
+        const [uriMap, setUriMap] = useState(null);
+        const takeSnapshot = useCallback(() => {
+            if (!mapRef.current) {
+                return;
+            }
+            setTimeout(() => {
+                const snapshot = mapRef.current.takeSnapshot({
+                    format: 'png', // image formats: 'png', 'jpg' (default: 'png')
+                    quality: 0.5, // image quality: 0..1 (only relevant for jpg, default: 1)
+                    result: 'file', // result types: 'file', 'base64' (default: 'file')
+                });
+                snapshot.then((uri) => {
+                    setUriMap(uri);
+                });
+            }, 0); // I add some timeout delay because without delay snapnot won't have map or marker.
+        }, []);
+
+        //element func
+        const [isEnabledSmartCal,setIsEnabledSmartCal] = useState(false);
 
         // const initialRegion = {
         //     latitude: LATITUDE,
@@ -97,10 +118,10 @@ const useMap = () => {
 
         const calInitialRegion = () => {
             
-            const minLat = Math.min(currentLocation.latitude, geo1.latitude);
-            const maxLat = Math.max(currentLocation.latitude, geo1.latitude);
-            const minLng = Math.min(currentLocation.longitude, geo1.longitude);
-            const maxLng = Math.max(currentLocation.longitude, geo1.longitude);
+            const minLat = Math.min(currentLocation.latitude, geo2.latitude);
+            const maxLat = Math.max(currentLocation.latitude, geo2.latitude);
+            const minLng = Math.min(currentLocation.longitude, geo2.longitude);
+            const maxLng = Math.max(currentLocation.longitude, geo2.longitude);
 
             // Calculate the center of the bounds
             const centerLat = (minLat + maxLat) / 2;
@@ -146,14 +167,20 @@ const useMap = () => {
                 marginHorizontal: split.s5,
                 marginVertical: split.s5,
             }}>
-                <MapView
+                {uriMap&&<Image 
+                    source={{uri:uriMap}} 
+                    style={{
+                        ...StyleSheet.absoluteFillObject,
+                    }}
+                />}
+                {!uriMap&&<MapView
                     ref={mapRef}
                     provider={PROVIDER_GOOGLE} // remove if not using Google Maps
                     style={{
                         ...StyleSheet.absoluteFillObject,
                     }}
                     customMapStyle={mapStyle.mapRetroStyle}
-                    //liteMode={true}
+                    liteMode={lite}
                     zoomControlEnabled={true}
                     rotateEnabled={false}
                     initialRegion={geo1? calInitialRegion():{
@@ -162,8 +189,9 @@ const useMap = () => {
                         latitudeDelta: 0.008,
                         longitudeDelta: 0.011,
                     }}
+                    onMapReady={lite?takeSnapshot:null}
                 >
-                    <Marker
+                    {(type==2||(type==1&&isEnabledSmartCal))&&<Marker
                         key={1}
                         coordinate={currentLocation}
                         tile={"User"}
@@ -171,30 +199,42 @@ const useMap = () => {
                     >
                         <Callout tooltip>
                         </Callout>
-                    </Marker>
-                    {geo1&&<Marker
+                    </Marker>}
+                    {type===1&&<Marker
                         key={2}
                         coordinate={geo1}
-                        tile={"geo1"}
-                        description={"Location of Geo1"}
+                        tile={"aim"}
+                        description={"Location of aim.geo1"}
                     >
                         <Image
-                            source={images.markerPeople}
-                            style={{ width: 50, height: 50 }} // Thiết lập kích thước của hình ảnh
+                            source={images.markerPickup}
+                            style={{ width: 40, height: 40 }} // Thiết lập kích thước của hình ảnh
                         />
                         <Callout tooltip>
                             <Text>hello</Text>
                         </Callout>
                     </Marker>}
-                    {/*screen === 'RequestDetail' && currentLocation && geo1 && <MapViewDirections
-                        origin={currentLocation}
-                        destination={geo1}
-                        apikey={GOOGLE_MAPS_APIKEY}
-                        strokeColor={colors.primary}
-                        strokeWidth={4}
-                />*/}
-                </MapView>
-                <TouchableOpacity
+                    {geo2&&<Marker
+                        key={3}
+                        coordinate={geo2}
+                        tile={"aim"}
+                        description={"Location of aim.geo2"}
+                    >
+                        <Image
+                            source={images.markerPeople}
+                            style={{ width: 40, height: 40 }} // Thiết lập kích thước của hình ảnh
+                        />
+                        <Callout tooltip>
+                            <Text>hello</Text>
+                        </Callout>
+                    </Marker>}
+                    {!lite&&direction&&geo1&&geo2&&<Polyline
+                        coordinates={direction.route}
+                        strokeColor="#ff0000"
+                        strokeWidth={2}
+                    />}
+                </MapView>}
+                {!lite&&<TouchableOpacity
                     style={{
                         position: 'absolute',
                         top: split.s2,
@@ -205,7 +245,7 @@ const useMap = () => {
                     onPress={handleGetCurrentLocation}
                 >
                     <Image source={images.iconCurrentLocation} style={{ height: 50, width: 50 }} />
-                </TouchableOpacity>
+                </TouchableOpacity>}
             </View>
         )
     }

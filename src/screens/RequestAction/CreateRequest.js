@@ -31,7 +31,7 @@ import {
     query,
 } from "../../../firebase/firebase"
 import { Camera, useCameraDevices } from 'react-native-vision-camera'
-import MapView, { PROVIDER_GOOGLE, Marker, Callout } from 'react-native-maps'; // remove PROVIDER_GOOGLE import if not using Google Maps
+import MapView, { PROVIDER_GOOGLE, Marker, Callout, Polyline } from 'react-native-maps'; // remove PROVIDER_GOOGLE import if not using Google Maps
 import { isEnabled } from "react-native/Libraries/Performance/Systrace";
 import { UserPositionContext } from '../../context/UserPositionContext';
 import { check, PERMISSIONS, request } from "react-native-permissions";
@@ -42,13 +42,67 @@ import Geocoder from 'react-native-geocoding';
 import { mapStyle } from '../../utilies'
 import ImageResizer from 'react-native-image-resizer';
 import useMap from '../FullMap/FullMap'
-
+import MapViewDirections from 'react-native-maps-directions';
+import axios from 'axios';
 const RNFS = require('react-native-fs');
+//const polyline = require('@mapbox/polyline');
+
+const GOOGLE_MAPS_APIKEY = 'xxxxxxxxxxxxx';
 
 const relatitude = 37.78825
 const relongitude = -122.4324
 const relatitudeDelta = 0.015
 const relongitudeDelta = 0.0121
+
+const getDirections = (origin, destination) => {
+    console.log("API direction RUNNING...................!");
+    return new Promise(async (resolve, reject) => {
+        try {
+            console.log("API direction RUNNING...................!");
+            const response = await axios.get(
+                'https://maps.googleapis.com/maps/api/directions/json',
+                {
+                    params: {
+                        origin: origin,
+                        destination: destination,
+                        key: GOOGLE_MAPS_APIKEY,
+                    },
+                }
+            );
+            const routes = response.data.routes;
+            if (routes && routes.length > 0) {
+                const points = routes[0].overview_polyline.points;
+                const decodedPoints = decodePolyline(points);
+                const direction = {
+                    summary: routes[0].summary,
+                    startAddress: routes[0].legs[0].start_address,
+                    endAddress: routes[0].legs[0].end_address,
+                    distance: routes[0].legs[0].distance,
+                    duration: routes[0].legs[0].duration,
+                    steps: routes[0].legs[0].steps,
+                    route: decodedPoints,
+                };
+                console.log("Direction OK! URL:", direction);
+                resolve(direction);
+            } else {
+                console.error('Error building directions!');
+                resolve(null);
+            }
+        } catch (error) {
+            console.error('Error fetching directions:', error);
+            resolve(null);
+        }
+    });
+};
+
+const decodePolyline = (encodedPolyline) => {
+    const polyline = require('@mapbox/polyline');
+    const decoded = polyline.decode(encodedPolyline);
+    return decoded.map((coordinate) => ({
+        latitude: coordinate[0],
+        longitude: coordinate[1],
+    }));
+};
 
 const checkCameraPermission = async () => {
     const cameraPermission = await Camera.getCameraPermissionStatus();
@@ -117,6 +171,7 @@ const CreateRequest = (props) => {
     //error const request
     const [errorPhotoUri, setErrorPhotoUri] = useState(null);
     const [errorCurrentLocation, setErrorCurrentLocation] = useState(null);
+    const [errorPressLocation, setErrorPressLocation] = useState(null);
     const [errorTypeRequest, setErrorTypeRequest] = useState(null);
     const [errorTitle, setErrorTitle] = useState(null);
     const [errorPrice, setErrorPrice] = useState(null);
@@ -126,7 +181,6 @@ const CreateRequest = (props) => {
     const [photoPath, setPhotoPath] = useState(null);
     const [modalVisible, setModalVisible] = useState(false);
     const camera = useRef(null);
-    //const devices = useCameraDevices('ultra-wide-angle-camera')
     const devices = useCameraDevices('ultra-wide-angle-camera')
     const device = devices.back
     const [titleAmount, setTitleAmount] = useState("Pay");
@@ -143,7 +197,7 @@ const CreateRequest = (props) => {
     }
 
     useEffect(() => {
-        console.log('------------Init createRequest------------');
+        console.log('________________Init createRequest________________');
         checkCameraPermission();
         checkLocationPermission();
         getCurrentPosition();
@@ -217,8 +271,9 @@ const CreateRequest = (props) => {
         setErrorDes(null);
         setErrorPhotoUri(null);
         setErrorCurrentLocation(null);
+        setErrorPressLocation(null);
         setErrorTypeRequest(null);
-        if (!title) {
+        if (typeRequest === 2 && !title) {
             setErrorTitle(i18n.t('titleErr1'))
             result = false;
         }
@@ -234,7 +289,7 @@ const CreateRequest = (props) => {
             setErrorDes(i18n.t('desErr1'))
             result = false;
         }
-        if (!photoPath) {
+        if (typeRequest === 2 && !photoPath) {
             setErrorPhotoUri(i18n.t('photoErr1'))
             result = false;
         }
@@ -242,6 +297,11 @@ const CreateRequest = (props) => {
             setErrorCurrentLocation(i18n.t('locationErr1'))
             result = false;
         }
+        if (typeRequest === 1 && !pressLocation) {
+            setErrorPressLocation(i18n.t('locationErr1'))
+            result = false;
+        }
+
         return result
     }
 
@@ -254,30 +314,51 @@ const CreateRequest = (props) => {
             const dbQuery = query(dbRef, orderByChild("accessToken"), equalTo(accessToken));
             const data = await get(dbQuery);
             const userID = Object.keys(data.val())[0];
-            const uploadedImageUrl = await uploadImage(photoPath);
-            if (!uploadedImageUrl) {
-                console.error("Image upload failed!");
-                setIsLoading(false);
-                return;
+            let uploadedImageUrl = null;
+            let direction = null;
+            if (typeRequest === 2) {
+                uploadedImageUrl = await uploadImage(photoPath);
+                if (!uploadedImageUrl) {
+                    console.error("Image upload failed!");
+                    setIsLoading(false);
+                    return;
+                }
             }
-            setIsLoading(false);
-            onRefresh();
+            if (typeRequest === 1) {
+                const origin = `${currentLocation.latitude.toFixed(6)},${currentLocation.longitude.toFixed(6)}`;
+                const destination = `${pressLocation.latitude.toFixed(6)},${pressLocation.longitude.toFixed(6)}`;
+                direction = await getDirections(origin, destination);
+                if (!direction) {
+                    console.error("Get direction failed!");
+                    setIsLoading(false);
+                    return;
+                }
+            }
+
+            const timestamp = (new Date()).getTime();
+
             let request = {
-                title: title,
+                title: typeRequest === 1 ? direction.summary : title,
                 des: des,
                 price: price ? parseInt(price) : 0,
                 geo1: currentLocation,
                 geo2: pressLocation ? pressLocation : currentLocation,
                 photo: uploadedImageUrl,
+                direction: direction,
                 typeRequest: typeRequest,
                 requestStatus: 0,
+                timestamp: timestamp,
             }
-            set(ref(firebaseDatabase, `request/${userID}-${title}`), request)
+            set(ref(firebaseDatabase, `request/${userID}-${timestamp}`), request)
                 .then(() => {
                     console.log("Data written to Firebase Realtime Database.");
+                    setIsLoading(false);
+                    onRefresh();
                 })
                 .catch((error) => {
                     console.error("Error writing data to Firebase Realtime Database: ", error);
+                    setIsLoading(false);
+                    onRefresh();
                 });
         }
 
@@ -337,11 +418,11 @@ const CreateRequest = (props) => {
                     >
                         <Picker.Item label="Hitchhiking" value={1} />
                         <Picker.Item label="Secondhand Stuff" value={2} />
-                        <Picker.Item label="Delivery" value={3} />
+                        {/* <Picker.Item label="Delivery" value={3} /> */}
                     </Picker>
                 </View>
             </View>
-            {typeRequest===2&&<View style={{
+            {typeRequest === 2 && <View style={{
                 flex: 8,
                 alignItems: 'center',
                 flexDirection: 'row',
@@ -372,7 +453,7 @@ const CreateRequest = (props) => {
                     placeholderTextColor={zalert}
                 />
             </View>}
-            {typeRequest===2&&<View style={{
+            <View style={{
                 flex: 8,
                 alignItems: 'center',
                 flexDirection: 'row',
@@ -417,8 +498,8 @@ const CreateRequest = (props) => {
                         transform: [{ scaleX: 1.3 }, { scaleY: 1.3 }],
                     }}
                 />
-            </View>}
-            {typeRequest===2&&<View style={{
+            </View>
+            {typeRequest === 2 && <View style={{
                 flex: 16,
                 marginHorizontal: 5,
                 flexDirection: 'row',
@@ -504,7 +585,7 @@ const CreateRequest = (props) => {
                     right: split.s4,
                     top: split.s1,
                     color: "black",
-                }}>{typeRequest===1? "| Nội dung |":"| Ghi chú |"}</Text>
+                }}>{typeRequest === 1 ? "| Nội dung |" : "| Ghi chú |"}</Text>
                 <TextInput
                     style={{
                         borderWidth: 1,
@@ -528,7 +609,7 @@ const CreateRequest = (props) => {
             </View>
             {currentLocation && <View style={{
                 flex: 30,
-                height: normalize(typeRequest===1?420:180),
+                height: normalize(typeRequest === 1 ? 280 : 180),
                 marginHorizontal: split.s5,
                 marginVertical: split.s5,
             }}>
@@ -551,14 +632,14 @@ const CreateRequest = (props) => {
                 >
                     <Marker
                         key={1}
-                        coordinate={typeRequest === 1 ? (pressLocation || currentLocation) : currentLocation}
+                        coordinate={typeRequest === 2 ? (pressLocation || currentLocation) : currentLocation}
                         tile={"User"}
                         description={"Current User Location"}
                     >
                         <Callout tooltip>
                         </Callout>
                     </Marker>
-                    {typeRequest===2&&pressLocation&&<Marker
+                    {typeRequest === 1 && pressLocation && <Marker
                         key={2}
                         coordinate={pressLocation}
                         tile={"Des"}
@@ -566,8 +647,13 @@ const CreateRequest = (props) => {
                     >
                         <Callout tooltip>
                         </Callout>
-                    </Marker>
-                    /*<MapViewDirections
+                    </Marker>}
+                    {/*typeRequest === 1 && pressLocation && route && <Polyline
+                        coordinates={route}
+                        strokeColor="#ff0000"
+                        strokeWidth={3}
+                    />*/}
+                    {/*typeRequest===1&&pressLocation&&<MapViewDirections
                         origin={currentLocation}
                         destination={pressLocation}
                         apikey={GOOGLE_MAPS_APIKEY}
@@ -589,21 +675,6 @@ const CreateRequest = (props) => {
                 </TouchableOpacity>
             </View>
             }
-            {typeRequest===1&&<View style={{
-                flex: 8,
-                alignItems: 'center',
-                flexDirection: 'row',
-                justifyContent: 'space-between',
-                marginHorizontal: split.s5,
-                marginVertical: split.s5,
-                //backgroundColor:'red'
-            }}>
-                <Text style={{
-                    color:success,
-                    fontSize: fontSizes.h3,
-
-                }}>Price:</Text>
-            </View>}
             {showIndicator && <ActivityIndicator size={'large'} animating={showIndicator} />}
             <View style={{
                 flex: 20,
@@ -622,7 +693,7 @@ const CreateRequest = (props) => {
                     radius={15}
                     disabled={isLoading}
                     onPress={() => {
-                        console.log();
+                        console.log("press preview!");
                     }}
                 />
                 <CLButton

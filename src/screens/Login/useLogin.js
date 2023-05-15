@@ -13,6 +13,7 @@ import {
     firebaseDatabase,
     ref,
     set,
+    update,
 } from "../../../firebase/firebase"
 import AsyncStorage from '@react-native-async-storage/async-storage'
 
@@ -48,8 +49,6 @@ const userLogin = () => {
         if (validateCredentials()) {
             signInWithEmailAndPassword(auth, email, password)
                 .then(() => {
-                    console.log("Logined to app");
-                    navigation.dispatch(StackActions.replace('UItab'));
                     onAuthStateChanged(auth, (responseUser) => {
                         if (responseUser) {
                             console.log("Auth successfully!");
@@ -57,25 +56,20 @@ const userLogin = () => {
                                 'token',
                                 responseUser.accessToken,
                             ).then(() => {
+                                console.log("Logined to app");
+                                navigation.dispatch(StackActions.replace('UItab'));
+                                //navigation.navigate('UItab');
                                 console.log("Set Token successfully!");
                             }).catch(() => {
                                 console.log("Error set Token!");
                             })
-                            let userapp = {
-                                userId: responseUser.uid,
-                                email: responseUser.email,
-                                emailVerified: responseUser.emailVerified,
-                                accessToken: responseUser.accessToken
-                            }
-                            set(ref(
-                                firebaseDatabase,
-                                `users/${userapp.userId}`
-                            ), userapp)
+                            const userRef = ref(firebaseDatabase, `users/${responseUser.uid}`);
+                            update(userRef, { accessToken:responseUser.accessToken })
                                 .then(() => {
-                                    console.log("Data written to Firebase Realtime Database.");
+                                    console.log("Update accessToken's user successfully!.");
                                 })
                                 .catch((error) => {
-                                    console.error("Error writing data to Firebase Realtime Database: ", error);
+                                    console.error("Error updating accessToken's user: ", error);
                                 });
                         }
                     })

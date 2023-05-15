@@ -16,6 +16,7 @@ import {
     firebaseDatabase,
     ref,
     set,
+    update,
 } from "../../firebase/firebase"
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { check, PERMISSIONS, request } from "react-native-permissions";
@@ -71,31 +72,23 @@ function Welcome(props) {
         getCurrentPositionFromGoogle();
         const unsubscribe = onAuthStateChanged(auth, async (responseUser) => {
             if (responseUser) {
-                navigation.dispatch(StackActions.replace('UItab'))
                 console.log("Auth successfully!");
                 let oldToken = await AsyncStorage.getItem("token")
                 if(oldToken != responseUser.accessToken){
                     AsyncStorage.setItem("token", responseUser.accessToken).then(()=>{
+                        navigation.dispatch(StackActions.replace('UItab'))
                         console.log("Set Token successfully!");  
                     }).catch(()=>{
                         console.log("Error set Token!");  
                     })
-                    let userapp = {
-                        userId: responseUser.uid,                
-                        email: responseUser.email,
-                        emailVerified: responseUser.emailVerified,
-                        accessToken: responseUser.accessToken
-                    }             
-                    set(ref(
-                        firebaseDatabase,
-                        `users/${userapp.userId}`
-                      ), userapp)
+                    const userRef = ref(firebaseDatabase, `users/${responseUser.uid}`);
+                    update(userRef, { accessToken:responseUser.accessToken })
                         .then(() => {
-                            console.log("Data written to Firebase Realtime Database.");
+                            console.log("Update accessToken's user successfully!.");
                         })
                         .catch((error) => {
-                            console.error("Error writing data to Firebase Realtime Database: ", error);
-                        });
+                            console.error("Error updating accessToken's user: ", error);
+                        });          
                 }
             }
             else{
