@@ -7,6 +7,7 @@ import ProductList from "./ProductGrid/ProductList";
 import Setting from "./Setting";
 import CreateRequest from "./RequestAction/CreateRequest";
 import RequestDetail from "./RequestDetail/RequestDetail";
+import CameraQR from "./CameraQR/CameraQR";
 
 export {
     Welcome,
@@ -18,4 +19,5 @@ export {
     Setting,
     CreateRequest,
     RequestDetail,
+    CameraQR
 }

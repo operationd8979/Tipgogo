@@ -1,12 +1,11 @@
 /**
  * @format
  */
-
+import 'react-native-reanimated';
 import { AppRegistry } from 'react-native';
 import App from './src/navigation/App';
 import { name as appName } from './app.json';
-import { Setting, RequestList, CreateRequest, Login, Welcome } from './src/screens'
+import { Setting, RequestList, CreateRequest, Login, Welcome, CameraQR} from './src/screens'
 import Test from './test';
-import { Camera, useCameraDevices } from 'react-native-vision-camera'
 
 AppRegistry.registerComponent(appName, () => App);

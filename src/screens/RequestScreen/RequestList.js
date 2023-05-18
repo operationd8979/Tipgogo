@@ -28,12 +28,65 @@ import {
     update,
 } from "../../../firebase/firebase"
 import useMap from '../FullMap/FullMap'
+import axios from 'axios';
 
 import AsyncStorage from '@react-native-async-storage/async-storage'
 /** 
  - ListView from a map of objects
  - FlatList
  */
+ const GOOGLE_MAPS_APIKEY = 'AIzaSyDhc3eBGx-ORJfHmMcpZ0o0MqS8lhgnSJY';
+
+const getDirections = (origin, destination) => {
+    console.log("API direction RUNNING...................!");
+    return new Promise(async (resolve, reject) => {
+        try {
+            console.log("API direction RUNNING...................!");
+            const response = await axios.get(
+                'https://maps.googleapis.com/maps/api/directions/json',
+                {
+                    params: {
+                        origin: origin,
+                        destination: destination,
+                        key: GOOGLE_MAPS_APIKEY,
+                    },
+                }
+            );
+            const routes = response.data.routes;
+            debugger
+            if (routes && routes.length > 0) {
+                const points = routes[0].overview_polyline.points;
+                const decodedPoints = decodePolyline(points);
+                const direction = {
+                    summary: routes[0].summary,
+                    startAddress: routes[0].legs[0].start_address,
+                    endAddress: routes[0].legs[0].end_address,
+                    distance: routes[0].legs[0].distance,
+                    duration: routes[0].legs[0].duration,
+                    steps: routes[0].legs[0].steps,
+                    route: decodedPoints,
+                };
+                console.log("Direction OK! URL:", direction);
+                resolve(direction);
+            } else {
+                console.error('Error building directions!');
+                resolve(null);
+            }
+        } catch (error) {
+            console.error('Error fetching directions:', error);
+            resolve(null);
+        }
+    });
+};
+
+const decodePolyline = (encodedPolyline) => {
+    const polyline = require('@mapbox/polyline');
+    const decoded = polyline.decode(encodedPolyline);
+    return decoded.map((coordinate) => ({
+        latitude: coordinate[0],
+        longitude: coordinate[1],
+    }));
+};
 
 const getUserIDByTokken= async () => {
     const accessToken = await AsyncStorage.getItem('token');
@@ -70,7 +123,7 @@ const RequestList = (props) => {
 
     //element init
     const { navigation } = props
-    const { FullMap } = useMap();
+    const { FullMap, currentLocation, getCurrentPosition,checkLocationPermission } = useMap();
 
     //element function
     const [modalVisible, setModalVisible] = useState(false);
@@ -81,6 +134,8 @@ const RequestList = (props) => {
 
     useEffect(() => {
         console.log("__________Init listRequest__________");
+        checkLocationPermission();
+        getCurrentPosition();
         const dbRef = ref(firebaseDatabase, 'request') 
         onValue(dbRef, async (snapshot) => {
             if (snapshot.exists()) {
@@ -136,7 +191,9 @@ const RequestList = (props) => {
                         //setModalVisible(true);
                         handleTapRequest(item);
                     }}
-                    request={item} />}
+                    request={item} 
+                    currentLocation={currentLocation}
+                    />}
                 keyExtractor={eachRequest => eachRequest.requestId}
             />
         );
@@ -169,23 +226,49 @@ const RequestList = (props) => {
 
     const acceptRequest = async() => {
         if (selectedRequest) {
-            const { 
+            const {
                 requestId,
                 status,
+                geo1,
+                geo2,
+                type,
             } = selectedRequest;
             if (status == 0) {
-                console.log(status);
-                const userID = await getUserIDByTokken();
-                const requestRef = ref(firebaseDatabase, `request/${requestId}`);
-                update(requestRef, { requestStatus: userID })
-                    .then(() => {
-                        console.log("Accepted request! GOGOGO TIP!.");
-                    })
-                    .catch((error) => {
-                        console.error("Error updating request status: ", error);
-                    });
+                if (currentLocation) {
+                    if (type == 2) {
+                        const origin = `${currentLocation.latitude.toFixed(6)},${currentLocation.longitude.toFixed(6)}`;
+                        const destination = `${geo2.latitude.toFixed(6)},${geo2.longitude.toFixed(6)}`;
+                        const direction = await getDirections(origin, destination);
+                        debugger
+                        if (!direction) {
+                            debugger
+                            console.error("Get direction failed!");
+                            return;
+                        }
+                        set(ref(firebaseDatabase, `direction/${userID}/${requestId}`), direction)
+                            .then(async () => {
+                                console.log("Direction update!.");
+                                const userID = await getUserIDByTokken();
+                                const requestRef = ref(firebaseDatabase, `request/${requestId}`);
+                                update(requestRef, { requestStatus: userID })
+                                    .then(() => {
+                                        console.log("Accepted request! GOGOGO TIP!.");
+                                    })
+                                    .catch((error) => {
+                                        console.error("Error updating request status: ", error);
+                                    });
+                            })
+                            .catch((error) => {
+                                console.error("Error updating direction: ", error);
+                            });
+                    }
+                }
+                else {
+                    console.error("Current location is null!");
+                }
+
             }
-            else{
+            else {
                 alert("Request in process!");
             }
         }
@@ -331,6 +414,7 @@ const RequestList = (props) => {
                             geo2={selectedRequest.geo2} 
                             direction={selectedRequest.direction}
                             type={selectedRequest.type}
+                            screen="ListRequest"
                         />
                     </View>
                 )}

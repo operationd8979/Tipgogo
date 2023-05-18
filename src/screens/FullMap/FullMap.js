@@ -17,7 +17,7 @@ import debounce from 'lodash.debounce';
 import { captureRef } from 'react-native-view-shot';
 
 
-const GOOGLE_MAPS_APIKEY = 'xxxxxxxxxxxxxx';
+const GOOGLE_MAPS_APIKEY = 'xxxxxxxxxxxxxxxxxxx';
 
 const LATITUDE = 33.7001019
 const LONGITUDE = 72.9735978
@@ -86,7 +86,7 @@ const useMap = () => {
     const FullMap = (props) => { 
 
         //element init map
-        let { geo1, geo2, lite, direction, type} = props;
+        let { geo1, geo2, lite, direction, type, screen, locationFromItem, request} = props;
         const mapRef = useRef(null);
 
         const [uriMap, setUriMap] = useState(null);
@@ -104,7 +104,7 @@ const useMap = () => {
                     setUriMap(uri);
                 });
             }, 0); // I add some timeout delay because without delay snapnot won't have map or marker.
-        }, []);
+        }, [mapRef.current!=null]);
 
         //element func
         const [isEnabledSmartCal,setIsEnabledSmartCal] = useState(false);
@@ -155,9 +155,10 @@ const useMap = () => {
         };
 
         useEffect(() => {
-            console.log("__________init map__________");
-            checkLocationPermission();
-            getCurrentPosition();
+            console.log(`__________init map(${screen?screen:null})__________`);
+            if(locationFromItem){
+                setCurrentLocation(locationFromItem);
+            }
         }, [])
 
         return (
@@ -222,7 +223,7 @@ const useMap = () => {
                     >
                         <Image
                             source={images.markerPeople}
-                            style={{ width: 40, height: 40 }} // Thiết lập kích thước của hình ảnh
+                            style={{ width: 40, height: 40, }} // Thiết lập kích thước của hình ảnh
                         />
                         <Callout tooltip>
                             <Text>hello</Text>

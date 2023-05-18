@@ -47,7 +47,7 @@ import axios from 'axios';
 const RNFS = require('react-native-fs');
 //const polyline = require('@mapbox/polyline');
 
-const GOOGLE_MAPS_APIKEY = 'xxxxxxxxxxxxx';
+const GOOGLE_MAPS_APIKEY = 'xxxxxxxxxxxxxxxxxxx';
 
 const relatitude = 37.78825
 const relongitude = -122.4324
@@ -163,7 +163,6 @@ const CreateRequest = (props) => {
 
     //request's const
     const [photoUri, setPhotoUri] = useState(null);
-    //const [currentLocation, setCurrentLocation] = useState(null);
     const [typeRequest, setTypeRequest] = useState(1);
     const [title, setTitle] = useState("");
     const [price, setPrice] = useState(null);

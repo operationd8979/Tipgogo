@@ -1,4 +1,4 @@
-import React, {useRef, useState} from "react";
+import React, {useRef, useState, useEffect} from "react";
 import { Text, Image, View, TouchableOpacity } from "react-native"
 import Icon from "react-native-vector-icons/FontAwesome5"
 
@@ -6,9 +6,7 @@ import { colors, fontSizes, icons, images, normalize , split } from "../../const
 import useMap from '../FullMap/FullMap'
 
 
-const RequestItem = ({ onPress, request: { name, url, price, des, geo1, geo2 , type, status, accepted, direction } }) => {
-
-
+const RequestItem = ({ onPress, request: { name, url, price, des, geo1, geo2 , type, status, accepted, direction}, currentLocation }) => {
 
     const {FullMap} = useMap();
 
@@ -48,13 +46,14 @@ const RequestItem = ({ onPress, request: { name, url, price, des, geo1, geo2 , t
             marginHorizontal: split.s5,
             marginVertical: split.s5,
         }}>
-            <FullMap
+            {currentLocation&&<FullMap
                 geo1={geo1}
                 geo2={geo2}
                 type={type}
-                screen="RequestList"
+                screen="RequestItem"
                 lite={true}
-            />
+                locationFromItem = {currentLocation}
+            />}
         </View>}
         <View style={{
             flex:1,
