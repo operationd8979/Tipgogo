@@ -17,7 +17,6 @@ import debounce from 'lodash.debounce';
 import { captureRef } from 'react-native-view-shot';
 
 
-const GOOGLE_MAPS_APIKEY = 'xxxxxxxxxxxxxxxxxxx';
 
 const LATITUDE = 33.7001019
 const LONGITUDE = 72.9735978
@@ -190,7 +189,7 @@ const useMap = () => {
                         latitudeDelta: 0.008,
                         longitudeDelta: 0.011,
                     }}
-                    onMapReady={lite?takeSnapshot:null}
+                    //onMapReady={lite?takeSnapshot:null}
                 >
                     {(type==2||(type==1&&isEnabledSmartCal))&&<Marker
                         key={1}

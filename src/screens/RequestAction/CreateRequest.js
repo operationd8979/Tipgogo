@@ -46,8 +46,9 @@ import MapViewDirections from 'react-native-maps-directions';
 import axios from 'axios';
 const RNFS = require('react-native-fs');
 //const polyline = require('@mapbox/polyline');
+import {APIkey_Direction} from '../../../Credentials'
 
-const GOOGLE_MAPS_APIKEY = 'xxxxxxxxxxxxxxxxxxx';
+const GOOGLE_MAPS_APIKEY = APIkey_Direction;
 
 const relatitude = 37.78825
 const relongitude = -122.4324

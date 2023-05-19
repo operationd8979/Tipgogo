@@ -31,11 +31,12 @@ import useMap from '../FullMap/FullMap'
 import axios from 'axios';
 
 import AsyncStorage from '@react-native-async-storage/async-storage'
+import {APIkey_Direction} from '../../../Credentials'
 /** 
  - ListView from a map of objects
  - FlatList
  */
- const GOOGLE_MAPS_APIKEY = 'asdasdasdasd';
+ const GOOGLE_MAPS_APIKEY = APIkey_Direction;
 
 const getDirections = (origin, destination) => {
     console.log("API direction RUNNING...................!");
@@ -99,27 +100,29 @@ const getUserIDByTokken= async () => {
 
 const RequestList = (props) => {
 
-    
+    const [typeSelected,setTypeSelected] = useState(null);
+    const [isEnableMine,setIsEnableMine] = useState(false);
     //constant
     const { hitchhiking, secondHand, helpBuy } = images
     const { primary, zalert, success, warning, inactive } = colors
     const [categories, setCategories] = useState([
         {
             name: 'Hitchhiking',
-            url: hitchhiking
+            url: hitchhiking,
+            value:1,
         },
         {
             name: 'Secondhand Stuff',
-            url: secondHand
+            url: secondHand,
+            value:2,
         },
         {
-            name: 'Delivery',
-            url: helpBuy
+            name: 'Your Request',
+            url: helpBuy,
+            value:0,
         },
 
     ])
-
-    let token1 = AsyncStorage.getItem("token");
 
     //element init
     const { navigation } = props
@@ -130,7 +133,12 @@ const RequestList = (props) => {
     const [selectedRequest, setSelectedRequest] = useState(null);
     const [requests, setRequests] = useState([]);
     const [searchText, setSearchText] = useState('')
-    const filterRequest = useCallback(() => requests.filter(eachRequest => eachRequest.name.toLowerCase().includes(searchText.toLowerCase())))
+    const filterRequest = useCallback(() => requests.filter(eachRequest => 
+        eachRequest.name.toLowerCase().includes(searchText.toLowerCase())
+        &&(!isEnableMine||eachRequest.mine)
+        &&(typeSelected==null||eachRequest.type==typeSelected))
+    ,[searchText,typeSelected,requests])
+
 
     useEffect(() => {
         console.log("__________Init listRequest__________");
@@ -158,6 +166,7 @@ const RequestList = (props) => {
                             direction: eachObject.direction,
                             accepted: userID==eachObject.requestStatus,
                             timestamp: eachObject.timestamp,
+                            mine: eachKey.split('-')[0]==userID,
                         }
                     }))
             } else {
@@ -210,13 +219,17 @@ const RequestList = (props) => {
     //     }
     // }
     const handleTapRequest = async(item) =>{
+        if(item.mine){
+            console.log("1");
+            navigation.navigate("MyRequest",{request:item});
+        }
         if(item.accepted){
+            console.log("2");
             navigation.navigate("RequestDetail",{request:item});
         }
-        else{
-            setSelectedRequest(item);
-            setModalVisible(true); 
-        } 
+        console.log("3");
+        setSelectedRequest(item);
+        setModalVisible(true); 
     }
 
     const handleCloseRequest = () =>{
@@ -283,7 +296,7 @@ const RequestList = (props) => {
         backgroundColor: 'white',
         flex: 1
     }}>
-        <View style={{ height: normalize(90) }}>
+        <View style={{ height: normalize(95) }}>
             <View style={{
                 marginHorizontal: split.s4,
                 marginVertical: split.s5,
@@ -294,13 +307,13 @@ const RequestList = (props) => {
                     fontWeight: 'bold',
                     padding: 10,
                 }}>Request List</Text>
-                <View style={{ height: 1, backgroundColor: primary }} />
             </View>
+            <View style={{ height: 1, backgroundColor: primary }} />
             <View style={{
                 flexDirection: 'row',
                 alignItems: 'center',
                 marginHorizontal: split.s3,
-                marginTop: split.s6,
+                marginTop: split.s4,
             }}>
                 <Icon name={"search"}
                     size={20}
@@ -341,9 +354,13 @@ const RequestList = (props) => {
                 horizontal={true}
                 renderItem={({ item }) => <Category
                     category={item}
-                    onPress={async () => {
-                        let stringUser = await AsyncStorage.getItem("token")
-                        alert(`you press item's name: ${stringUser}`)
+                    onPress={() => {
+                        if(item.value==0){
+                            setIsEnableMine(!isEnableMine);
+                        }
+                        else{
+                            setTypeSelected(item.value==typeSelected?null:item.value);
+                        }
                     }} />}
                 style={{
                     flex: 1
@@ -358,7 +375,7 @@ const RequestList = (props) => {
                             flexDirection: 'row',
                             marginBottom: split.s4,
                         }}>
-                            {selectedRequest.type==2&&<Image
+                            {selectedRequest.type == 2 && <Image
                                 style={{
                                     width: normalize(130),
                                     height: normalize(130),
@@ -406,12 +423,12 @@ const RequestList = (props) => {
                                     }}>Tới: {selectedRequest.direction.endAddress}</Text>
                                 </View>}
                             </View>
-                            
+
                         </View>
                         <View style={{ height: 1, backgroundColor: 'black' }} />
-                        <FullMap 
-                            geo1={selectedRequest.geo1} 
-                            geo2={selectedRequest.geo2} 
+                        <FullMap
+                            geo1={selectedRequest.geo1}
+                            geo2={selectedRequest.geo2}
                             direction={selectedRequest.direction}
                             type={selectedRequest.type}
                             screen="ListRequest"
@@ -422,13 +439,26 @@ const RequestList = (props) => {
                     flexDirection: 'row',
                     justifyContent: 'center',
                 }}>
-                    <CLButton title="Accept" sizeBT={"35%"} height={normalize(30)} 
-                    onPress={()=>acceptRequest()} />
-                    <CLButton title="Close Modal" sizeBT={"35%"} height={normalize(30)} 
-                    onPress={() => handleCloseRequest()} />
+                    <CLButton title="Accept" sizeBT={"35%"} height={normalize(30)}
+                        onPress={() => acceptRequest()} />
+                    <CLButton title="Close Modal" sizeBT={"35%"} height={normalize(30)}
+                        onPress={() => handleCloseRequest()} />
                 </View>
             </View>
         </Modal>
+        {isEnableMine &&
+            <View>
+                <Text
+                    style={{
+                        color: primary,
+                        alignSelf: 'center',
+                        marginVertical: normalize(5),
+                        fontSize: fontSizes.h3
+                    }}
+                >Your request</Text>
+                <View style={{ height: 1, backgroundColor: primary }} />
+            </View>
+        }
         {filterRequest().length > 0 ? renderRequestList() : renderNotRequest()}
     </View>
 }

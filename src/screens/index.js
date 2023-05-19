@@ -6,7 +6,7 @@ import Category from "./RequestScreen/Category";
 import ProductList from "./ProductGrid/ProductList";
 import Setting from "./Setting";
 import CreateRequest from "./RequestAction/CreateRequest";
-import RequestDetail from "./RequestDetail/RequestDetail";
+import {RequestDetail,MyRequest} from "./RequestDetail";
 import CameraQR from "./CameraQR/CameraQR";
 
 export {
@@ -19,5 +19,6 @@ export {
     Setting,
     CreateRequest,
     RequestDetail,
+    MyRequest,
     CameraQR
 }

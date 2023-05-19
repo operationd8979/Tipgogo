@@ -6,7 +6,7 @@ import { colors, fontSizes, icons, images, normalize , split } from "../../const
 import useMap from '../FullMap/FullMap'
 
 
-const RequestItem = ({ onPress, request: { name, url, price, des, geo1, geo2 , type, status, accepted, direction}, currentLocation }) => {
+const RequestItem = ({ onPress, request: { name, url, price, des, geo1, geo2 , type, status, accepted, direction, mine}, currentLocation }) => {
 
     const {FullMap} = useMap();
 
