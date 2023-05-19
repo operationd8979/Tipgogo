@@ -35,7 +35,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage'
  - ListView from a map of objects
  - FlatList
  */
- const GOOGLE_MAPS_APIKEY = 'AIzaSyDhc3eBGx-ORJfHmMcpZ0o0MqS8lhgnSJY';
+ const GOOGLE_MAPS_APIKEY = 'asdasdasdasd';
 
 const getDirections = (origin, destination) => {
     console.log("API direction RUNNING...................!");
