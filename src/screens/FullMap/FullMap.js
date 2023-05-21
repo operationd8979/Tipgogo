@@ -85,7 +85,7 @@ const useMap = () => {
     const FullMap = (props) => { 
 
         //element init map
-        let { geo1, geo2, lite, direction, type, screen, locationFromItem, request} = props;
+        let { geo1, geo2, lite, direction, direction2, type, screen, locationFromItem, currentDriver, request} = props;
         const mapRef = useRef(null);
 
         const [uriMap, setUriMap] = useState(null);
@@ -102,7 +102,7 @@ const useMap = () => {
                 snapshot.then((uri) => {
                     setUriMap(uri);
                 });
-            }, 0); // I add some timeout delay because without delay snapnot won't have map or marker.
+            }, 50); // I add some timeout delay because without delay snapnot won't have map or marker.
         }, [mapRef.current!=null]);
 
         //element func
@@ -116,11 +116,24 @@ const useMap = () => {
         // };
 
         const calInitialRegion = () => {
-            
-            const minLat = Math.min(currentLocation.latitude, geo2.latitude);
-            const maxLat = Math.max(currentLocation.latitude, geo2.latitude);
-            const minLng = Math.min(currentLocation.longitude, geo2.longitude);
-            const maxLng = Math.max(currentLocation.longitude, geo2.longitude);
+
+            let minLat = null;
+            let maxLat = null;
+            let minLng = null;
+            let maxLng = null;
+
+            if (screen == "RequestList"||screen == "MyRequestList") {
+                minLat = Math.min(currentLocation.latitude, geo2.latitude);
+                maxLat = Math.max(currentLocation.latitude, geo2.latitude);
+                minLng = Math.min(currentLocation.longitude, geo2.longitude);
+                maxLng = Math.max(currentLocation.longitude, geo2.longitude);
+            }
+            else {
+                minLat = Math.min(currentLocation.latitude, type === 1 ? geo1.latitude : geo2.latitude);
+                maxLat = Math.max(currentLocation.latitude, type === 1 ? geo1.latitude : geo2.latitude);
+                minLng = Math.min(currentLocation.longitude, type === 1 ? geo1.longitude : geo2.longitude);
+                maxLng = Math.max(currentLocation.longitude, type === 1 ? geo1.longitude : geo2.longitude);
+            }
 
             // Calculate the center of the bounds
             const centerLat = (minLat + maxLat) / 2;
@@ -191,7 +204,7 @@ const useMap = () => {
                     }}
                     //onMapReady={lite?takeSnapshot:null}
                 >
-                    {(type==2||(type==1&&isEnabledSmartCal))&&<Marker
+                    {currentLocation&&<Marker
                         key={1}
                         coordinate={currentLocation}
                         tile={"User"}
@@ -207,8 +220,8 @@ const useMap = () => {
                         description={"Location of aim.geo1"}
                     >
                         <Image
-                            source={images.markerPickup}
-                            style={{ width: 40, height: 40 }} // Thiết lập kích thước của hình ảnh
+                            source={(screen=="MyRequest"||screen=="MyRequestList")?images.markerUrGeo1:images.markerPickup}
+                            style={{ width: 35, height: 35 }} // Thiết lập kích thước của hình ảnh
                         />
                         <Callout tooltip>
                             <Text>hello</Text>
@@ -221,16 +234,35 @@ const useMap = () => {
                         description={"Location of aim.geo2"}
                     >
                         <Image
-                            source={images.markerPeople}
-                            style={{ width: 40, height: 40, }} // Thiết lập kích thước của hình ảnh
+                            source={(screen=="MyRequest"||screen=="MyRequestList")?images.markerUrGeo2:images.markerPeople}
+                            style={{ width: 35, height: 35, }} // Thiết lập kích thước của hình ảnh
                         />
                         <Callout tooltip>
                             <Text>hello</Text>
                         </Callout>
                     </Marker>}
-                    {!lite&&direction&&geo1&&geo2&&<Polyline
+                    {currentDriver&&<Marker
+                        key={4}
+                        coordinate={currentDriver}
+                        tile={"aim"}
+                        description={"Location of aim.geo2"}
+                    >
+                        <Image
+                            source={images.markerPickup}
+                            style={{ width: 35, height: 35, }} // Thiết lập kích thước của hình ảnh
+                        />
+                        <Callout tooltip>
+                            <Text>hello</Text>
+                        </Callout>
+                    </Marker>}
+                    {!lite&&direction&&<Polyline
                         coordinates={direction.route}
                         strokeColor="#ff0000"
+                        strokeWidth={2}
+                    />}
+                    {!lite&&direction2&&<Polyline
+                        coordinates={direction2.route}
+                        strokeColor={colors.primary}
                         strokeWidth={2}
                     />}
                 </MapView>}

@@ -47,6 +47,7 @@ const getUserByTokken = () => {
                 email: userData.email,
                 name: userData.name,
                 photo: userData.photo,
+                emailVerified: userData.emailVerified,
             }
             console.log("User getting OK!", user);
             resolve(user);
@@ -410,10 +411,10 @@ const Setting = (props) => {
             </TouchableOpacity>
         </View>
         <View style={{
-            flex: 40,
             //backgroundColor: 'purple',
             margin: split.s2,
             paddingHorizontal: split.s3,
+            paddingVertical: split.s1,
             borderColor: primary,
             borderWidth: 1,
             borderRadius: 20,
@@ -423,12 +424,10 @@ const Setting = (props) => {
                 fontSize: fontSizes.h2,
                 fontWeight: '500',
                 alignSelf: 'center',
-                marginVertical: split.s1,
                 //backgroundColor:"green"
-            }}>Your information</Text>
+            }}>Your Account</Text>
             <View style={{
                 flexDirection: "row",
-                flex: 1,
                 //backgroundColor:"red"
             }}>
                 <Image
@@ -450,26 +449,25 @@ const Setting = (props) => {
                     <Text style={{
                         color: "black",
                         fontSize: fontSizes.h4,
-                        fontWeight: 'bold',
+                        fontWeight: '600',
                     }}>Email:</Text>
                     <Text style={{
                         color: "black",
                         fontSize: fontSizes.h4,
-                        fontWeight: 'bold',
+                        fontWeight: '600',
                         alignSelf: 'center'
                     }}>{user ? user.email : "Your email is not seted!"}</Text>
                     <View style={{ height: normalize(8) }} />
                     <Text style={{
                         color: "black",
                         fontSize: fontSizes.h4,
-                        fontWeight: 'bold',
-                    }}>FullName:</Text>
+                        fontWeight: '600',
+                    }}>Name: {user ? user.name || "null!" : "null"}</Text>
                     <Text style={{
                         color: "black",
                         fontSize: fontSizes.h4,
-                        fontWeight: 'bold',
-                        alignSelf: 'center'
-                    }}>{user ? user.name || "Your name is not seted!" : "null"}</Text>
+                        fontWeight: '600',
+                    }}>Verified-Email: {user ? user.emailVerified? "Yes" : "No" : "null"}</Text>
                 </View>
             </View>
         </View>

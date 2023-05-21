@@ -31,14 +31,14 @@ import useMap from '../FullMap/FullMap'
 import axios from 'axios';
 
 import AsyncStorage from '@react-native-async-storage/async-storage'
-import {APIkey_Direction} from '../../../Credentials'
+import Credentials from '../../../Credentials'
 /** 
  - ListView from a map of objects
  - FlatList
  */
- const GOOGLE_MAPS_APIKEY = APIkey_Direction;
+ const GOOGLE_MAPS_APIKEY = Credentials.APIkey_Direction;
 
-const getDirections = (origin, destination) => {
+ const getDirections = (origin, destination,currentLocation) => {
     console.log("API direction RUNNING...................!");
     return new Promise(async (resolve, reject) => {
         try {
@@ -53,11 +53,16 @@ const getDirections = (origin, destination) => {
                     },
                 }
             );
+            console.log("-----------------------------------")
+            console.log(response)
             const routes = response.data.routes;
-            debugger
+            console.log("-----------------------------------")
+            console.log(routes)
             if (routes && routes.length > 0) {
                 const points = routes[0].overview_polyline.points;
                 const decodedPoints = decodePolyline(points);
+                console.log("-----------------------------------")
+                console.log(routes[0])
                 const direction = {
                     summary: routes[0].summary,
                     startAddress: routes[0].legs[0].start_address,
@@ -66,6 +71,9 @@ const getDirections = (origin, destination) => {
                     duration: routes[0].legs[0].duration,
                     steps: routes[0].legs[0].steps,
                     route: decodedPoints,
+                    currentDriver: currentLocation,
+                    state: '0',
+                    timestamp : new Date().getTime(),
                 };
                 console.log("Direction OK! URL:", direction);
                 resolve(direction);
@@ -101,7 +109,6 @@ const getUserIDByTokken= async () => {
 const RequestList = (props) => {
 
     const [typeSelected,setTypeSelected] = useState(null);
-    const [isEnableMine,setIsEnableMine] = useState(false);
     //constant
     const { hitchhiking, secondHand, helpBuy } = images
     const { primary, zalert, success, warning, inactive } = colors
@@ -135,7 +142,6 @@ const RequestList = (props) => {
     const [searchText, setSearchText] = useState('')
     const filterRequest = useCallback(() => requests.filter(eachRequest => 
         eachRequest.name.toLowerCase().includes(searchText.toLowerCase())
-        &&(!isEnableMine||eachRequest.mine)
         &&(typeSelected==null||eachRequest.type==typeSelected))
     ,[searchText,typeSelected,requests])
 
@@ -151,6 +157,7 @@ const RequestList = (props) => {
                 const userID = await getUserIDByTokken();
                 let snapshotObject = snapshot.val()
                 setRequests(Object.keys(snapshotObject)
+                    .filter(k=>snapshotObject[k].requestStatus!=-1)
                     .map(eachKey => {
                         let eachObject = snapshotObject[eachKey]
                         return {
@@ -196,10 +203,9 @@ const RequestList = (props) => {
                 renderItem={({ item }) => <RequestItem
                     onPress={() => {
                         const userID = item.requestId.split("-")[0];
-                        //setSelectedRequest(item);
-                        //setModalVisible(true);
                         handleTapRequest(item);
                     }}
+                    screen="RequestList"
                     request={item} 
                     currentLocation={currentLocation}
                     />}
@@ -208,28 +214,22 @@ const RequestList = (props) => {
         );
     };
 
-    //func action requests
-    // const handleTapRequest = async(item) =>{
-    //     setSelectedRequest(item);
-    //     setModalVisible(true); 
-    //     const userID = await getUserIDByTokken();    
-    //     if(item.status==userID){
-    //         navigation.navigate("RequestDetail",{request:item});
-    //         handleCloseRequest();
-    //     }
-    // }
     const handleTapRequest = async(item) =>{
         if(item.mine){
             console.log("1");
             navigation.navigate("MyRequest",{request:item});
         }
-        if(item.accepted){
-            console.log("2");
-            navigation.navigate("RequestDetail",{request:item});
-        }
-        console.log("3");
-        setSelectedRequest(item);
-        setModalVisible(true); 
+        else{
+            if(item.accepted){
+                console.log("2");
+                navigation.navigate("RequestDetail",{request:item});
+            }
+            else{
+                console.log("3");
+                setSelectedRequest(item);
+                setModalVisible(true); 
+            }
+        }          
     }
 
     const handleCloseRequest = () =>{
@@ -246,13 +246,19 @@ const RequestList = (props) => {
                 geo2,
                 type,
             } = selectedRequest;
+            const userID = await getUserIDByTokken();
             if (status == 0) {
-                if (currentLocation) {
-                    if (type == 2) {
+                if (currentLocation&&userID) {
+                    if (type === 2||true) {
                         const origin = `${currentLocation.latitude.toFixed(6)},${currentLocation.longitude.toFixed(6)}`;
-                        const destination = `${geo2.latitude.toFixed(6)},${geo2.longitude.toFixed(6)}`;
-                        const direction = await getDirections(origin, destination);
-                        debugger
+                        let destination = "";
+                        let direction = null;
+                        if (type === 1)
+                            destination = `${geo1.latitude.toFixed(6)},${geo2.longitude.toFixed(6)}`;
+                        if (type === 2)
+                            destination = `${geo2.latitude.toFixed(6)},${geo2.longitude.toFixed(6)}`;
+                        if (destination != "")
+                            direction = await getDirections(origin, destination, currentLocation);
                         if (!direction) {
                             debugger
                             console.error("Get direction failed!");
@@ -356,7 +362,7 @@ const RequestList = (props) => {
                     category={item}
                     onPress={() => {
                         if(item.value==0){
-                            setIsEnableMine(!isEnableMine);
+                            navigation.navigate("MyRequestList");
                         }
                         else{
                             setTypeSelected(item.value==typeSelected?null:item.value);
@@ -423,7 +429,6 @@ const RequestList = (props) => {
                                     }}>Tới: {selectedRequest.direction.endAddress}</Text>
                                 </View>}
                             </View>
-
                         </View>
                         <View style={{ height: 1, backgroundColor: 'black' }} />
                         <FullMap
@@ -446,19 +451,6 @@ const RequestList = (props) => {
                 </View>
             </View>
         </Modal>
-        {isEnableMine &&
-            <View>
-                <Text
-                    style={{
-                        color: primary,
-                        alignSelf: 'center',
-                        marginVertical: normalize(5),
-                        fontSize: fontSizes.h3
-                    }}
-                >Your request</Text>
-                <View style={{ height: 1, backgroundColor: primary }} />
-            </View>
-        }
         {filterRequest().length > 0 ? renderRequestList() : renderNotRequest()}
     </View>
 }

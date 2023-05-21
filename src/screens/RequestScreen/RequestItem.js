@@ -6,7 +6,7 @@ import { colors, fontSizes, icons, images, normalize , split } from "../../const
 import useMap from '../FullMap/FullMap'
 
 
-const RequestItem = ({ onPress, request: { name, url, price, des, geo1, geo2 , type, status, accepted, direction, mine}, currentLocation }) => {
+const RequestItem = ({ onPress, request: { name, url, price, des, geo1, geo2 , type, status, accepted, direction, mine}, currentLocation, screen }) => {
 
     const {FullMap} = useMap();
 
@@ -46,11 +46,11 @@ const RequestItem = ({ onPress, request: { name, url, price, des, geo1, geo2 , t
             marginHorizontal: split.s5,
             marginVertical: split.s5,
         }}>
-            {currentLocation&&<FullMap
+            {currentLocation&&screen&&<FullMap
                 geo1={geo1}
                 geo2={geo2}
                 type={type}
-                screen="RequestItem"
+                screen={screen}
                 lite={true}
                 locationFromItem = {currentLocation}
             />}
@@ -77,13 +77,13 @@ const RequestItem = ({ onPress, request: { name, url, price, des, geo1, geo2 , t
                 <Text style={{
                     color: accepted? colors.zalert : _getColorFromStatus(status),
                     fontSize: fontSizes.h4,
-                }}>{accepted? "<ONING YOU>" :status==0?"AVAILABLE":status==1?"ENDED":"ON PROCESS"}</Text>
+                }}>{accepted? "<ONING YOU>" :status==0?"AVAILABLE":status==-1?"ENDED":"ON PROCESS"}</Text>
             </View>
             <Text style={{
-                    color: "red",
+                    color: price==0?colors.success:"red",
                     fontSize: fontSizes.h4,
                     fontWeight: 'bold',
-            }}>Price: {price} vnd</Text>
+            }}>Price: {price==0?'Free':`${price} vnd`}</Text>
             <Text style={{
                     color:'black',
                     fontSize: fontSizes.h4,

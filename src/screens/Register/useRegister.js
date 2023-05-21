@@ -105,6 +105,7 @@ const useRegister = () => {
                 let userapp = {
                   userId: responseUser.uid,
                   email: responseUser.email,
+                  name: fullname,
                   emailVerified: responseUser.emailVerified,
                   accessToken: responseUser.accessToken
                 }

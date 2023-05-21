@@ -8,6 +8,7 @@ import Setting from "./Setting";
 import CreateRequest from "./RequestAction/CreateRequest";
 import {RequestDetail,MyRequest} from "./RequestDetail";
 import CameraQR from "./CameraQR/CameraQR";
+import MyRequestList from "./RequestScreen/MyRequestList";
 
 export {
     Welcome,
@@ -20,5 +21,6 @@ export {
     CreateRequest,
     RequestDetail,
     MyRequest,
-    CameraQR
+    CameraQR,
+    MyRequestList
 }

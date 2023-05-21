@@ -32,8 +32,42 @@ import {
 import { CameraQR } from '../../screens'
 import { CLButton } from '../../components'
 import LinearGradient from 'react-native-linear-gradient'
+import Icon from 'react-native-vector-icons/FontAwesome5'
 
 
+
+const getUserByUserID = (userID) => {
+    return new Promise(async (resolve, reject) => {
+        try {
+            if (userID) {
+                const dbRef = ref(firebaseDatabase, 'users');
+                const dbQuery = query(dbRef, orderByKey(), equalTo(userID));
+                const data = await get(dbQuery);
+                const snapshotObject = data.val();
+                if (snapshotObject) {
+                    const data = snapshotObject[userID];
+                    const user = {
+                        userID: userID,
+                        email: data.email,
+                        name: data.name,
+                        photo: data.photo,
+                    }
+                    console.log("User getting OK!", user);
+                    resolve(user);
+                }
+                resolve(null);
+            }
+            else {
+                console.log("No driver!");
+            }
+
+        }
+        catch (error) {
+            console.error('Error getting user:', error);
+            resolve(null);
+        }
+    });
+}
 
 const getUserIDByTokken = async () => {
     const accessToken = await AsyncStorage.getItem('token');
@@ -69,7 +103,9 @@ const RequestDetail = (props) => {
     } = request;
 
     const [road, setRoad] = useState("");
+    const [boss, setBoss] = useState(null);
 
+    const [stateDisplay, SetStateDisplay] = useState(1);
 
     const { distance, duration, endAddress, startAddress, summary } = road;
 
@@ -80,6 +116,9 @@ const RequestDetail = (props) => {
         checkLocationPermission();
         getCurrentPosition();
         getDirections().then((direction) => setRoad(direction));
+        if(type===1){
+            getUserByUserID(requestId.split('-')[0]).then((user) => setBoss(user));
+        }
     }, [])
 
     const getDirections = () => {
@@ -123,8 +162,8 @@ const RequestDetail = (props) => {
         scrollEnabled={true}
         contentContainerStyle={{ flexGrow: 1 }}
     >
-        {currentLocation && road && <FullMap geo1={geo1} geo2={geo2} direction={road} type={type} request={request} screen="DetailRequest" />}
-        {road && <View style={{
+        {currentLocation && road && <FullMap geo1={geo1} geo2={geo2} direction={road} direction2={direction} type={type} request={request} screen="DetailRequest" />}
+        {road && type===2 &&<View style={{
             //backgroundColor:"green",
             //height: 400,
             margin: normalize(10),
@@ -151,11 +190,11 @@ const RequestDetail = (props) => {
                 marginHorizontal: normalize(20),
             }}>
                 <Circle
-                    color={primary}
+                    color={stateDisplay > 1 ? primary : inactive}
                     size={30}>
                     <Text style={{ color: 'white', fontWeight: '800' }}>2</Text>
                 </Circle>
-                <Text style={{ fontSize: fontSizes.h4, color: primary, marginStart: normalize(5) }}>Pay for it</Text>
+                <Text style={{ fontSize: fontSizes.h4, color: stateDisplay > 1 ? primary : inactive, marginStart: normalize(5) }}>Pay for it</Text>
                 <Text style={{ fontSize: fontSizes.h4, color: "black", marginStart: normalize(5), position: 'absolute', end: normalize(20) }}>{price}k vnd</Text>
             </View>
             <View style={{ height: 1, backgroundColor: primary, marginHorizontal: normalize(50) }} />
@@ -179,63 +218,197 @@ const RequestDetail = (props) => {
                 </View>
             </View>
         </View>}
-        {request&&<View style={{
-                //backgroundColor:"green",
-                marginVertical: normalize(5),
-                marginHorizontal: normalize(20),
+        {road && type===1 &&<View style={{
+            //backgroundColor:"green",
+            //height: 400,
+            margin: normalize(10),
+        }}>
+            <View style={{ height: 1, backgroundColor: primary, marginHorizontal: normalize(50) }} />
+            <View style={{
+                flexDirection: 'row',
                 alignItems: 'center',
-                flexDirection:'row',
+                marginVertical: normalize(10),
+                marginHorizontal: normalize(20),
             }}>
-                <Image source={{uri:url}} style={{minHeight:120,height:"100%",width:120,borderRadius:20}}/>
-                <View style={{marginStart:10,flex:1}}>
+                <Circle
+                    color={primary}
+                    size={30}>
+                    <Text style={{ color: 'white', fontWeight: '800' }}>1</Text>
+                </Circle>
+                <Text style={{ fontSize: fontSizes.h4, color: primary, marginStart: normalize(5) }}>On going</Text>
+                <Text style={{ fontSize: fontSizes.h4, color: "black", marginStart: normalize(5), position: 'absolute', end: normalize(20) }}>{distance.text}/{duration.text}</Text>
+            </View>
+            <View style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                marginVertical: normalize(10),
+                marginHorizontal: normalize(20),
+            }}>
+                <Circle
+                    color={primary}
+                    size={30}>
+                    <Text style={{ color: 'white', fontWeight: '800' }}>2</Text>
+                </Circle>
+                <Text style={{ fontSize: fontSizes.h4, color: primary, marginStart: normalize(5) }}>Hitchhiking</Text>
+                <Text style={{ fontSize: fontSizes.h4, color: "black", marginStart: normalize(5), position: 'absolute', end: normalize(20) }}>{road?`${direction.distance.text}/${direction.duration.text}`:"==/=="}</Text>
+            </View>
+            <View style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                marginVertical: normalize(10),
+                marginHorizontal: normalize(20),
+            }}>
+                <Circle
+                    color={stateDisplay > 1 ? primary : inactive}
+                    size={30}>
+                    <Text style={{ color: 'white', fontWeight: '800' }}>3</Text>
+                </Circle>
+                <Text style={{ fontSize: fontSizes.h4, color: stateDisplay > 2 ? primary : inactive, marginStart: normalize(5) }}>Get pay</Text>
+                <Text style={{ fontSize: fontSizes.h4, color: "black", marginStart: normalize(5), position: 'absolute', end: normalize(20) }}>{price}k vnd</Text>
+            </View>
+            <View style={{ height: 1, backgroundColor: primary, marginHorizontal: normalize(50) }} />
+        </View>}
+        {request && <View style={{
+            //backgroundColor:"green",
+            marginVertical: normalize(5),
+            marginHorizontal: normalize(20),
+            alignItems: 'center',
+            flexDirection: 'row',
+        }}>
+            {type == 2 && <Image source={{ uri: url }} style={{ minHeight: 120, height: "100%", width: 120, borderRadius: 20 }} />}
+            <View style={{ marginStart: 10, flex: 1 }}>
+                <Text style={{
+                    marginTop: normalize(5),
+                    color: 'black',
+                    alignSelf: 'center',
+                    fontSize: fontSizes.h4,
+                }}>Title: {name} </Text>
+                <Text style={{
+                    marginTop: normalize(5),
+                    color: 'black',
+                    alignSelf: 'center',
+                    fontSize: fontSizes.h4,
+                }}>Mô tả: {des} </Text>
+                {type == 1 && <View style={{
+                    borderRadius: 30,
+                    borderWidth: 1,
+                    padding: normalize(11),
+                    margin: 3,
+                }}>
                     <Text style={{
-                        marginTop: normalize(5),
                         color: 'black',
                         fontSize: fontSizes.h4,
-                    }}>Tựa: {name} </Text>
+                        fontWeight: 'bold'
+                    }}>Bắt đầu: {road ? road.startAddress : "==/=="}</Text>
+                    <View style={{ height: 1, backgroundColor: 'black', margin: 2 }} />
                     <Text style={{
-                        marginTop: normalize(5),
                         color: 'black',
                         fontSize: fontSizes.h4,
-                    }}>Mô tả: {des} </Text>
+                        fontWeight: 'bold'
+                    }}>Đón tại: {direction.startAddress}</Text>
+                    <View style={{ height: 1, backgroundColor: 'black', margin: 2 }} />
                     <Text style={{
-                        marginTop: normalize(5),
                         color: 'black',
                         fontSize: fontSizes.h4,
-                    }}>Giá: {price} </Text>
+                        fontWeight: 'bold'
+                    }}>Tới: {direction.endAddress}</Text>
+                </View>}
+            </View>
+        </View>}
+        {boss && <View style={{
+            //backgroundColor:"green",
+            //height: 400,
+            marginVertical: normalize(5),
+            marginHorizontal: normalize(10),
+        }}>
+            <View style={{
+                flexDirection: "row",
+                marginVertical: normalize(5),
+                borderRadius: 15,
+                borderWidth: 1,
+                padding: 5,
+            }}>
+                <View style={{
+                    flex: 7,
+                    flexDirection: "row",
+                    alignItems: 'center',
+                    marginHorizontal: 5,
+                }}>
+                    <Image
+                        source={{ uri: boss.photo || images.uriUserPhoto }}
+                        style={{
+                            width: normalize(40),
+                            height: normalize(40),
+                            borderRadius: 90,
+                        }}
+                    />
+                    <Text style={{
+                        color: "black",
+                        fontSize: fontSizes.h4,
+                        fontWeight: '500',
+                        marginStart: 5,
+                    }}> {boss.name || boss.email}</Text>
                 </View>
-            </View>}
+                <View style={{
+                    flex: 3,
+                    flexDirection: "row",
+                    alignItems: 'center',
+                    marginHorizontal: 5,
+                    justifyContent: 'space-between',
+                }}>
+                    <TouchableOpacity style={{
+                        padding: 5
+                    }}>
+                        <Icon
+                            name={'phone'}
+                            size={normalize(28)}
+                            color={'black'}
+                        />
+                    </TouchableOpacity>
+                    <TouchableOpacity style={{
+                        padding: 5
+                    }}>
+                        <Icon
+                            name={'rocketchat'}
+                            size={normalize(28)}
+                            color={'black'}
+                        />
+                    </TouchableOpacity>
+                </View>
+            </View>
+        </View>}
         <View style={{ height: 1, backgroundColor: primary, marginHorizontal: normalize(50) }} />
         <View style={{
             marginHorizontal: 5,
             marginHorizontal: split.s5,
             marginVertical: split.s5,
-            height: normalize(70),
-            flexDirection:'row',
+            height: normalize(50),
+            flexDirection: 'row',
             justifyContent: 'space-around',
             //backgroundColor:"red",
         }}>
             {/*onPress,title,colorBG,colorBD,colorT,sizeF,sizeBT,sizeB,radius,disabled*/}
-            <TouchableOpacity 
+            <TouchableOpacity
                 onPress={() => setModalVisible(true)}>
-                    <LinearGradient 
-                        colors={[primary, 'white', success]} 
-                        style={{
-                            height:"100%",
-                            width: 110,
-                            borderRadius:20,
-                            justifyContent:'center',
-                            alignItems:'center'
-                        }}
-                    >
-                        <Text style={{color:'black'}}>QR done</Text>
-                    </LinearGradient>
+                <LinearGradient
+                    colors={[primary, 'white', success]}
+                    style={{
+                        height: "80%",
+                        width: normalize(270),
+                        borderRadius: 13,
+                        justifyContent: 'center',
+                        alignItems: 'center'
+                    }}
+                >
+                    <Text style={{ color: 'black' }}>QR DONE</Text>
+                </LinearGradient>
             </TouchableOpacity>
             <Modal visible={modalVisible} animationType="slide">
                 <View style={{ flex: 1, justifyContent: 'center' }}>
                     {modalVisible && (
                         <View style={styles.container}>
                             <CameraQR
+                                requestId={requestId}
                                 style={{
                                     height: "85%",
                                     width: "100%",
@@ -248,8 +421,6 @@ const RequestDetail = (props) => {
                 </View>
             </Modal>
         </View>
-        <View style={{ height: 1, backgroundColor: primary, marginHorizontal: normalize(50) }} />
-        <View style={{ height: 150 }}></View>
     </KeyboardAwareScrollView>
 }
 
