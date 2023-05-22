@@ -99,6 +99,7 @@ const RequestDetail = (props) => {
 
     const [road, setRoad] = useState(null);
     const [driver, setDriver] = useState(null);
+    const [currentDriver, setCurrentDriver] = useState(null);
     const [time, setTime] = useState(null);
     const [stateDisplay, SetStateDisplay] = useState(1);
     const [stateRequest, SetStateRequest] = useState(status);
@@ -133,6 +134,7 @@ const RequestDetail = (props) => {
                     if (direction) {
                         const time = new Date(direction.timestamp);
                         setTime(time);
+                        setCurrentDriver(direction.currentDriver);
                         SetStateDisplay(2);
                     }
                 });
@@ -227,7 +229,7 @@ const RequestDetail = (props) => {
 
             }}>Vị trí tại: {road.endAddress}</Text>
         </View>}
-        {currentLocation && <FullMap geo1={geo1} geo2={geo2} type={type} direction2={direction} currentDriver={road ? road.currentDriver : null} request={request} screen="MyRequest" />}
+        {currentLocation && <FullMap geo2={geo2} type={type} direction2={direction} currentDriver={currentDriver ? currentDriver : null} request={request} screen="MyRequest" />}
         <View>
             <View style={{ height: 1, backgroundColor: primary, marginHorizontal: normalize(140), marginBottom: 3 }} />
             <View style={{ height: 1, backgroundColor: primary, marginHorizontal: normalize(146) }} />

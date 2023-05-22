@@ -74,7 +74,8 @@ const useMap = () => {
                         //setAddress(getAddressFromCoordinates(latitude,longitude));
                     },
                     error => {
-                        console.error('Error getting current location:', error);
+                        checkLocationPermission();
+                        //console.error('Error getting current location:', error);
                     },
                     //{ enableHighAccuracy: true, timeout: 15000, maximumAge: 10000 }
                 )
@@ -103,7 +104,7 @@ const useMap = () => {
                     setUriMap(uri);
                 });
             }, 50); // I add some timeout delay because without delay snapnot won't have map or marker.
-        }, [mapRef.current!=null]);
+        }, [mapRef.current]);
 
         //element func
         const [isEnabledSmartCal,setIsEnabledSmartCal] = useState(false);
@@ -210,22 +211,21 @@ const useMap = () => {
                         tile={"User"}
                         description={"Current Location of User"}
                     >
-                        <Callout tooltip>
-                        </Callout>
+                        <Image
+                            source={images.markerUrGeo2}
+                            style={{ width: 35, height: 35 }} // Thiết lập kích thước của hình ảnh
+                        />
                     </Marker>}
-                    {type===1&&<Marker
+                    {type===1&&geo1&&<Marker
                         key={2}
                         coordinate={geo1}
                         tile={"aim"}
                         description={"Location of aim.geo1"}
                     >
                         <Image
-                            source={(screen=="MyRequest"||screen=="MyRequestList")?images.markerUrGeo1:images.markerPickup}
+                            source={images.markerPeople}
                             style={{ width: 35, height: 35 }} // Thiết lập kích thước của hình ảnh
                         />
-                        <Callout tooltip>
-                            <Text>hello</Text>
-                        </Callout>
                     </Marker>}
                     {geo2&&<Marker
                         key={3}
@@ -234,12 +234,9 @@ const useMap = () => {
                         description={"Location of aim.geo2"}
                     >
                         <Image
-                            source={(screen=="MyRequest"||screen=="MyRequestList")?images.markerUrGeo2:images.markerPeople}
+                            source={(screen=="MyRequest"||screen=="MyRequestList")?images.markerMyAim:images.markerUrAim}
                             style={{ width: 35, height: 35, }} // Thiết lập kích thước của hình ảnh
                         />
-                        <Callout tooltip>
-                            <Text>hello</Text>
-                        </Callout>
                     </Marker>}
                     {currentDriver&&<Marker
                         key={4}
@@ -251,9 +248,6 @@ const useMap = () => {
                             source={images.markerPickup}
                             style={{ width: 35, height: 35, }} // Thiết lập kích thước của hình ảnh
                         />
-                        <Callout tooltip>
-                            <Text>hello</Text>
-                        </Callout>
                     </Marker>}
                     {!lite&&direction&&<Polyline
                         coordinates={direction.route}

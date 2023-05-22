@@ -206,7 +206,6 @@ const CreateRequest = (props) => {
     const handleMapPress = (event) => {
         if (!isLoading) {
             const { coordinate } = event.nativeEvent;
-            console.log(coordinate)
             setPressLocation(coordinate);
         }
     };
@@ -339,7 +338,7 @@ const CreateRequest = (props) => {
             const timestamp = (new Date()).getTime();
 
             let request = {
-                title: typeRequest === 1 ? direction.summary : title,
+                title: typeRequest === 1 ? `${direction.summary}${direction.duration.value}` : title,
                 des: des,
                 price: price ? parseInt(price) : 0,
                 geo1: currentLocation,
@@ -637,8 +636,6 @@ const CreateRequest = (props) => {
                         tile={"User"}
                         description={"Current User Location"}
                     >
-                        <Callout tooltip>
-                        </Callout>
                     </Marker>
                     {typeRequest === 1 && pressLocation && <Marker
                         key={2}
@@ -646,21 +643,11 @@ const CreateRequest = (props) => {
                         tile={"Des"}
                         description={"Des Location"}
                     >
-                        <Callout tooltip>
-                        </Callout>
+                        <Image
+                            source={images.markerUrGeo1}
+                            style={{ width: 35, height: 35, }} // Thiết lập kích thước của hình ảnh
+                        />
                     </Marker>}
-                    {/*typeRequest === 1 && pressLocation && route && <Polyline
-                        coordinates={route}
-                        strokeColor="#ff0000"
-                        strokeWidth={3}
-                    />*/}
-                    {/*typeRequest===1&&pressLocation&&<MapViewDirections
-                        origin={currentLocation}
-                        destination={pressLocation}
-                        apikey={GOOGLE_MAPS_APIKEY}
-                        strokeColor={colors.primary}
-                        strokeWidth={4}
-                    />*/}
                 </MapView>
                 <TouchableOpacity
                     style={{

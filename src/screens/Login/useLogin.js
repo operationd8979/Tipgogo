@@ -49,30 +49,31 @@ const userLogin = () => {
         if (validateCredentials()) {
             signInWithEmailAndPassword(auth, email, password)
                 .then(() => {
-                    onAuthStateChanged(auth, (responseUser) => {
-                        if (responseUser) {
-                            console.log("Auth successfully!");
-                            AsyncStorage.setItem(
-                                'token',
-                                responseUser.accessToken,
-                            ).then(() => {
-                                console.log("Logined to app");
-                                navigation.dispatch(StackActions.replace('UItab'));
-                                //navigation.navigate('UItab');
-                                console.log("Set Token successfully!");
-                            }).catch(() => {
-                                console.log("Error set Token!");
-                            })
-                            const userRef = ref(firebaseDatabase, `users/${responseUser.uid}`);
-                            update(userRef, { accessToken:responseUser.accessToken })
-                                .then(() => {
-                                    console.log("Update accessToken's user successfully!.");
+                    const unsubscribe = onAuthStateChanged(auth, (responseUser) => {
+                            if (responseUser) {
+                                console.log("Auth successfully!");
+                                AsyncStorage.setItem(
+                                    'token',
+                                    responseUser.accessToken,
+                                ).then(() => {
+                                    console.log("Logined to app");
+                                    navigation.dispatch(StackActions.replace('UItab'));
+                                    //navigation.navigate('UItab');
+                                    console.log("Set Token successfully!");
+                                }).catch(() => {
+                                    console.log("Error set Token!");
                                 })
-                                .catch((error) => {
-                                    console.error("Error updating accessToken's user: ", error);
-                                });
-                        }
-                    })
+                                const userRef = ref(firebaseDatabase, `users/${responseUser.uid}`);
+                                update(userRef, { accessToken:responseUser.accessToken })
+                                    .then(() => {
+                                        console.log("Update accessToken's user successfully!.");
+                                    })
+                                    .catch((error) => {
+                                        console.error("Error updating accessToken's user: ", error);
+                                    });
+                            }
+                        })
+                    unsubscribe();
                 })
                 .catch((error) => {
                     console.error("Error sign in: ", error);

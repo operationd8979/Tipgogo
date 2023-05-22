@@ -81,46 +81,47 @@ const useRegister = () => {
       createUserWithEmailAndPassword(auth, email, password).then((userCredential) => {
         console.log('Create account sucessfully!');
         sendEmailVerification(userCredential.user)
-              .then(() => {
-                console.log('Email verification sent');
-              })
-              .catch((error) => {
-                console.error("Error send email verification: ", error);
-              });
-        navigation.dispatch(StackActions.replace('UItab'));
+          .then(() => {
+            console.log('Email verification sent');
+          })
+          .catch((error) => {
+            console.error("Error send email verification: ", error);
+          });
         signInWithEmailAndPassword(auth, email, password)
           .then(() => {
             console.log("Logined to app");
-            onAuthStateChanged(auth, (responseUser) => {
-              if (responseUser) {
-                console.log("Auth successfully!");
-                AsyncStorage.setItem(
-                  'token',
-                  responseUser.accessToken,
-                ).then(() => {
-                  console.log("Set Token successfully!");
-                }).catch(() => {
-                  console.error("Error set Token!");
-                })
-                let userapp = {
-                  userId: responseUser.uid,
-                  email: responseUser.email,
-                  name: fullname,
-                  emailVerified: responseUser.emailVerified,
-                  accessToken: responseUser.accessToken
-                }
-                set(ref(
-                  firebaseDatabase,
-                  `users/${userapp.userId}`
-                ), userapp)
-                  .then(() => {
-                    console.log("Data written to Firebase Realtime Database.");
+            const unsubscribe = onAuthStateChanged(auth, (responseUser) => {
+                if (responseUser) {
+                  console.log("Auth successfully!");
+                  AsyncStorage.setItem(
+                    'token',
+                    responseUser.accessToken,
+                  ).then(() => {
+                    navigation.dispatch(StackActions.replace('UItab'));
+                    console.log("Set Token successfully!");
+                  }).catch(() => {
+                    console.error("Error set Token!");
                   })
-                  .catch((error) => {
-                    console.error("Error writing data to Firebase Realtime Database: ", error);
-                  });
-              }
-            })
+                  let userapp = {
+                    userId: responseUser.uid,
+                    email: responseUser.email,
+                    name: fullname,
+                    emailVerified: responseUser.emailVerified,
+                    accessToken: responseUser.accessToken
+                  }
+                  set(ref(
+                    firebaseDatabase,
+                    `users/${userapp.userId}`
+                  ), userapp)
+                    .then(() => {
+                      console.log("Data written to Firebase Realtime Database.");
+                    })
+                    .catch((error) => {
+                      console.error("Error writing data to Firebase Realtime Database: ", error);
+                    });
+                }
+              })
+            unsubscribe();
           })
           .catch((error) => {
             console.log(error);

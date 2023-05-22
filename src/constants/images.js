@@ -10,6 +10,8 @@ export default{
     markerPickup: require('../assets/marker-pickup.png'),
     markerUrGeo1: require('../assets/marker-ur-request-geo1.png'),
     markerUrGeo2: require('../assets/marker-ur-request-geo2.png'),
+    markerMyAim: require('../assets/marker-end-my.png'),
+    markerUrAim: require('../assets/marker-end-your.png'),
     userPhoto: require('../assets/photo-user.jpg'),
     uriUserPhoto: "https://firebasestorage.googleapis.com/v0/b/tipgogo-3a1a9.appspot.com/o/UserPhoto%2Fphoto-user.jpg?alt=media&token=31fde32c-dfea-42e5-ad18-c51227d6d409"
 }

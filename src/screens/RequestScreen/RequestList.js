@@ -254,7 +254,7 @@ const RequestList = (props) => {
                         let destination = "";
                         let direction = null;
                         if (type === 1)
-                            destination = `${geo1.latitude.toFixed(6)},${geo2.longitude.toFixed(6)}`;
+                            destination = `${geo1.latitude.toFixed(6)},${geo1.longitude.toFixed(6)}`;
                         if (type === 2)
                             destination = `${geo2.latitude.toFixed(6)},${geo2.longitude.toFixed(6)}`;
                         if (destination != "")
