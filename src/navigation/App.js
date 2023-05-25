@@ -13,7 +13,7 @@ const App = (props) => {
     <UserPositionProvider>
       <NavigationContainer>
         <Stack.Navigator
-          initialRouteName="UItab"
+          initialRouteName="Welcome"
           screenOptions={{
             headerShown: false,
           }}>

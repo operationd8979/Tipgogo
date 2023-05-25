@@ -33,6 +33,7 @@ import { CameraQR } from '../../screens'
 import { CLButton } from '../../components'
 import LinearGradient from 'react-native-linear-gradient'
 import Icon from 'react-native-vector-icons/FontAwesome5'
+import LocationService from '../../service/LocationService';
 
 
 
@@ -78,7 +79,7 @@ const getUserIDByTokken = async () => {
     return userID;
 }
 
-const RequestDetail = (props) => {
+const RequestDetail = () => {
 
     const route = useRoute();
 
@@ -114,11 +115,16 @@ const RequestDetail = (props) => {
 
     useEffect(() => {
         checkLocationPermission();
-        getCurrentPosition();
+        //getCurrentPosition();
         getDirections().then((direction) => setRoad(direction));
-        if(type===1){
+        if (type === 1) {
             getUserByUserID(requestId.split('-')[0]).then((user) => setBoss(user));
         }
+        // const cleanup = () => {
+        //     LocationService.stop();
+        // };
+        // LocationService.start();
+        // return cleanup;
     }, [])
 
     const getDirections = () => {
@@ -162,8 +168,8 @@ const RequestDetail = (props) => {
         scrollEnabled={true}
         contentContainerStyle={{ flexGrow: 1 }}
     >
-        {currentLocation && road && <FullMap geo1={geo1} geo2={geo2} direction={road} direction2={direction} type={type} request={request} screen="DetailRequest" />}
-        {road && type===2 &&<View style={{
+        {currentLocation && road && <FullMap geo2={geo2} direction={road} direction2={direction} type={type} request={request} screen="DetailRequest" />}
+        {road && type === 2 && <View style={{
             //backgroundColor:"green",
             //height: 400,
             margin: normalize(10),
@@ -218,7 +224,7 @@ const RequestDetail = (props) => {
                 </View>
             </View>
         </View>}
-        {road && type===1 &&<View style={{
+        {road && type === 1 && <View style={{
             //backgroundColor:"green",
             //height: 400,
             margin: normalize(10),
@@ -235,7 +241,7 @@ const RequestDetail = (props) => {
                     size={30}>
                     <Text style={{ color: 'white', fontWeight: '800' }}>1</Text>
                 </Circle>
-                <Text style={{ fontSize: fontSizes.h4, color: primary, marginStart: normalize(5) }}>On going</Text>
+                <Text style={{ fontSize: fontSizes.h4, color: primary, marginStart: normalize(5) }}>On going {currentLocation}</Text>
                 <Text style={{ fontSize: fontSizes.h4, color: "black", marginStart: normalize(5), position: 'absolute', end: normalize(20) }}>{distance.text}/{duration.text}</Text>
             </View>
             <View style={{
@@ -250,7 +256,7 @@ const RequestDetail = (props) => {
                     <Text style={{ color: 'white', fontWeight: '800' }}>2</Text>
                 </Circle>
                 <Text style={{ fontSize: fontSizes.h4, color: primary, marginStart: normalize(5) }}>Hitchhiking</Text>
-                <Text style={{ fontSize: fontSizes.h4, color: "black", marginStart: normalize(5), position: 'absolute', end: normalize(20) }}>{road?`${direction.distance.text}/${direction.duration.text}`:"==/=="}</Text>
+                <Text style={{ fontSize: fontSizes.h4, color: "black", marginStart: normalize(5), position: 'absolute', end: normalize(20) }}>{road ? `${direction.distance.text}/${direction.duration.text}` : "==/=="}</Text>
             </View>
             <View style={{
                 flexDirection: 'row',
@@ -423,6 +429,7 @@ const RequestDetail = (props) => {
         </View>
     </KeyboardAwareScrollView>
 }
+
 
 const styles = StyleSheet.create({
     container: {

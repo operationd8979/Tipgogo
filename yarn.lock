@@ -6822,6 +6822,23 @@ react-is@^17.0.1:
   resolved "https://registry.npmjs.org/react-is/-/react-is-17.0.2.tgz"
   integrity sha512-w2GsyukL62IJnlaff/nRegPQR94C/XXamvMWmSHRJ4y7Ts/4ocGRmTHvOs8PSE6pB3dWOrD/nueuU5sduBsQ4w==
 
+react-native-background-fetch@^4.1.0:
+  version "4.1.0"
+  resolved "https://registry.npmjs.org/react-native-background-fetch/-/react-native-background-fetch-4.1.0.tgz"
+  integrity sha512-LWl1xuLNfHbD9MQXV31RvpCia9hMxOW+gwjp5yzW7BbiZWTWV2TQ9szuHaPn4NBWHDdh+MtI5pb6JV9P/LCaOQ==
+
+react-native-background-fetch@~4.1.10:
+  version "4.1.10"
+  resolved "https://registry.npmjs.org/react-native-background-fetch/-/react-native-background-fetch-4.1.10.tgz"
+  integrity sha512-Ug54vTctZuD/c06ZLk/VyvFdhw/hCVVOHYR5heyMqc6FlT/m9fVhFWyl4uH3JmPCzmWDVR3fO28CzrGpKOrusw==
+
+react-native-background-geolocation@^4.12.1:
+  version "4.12.1"
+  resolved "https://registry.npmjs.org/react-native-background-geolocation/-/react-native-background-geolocation-4.12.1.tgz"
+  integrity sha512-0ZjFQdoTClCOSbhEDrq/7xpZf9Yt6xi1ryWBOPkvXo/sO7P0a8+ZYRejXJFm4vy8QK5r5q4BzQRuGM51ycHcsA==
+  dependencies:
+    react-native-background-fetch "~4.1.10"
+
 react-native-camera@>=1.0.2:
   version "4.2.1"
   resolved "https://registry.npmjs.org/react-native-camera/-/react-native-camera-4.2.1.tgz"
@@ -6898,11 +6915,6 @@ react-native-keyboard-aware-scroll-view@^0.9.5:
   dependencies:
     prop-types "^15.6.2"
     react-native-iphone-x-helper "^1.0.3"
-
-react-native-keychain@^8.1.1:
-  version "8.1.1"
-  resolved "https://registry.npmjs.org/react-native-keychain/-/react-native-keychain-8.1.1.tgz"
-  integrity sha512-8fxgeHKwGcL657eAYpdBTkDIxNhbIHI+kyyO0Yac2dgVAN184JoIwQcW2z6snahwDaCObQOu0biLFHnsH+4KSg==
 
 react-native-linear-gradient@^2.6.2:
   version "2.6.2"
@@ -7005,7 +7017,7 @@ react-native-vision-camera@^2.15.4, react-native-vision-camera@>=2.9.4:
   resolved "https://registry.npmjs.org/react-native-vision-camera/-/react-native-vision-camera-2.15.4.tgz"
   integrity sha512-SJXSWH1pu4V3Kj4UuX/vSgOxc9d5wb5+nHqBHd+5iUtVyVLEp0F6Jbbaha7tDoU+kUBwonhlwr2o8oV6NZ7Ibg==
 
-react-native@*, "react-native@^0.0.0-0 || 0.60 - 0.72 || 1000.0.0", "react-native@>= 0.64.3", react-native@>=0.42.0, react-native@>=0.48.4, react-native@>=0.57, react-native@>=0.60.0, react-native@>=0.63.3, react-native@>=0.63.4, react-native@>=v0.40.0, react-native@0.71.7:
+react-native@*, "react-native@^0.0.0-0 || 0.60 - 0.72 || 1000.0.0", "react-native@>= 0.64.3", react-native@>=0.28.0, react-native@>=0.42.0, react-native@>=0.48.4, react-native@>=0.57, react-native@>=0.60.0, react-native@>=0.63.3, react-native@>=0.63.4, react-native@>=v0.40.0, react-native@0.71.7:
   version "0.71.7"
   resolved "https://registry.npmjs.org/react-native/-/react-native-0.71.7.tgz"
   integrity sha512-Id6iRLS581fJMFGbBl1jP5uSmjExtGOvw5Gvh7694zISXjsRAsFMmU+izs0pyCLqDBoHK7y4BT7WGPGw693nYw==

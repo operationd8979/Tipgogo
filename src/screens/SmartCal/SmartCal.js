@@ -40,7 +40,7 @@ import { distanceTwoGeo } from '../../utilies'
  */
 const GOOGLE_MAPS_APIKEY = Credentials.APIkey_Direction;
 
-const getDirections = (origin, destination, currentLocation) => {
+const getDirections = (origin, destination) => {
     console.log("API direction RUNNING...................!");
     return new Promise(async (resolve, reject) => {
         try {
@@ -73,7 +73,6 @@ const getDirections = (origin, destination, currentLocation) => {
                     duration: routes[0].legs[0].duration,
                     steps: routes[0].legs[0].steps,
                     route: decodedPoints,
-                    currentDriver: currentLocation,
                     state: '0',
                     timestamp: new Date().getTime(),
                 };
@@ -121,30 +120,13 @@ const WaitingScreen = () => {
     );
 };
 
-const RequestList = (props) => {
+const SmartCal = (props) => {
 
     const [typeSelected, setTypeSelected] = useState(null);
     const [optionSort, setOptionSort] = useState(false);
     //constant
-    const { hitchhiking, secondHand, helpBuy } = images
     const { primary, zalert, success, warning, inactive } = colors
-    const [categories, setCategories] = useState([
-        {
-            name: 'Hitchhiking',
-            url: hitchhiking,
-            value: 1,
-        },
-        {
-            name: 'Secondhand Stuff',
-            url: secondHand,
-            value: 2,
-        },
-        {
-            name: 'Your Request',
-            url: helpBuy,
-            value: 0,
-        },
-    ])
+    const [destination,setDestination] = useState(null);
 
     //element init
     const { navigation } = props
@@ -183,8 +165,26 @@ const RequestList = (props) => {
         getCurrentPosition();
     }, [])
 
+    const inside = (currentLocation, destination, geo1 , geo2) => {
+        const minLat = Math.min(currentLocation.latitude, destination.latitude);
+        const maxLat = Math.max(currentLocation.latitude, destination.latitude);
+        const minLong = Math.min(currentLocation.longitude, destination.longitude);
+        const maxLong = Math.max(currentLocation.longitude, destination.longitude);
+        return (
+            geo1.latitude >= minLat &&
+            geo1.latitude <= maxLat &&
+            geo1.longitude >= minLong &&
+            geo1.longitude <= maxLong &&
+            geo2.latitude >= minLat &&
+            geo2.latitude <= maxLat &&
+            geo2.longitude >= minLong &&
+            geo2.longitude <= maxLong &&
+            distanceTwoGeo(geo1,currentLocation)<distanceTwoGeo(geo2,currentLocation)
+        );
+    };
+
     useEffect(() => {
-        if (currentLocation) {
+        if (currentLocation,destination) {
             const dbRef = ref(firebaseDatabase, 'request')
             onValue(dbRef, async (snapshot) => {
                 if (snapshot.exists()) {
@@ -192,19 +192,10 @@ const RequestList = (props) => {
                     const userID = await getUserIDByTokken();
                     let snapshotObject = snapshot.val()
                     setRequests(Object.keys(snapshotObject)
-                        .filter(k => snapshotObject[k].requestStatus != -1)
-                        .filter(k => k.split('-')[0] != userID)
-                        // .sort((a, b) => {
-                        //     const distanceA = distanceTwoGeo(currentLocation, snapshotObject[a].typeRequest===1? snapshotObject[a].geo1 :snapshotObject[a].geo2);
-                        //     const distanceB = distanceTwoGeo(currentLocation, snapshotObject[b].typeRequest===1? snapshotObject[b].geo1 :snapshotObject[b].geo2);
-                        //     if (distanceA < distanceB){
-                        //         return -1;
-                        //     } 
-                        //     if (distanceA > distanceB){
-                        //         return 1;
-                        //     } 
-                        //     return 0;
-                        // })
+                        .filter(k => snapshotObject[k].typeRequest === 1
+                        && k.split('-')[0] != userID
+                        && inside(currentLocation,destination,snapshotObject[k].geo1,snapshotObject[k].geo2)
+                        )
                         .map(eachKey => {
                             let eachObject = snapshotObject[eachKey]
                             const time = new Date(eachObject.timestamp).toLocaleString();
@@ -518,4 +509,4 @@ const styles = StyleSheet.create({
         borderColor: 'black',
     },
 });
-export default RequestList
+export default SmartCal

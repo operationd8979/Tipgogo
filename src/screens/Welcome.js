@@ -22,6 +22,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage'
 import { check, PERMISSIONS, request } from "react-native-permissions";
 import Geolocation from '@react-native-community/geolocation';
 import { FlashMessage } from '../ui'
+import useMap from './FullMap/FullMap'
 
 const checkLocationPermission = async () => {
     try {
@@ -60,16 +61,20 @@ const getCurrentPositionFromGoogle = () => Geolocation.getCurrentPosition(
         //{ enableHighAccuracy: true, timeout: 15000, maximumAge: 10000 }
 )
 
+
 function Welcome(props) {
 
     const {navigation,route} = props
     const {navigate,goBack} = navigation
     const [selectedOption, setSelectedOption] = useState(1);
+
+    const { watchPosition } = useMap();
     
-    useFocusEffect(()=>{
+    useEffect(()=>{
         console.log("----useEffect_welcomeScreen running-----")
         checkLocationPermission();
-        getCurrentPositionFromGoogle();
+        //getCurrentPositionFromGoogle();
+        watchPosition();
         const unsubscribe = onAuthStateChanged(auth, async (responseUser) => {
             if (responseUser) {
                 console.log("Auth successfully!");
@@ -96,7 +101,7 @@ function Welcome(props) {
             }
         })
         return unsubscribe();
-    })
+    },[])
     
     //state => when a state is changed => UI is reloaded
     //like getter/setter

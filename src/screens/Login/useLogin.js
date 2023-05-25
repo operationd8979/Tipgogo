@@ -2,8 +2,6 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Alert } from "react-native";
 import i18n from '../../../i18n';
 
-import * as Keychain from 'react-native-keychain';
-
 import { useNavigation,StackActions } from '@react-navigation/native'
 
 import {

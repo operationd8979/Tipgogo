@@ -16,7 +16,6 @@ import {
 
 import { StackActions } from '@react-navigation/native'
 
-import * as Keychain from 'react-native-keychain';
 import AsyncStorage from '@react-native-async-storage/async-storage'
 
 const useRegister = () => {

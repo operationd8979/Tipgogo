@@ -10,6 +10,10 @@ buildscript {
         kotlinVersion = '1.6.20'
         ndkVersion = "23.1.7779620"
         // We use NDK 23 which has both M1 support and is the side-by-side NDK version from AGP.
+        //tracking location
+        appCompatVersion = "1.4.2"      // Or higher.  Required for new AndroidX compatibility.
+        googlePlayServicesLocationVersion = "20.0.0"  // Or higher.
+
     }
     repositories {
         google()
@@ -22,15 +26,22 @@ buildscript {
     }
 }
 
-/*
+
 allprojects {
-  ...
   repositories {
     // Make sure that you have the following two repositories
     google()  // Google's Maven repository
-
     mavenCentral()  // Maven Central repository
+    //tracking location
+    maven {
+        // Required for react-native-background-geolocation
+        url("${project(':react-native-background-geolocation').projectDir}/libs")
+    }
+    maven {
+        // Required for react-native-background-fetch
+        url("${project(':react-native-background-fetch').projectDir}/libs")
+    }
 
   }
 }
-*/
+

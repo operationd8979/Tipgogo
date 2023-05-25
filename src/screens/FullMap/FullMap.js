@@ -52,6 +52,37 @@ const useMap = () => {
         }
     }
 
+    // const getCurrentPosition = async () => {
+    //     if (!currentLocation) {
+    //         const storageLocation = await AsyncStorage.getItem('currentLocation');
+    //         const location = await JSON.parse(storageLocation);
+    //         if (location) {
+    //             const latitude = location.latitude;
+    //             const longitude = location.longitude;
+    //             console.log(`[Storage]:latitude=${latitude},longitude=${longitude}`);
+    //             setCurrentLocation({ latitude, longitude });
+    //         }
+    //         else {
+    //             Geolocation.getCurrentPosition(
+    //                 position => {
+    //                     const latitude = position.coords.latitude;
+    //                     const longitude = position.coords.longitude;
+    //                     console.log(`[Geolocation]:latitude=${latitude},longitude=${longitude}`);
+    //                     setCurrentLocation({ latitude, longitude });
+    //                     AsyncStorage.setItem('currentLocation', JSON.stringify({ latitude, longitude }));
+    //                     console.log("Updated current location to AsyncStorage!");
+    //                     //setAddress(getAddressFromCoordinates(latitude,longitude));
+    //                 },
+    //                 error => {
+    //                     checkLocationPermission();
+    //                     //console.error('Error getting current location:', error);
+    //                 },
+    //                 //{ enableHighAccuracy: true, timeout: 15000, maximumAge: 10000 }
+    //             )
+    //         }
+    //     }
+    // }
+
     const getCurrentPosition = async () => {
         if (!currentLocation) {
             const storageLocation = await AsyncStorage.getItem('currentLocation');
@@ -62,25 +93,33 @@ const useMap = () => {
                 console.log(`[Storage]:latitude=${latitude},longitude=${longitude}`);
                 setCurrentLocation({ latitude, longitude });
             }
-            else {
-                Geolocation.getCurrentPosition(
-                    position => {
-                        const latitude = position.coords.latitude;
-                        const longitude = position.coords.longitude;
-                        console.log(`[Geolocation]:latitude=${latitude},longitude=${longitude}`);
-                        setCurrentLocation({ latitude, longitude });
-                        AsyncStorage.setItem('currentLocation', JSON.stringify({ latitude, longitude }));
-                        console.log("Updated current location to AsyncStorage!");
-                        //setAddress(getAddressFromCoordinates(latitude,longitude));
-                    },
-                    error => {
-                        checkLocationPermission();
-                        //console.error('Error getting current location:', error);
-                    },
-                    //{ enableHighAccuracy: true, timeout: 15000, maximumAge: 10000 }
-                )
-            }
         }
+    }
+
+    const watchPosition = async () => {
+        console.log("[WATCHPOSITION RUNNING] ID:");
+        console.log(
+        Geolocation.watchPosition(
+            (position) => {
+                console.log("watchPosition")
+                const latitude = position.coords.latitude;
+                const longitude = position.coords.longitude;
+                console.log(`[Geolocation]:latitude=${latitude},longitude=${longitude}`);
+                setCurrentLocation({ latitude, longitude });
+                AsyncStorage.setItem('currentLocation', JSON.stringify({ latitude, longitude }));
+                console.log("Updated current location to AsyncStorage!");
+            },
+            (error) => {
+                checkLocationPermission();
+                console.log("watchPosition")
+            },
+            {
+                enableHighAccuracy: true,
+                distanceFilter: 10, 
+                interval: 5000, //5000
+                fastestInterval: 2000, //2000
+            }
+        ))
     }
 
     const FullMap = (props) => { 
@@ -118,22 +157,23 @@ const useMap = () => {
 
         const calInitialRegion = () => {
 
-            let minLat = null;
-            let maxLat = null;
-            let minLng = null;
-            let maxLng = null;
 
-            if (screen == "RequestList"||screen == "MyRequestList") {
+            let minLat
+            let maxLat
+            let minLng
+            let maxLng
+
+            if(currentDriver){
+                minLat = Math.min(currentLocation.latitude, currentDriver.latitude);
+                maxLat = Math.max(currentLocation.latitude, currentDriver.latitude);
+                minLng = Math.min(currentLocation.longitude, currentDriver.longitude);
+                maxLng = Math.max(currentLocation.longitude, currentDriver.longitude);
+            }
+            else{
                 minLat = Math.min(currentLocation.latitude, geo2.latitude);
                 maxLat = Math.max(currentLocation.latitude, geo2.latitude);
                 minLng = Math.min(currentLocation.longitude, geo2.longitude);
                 maxLng = Math.max(currentLocation.longitude, geo2.longitude);
-            }
-            else {
-                minLat = Math.min(currentLocation.latitude, type === 1 ? geo1.latitude : geo2.latitude);
-                maxLat = Math.max(currentLocation.latitude, type === 1 ? geo1.latitude : geo2.latitude);
-                minLng = Math.min(currentLocation.longitude, type === 1 ? geo1.longitude : geo2.longitude);
-                maxLng = Math.max(currentLocation.longitude, type === 1 ? geo1.longitude : geo2.longitude);
             }
 
             // Calculate the center of the bounds
@@ -197,7 +237,7 @@ const useMap = () => {
                     liteMode={lite}
                     zoomControlEnabled={true}
                     rotateEnabled={false}
-                    initialRegion={geo1? calInitialRegion():{
+                    initialRegion={geo2? calInitialRegion():{
                         latitude: currentLocation.latitude,
                         longitude: currentLocation.longitude,
                         latitudeDelta: 0.008,
@@ -205,7 +245,7 @@ const useMap = () => {
                     }}
                     //onMapReady={lite?takeSnapshot:null}
                 >
-                    {currentLocation&&<Marker
+                    {currentLocation&&screen!="RequestList"&&<Marker
                         key={1}
                         coordinate={currentLocation}
                         tile={"User"}
@@ -216,7 +256,7 @@ const useMap = () => {
                             style={{ width: 35, height: 35 }} // Thiết lập kích thước của hình ảnh
                         />
                     </Marker>}
-                    {type===1&&geo1&&<Marker
+                    {screen!="MyRequestList"&&geo1&&<Marker
                         key={2}
                         coordinate={geo1}
                         tile={"aim"}
@@ -282,6 +322,7 @@ const useMap = () => {
         setPressLocation,
         checkLocationPermission,
         getCurrentPosition,
+        watchPosition,
     }
 
 

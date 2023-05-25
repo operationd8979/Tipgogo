@@ -1,4 +1,4 @@
-import {} from './Calculation'
+import {distanceTwoGeo} from './mapCal'
 import { emailRegex, passRegex, phoneRegex, nameRegex } from './regx'
 import * as mapStyle from './mapStyle'
 export{
@@ -6,5 +6,6 @@ export{
     passRegex,
     phoneRegex,
     nameRegex,
-    mapStyle
+    mapStyle,
+    distanceTwoGeo,
 }

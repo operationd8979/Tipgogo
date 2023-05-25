@@ -33,6 +33,7 @@ import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import Credentials from '../../../Credentials'
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view'
+
 /** 
  - ListView from a map of objects
  - FlatList
@@ -80,18 +81,19 @@ const MyRequestList = (props) => {
                 let snapshotObject = snapshot.val()
                 setRequests(Object.keys(snapshotObject).filter(k=>k.split('-')[0]==userID)
                     .sort((a, b) => {
-                        const statusA = snapshotObject[a].status;
-                        const statusB = snapshotObject[b].status;
-                        if (statusA < statusB) {
-                        return -1;
-                        }
-                        if (statusA > statusB) {
+                        const timestampA = snapshotObject[a].timestamp;
+                        const timestampB = snapshotObject[b].timestamp;
+                        if (timestampA < timestampB) {
                         return 1;
+                        }
+                        if (timestampA > timestampB) {
+                        return -1;
                         }
                         return 0;
                     })
                     .map(eachKey => {
-                        let eachObject = snapshotObject[eachKey]
+                        let eachObject = snapshotObject[eachKey];
+                        const time = new Date(eachObject.timestamp).toLocaleString();
                         return {
                             requestId: eachKey,
                             name: eachObject.title,
@@ -105,6 +107,7 @@ const MyRequestList = (props) => {
                             direction: eachObject.direction,
                             accepted: userID==eachObject.requestStatus,
                             timestamp: eachObject.timestamp,
+                            time : time,
                             mine: eachKey.split('-')[0]==userID,
                         }
                     }))
@@ -156,7 +159,10 @@ const MyRequestList = (props) => {
     }
 
 
-    return <View >
+    return <View style={{
+        backgroundColor: 'white',
+        flex: 1
+    }}>
         <View style={{ height: normalize(95) }}>
             <View style={{
                 paddingHorizontal: split.s4,

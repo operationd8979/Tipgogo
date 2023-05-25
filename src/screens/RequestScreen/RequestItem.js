@@ -6,7 +6,7 @@ import { colors, fontSizes, icons, images, normalize , split } from "../../const
 import useMap from '../FullMap/FullMap'
 
 
-const RequestItem = ({ onPress, request: { name, url, price, des, geo1, geo2 , type, status, accepted, direction, mine}, currentLocation, screen }) => {
+const RequestItem = ({ onPress, request: { name, url, price, des, geo1, geo2 , type, status, accepted, direction, mine, time}, currentLocation, screen }) => {
 
     const {FullMap} = useMap();
 
@@ -46,8 +46,8 @@ const RequestItem = ({ onPress, request: { name, url, price, des, geo1, geo2 , t
             marginHorizontal: split.s5,
             marginVertical: split.s5,
         }}>
-            {currentLocation&&screen&&<FullMap
-                geo1={geo1}
+            {screen&&<FullMap
+                geo1={type===1&&geo1}
                 geo2={geo2}
                 type={type}
                 screen={screen}
@@ -92,10 +92,10 @@ const RequestItem = ({ onPress, request: { name, url, price, des, geo1, geo2 , t
                     color:'black',
                     fontSize: fontSizes.h4,
             }}>Adress: {direction? `${direction.startAddress}` :`${geo1.latitude}-${geo1.longitude}`}</Text>
-            {/* <Text style={{
+            <Text style={{
                     color:'black',
                     fontSize: fontSizes.h4,
-            }}>Type: {type==1?"Hitchiking":type==2?"SecondHand":"Delivery"}</Text> */}
+            }}>Time: {time}</Text>
         </View>
     </TouchableOpacity>
 }
