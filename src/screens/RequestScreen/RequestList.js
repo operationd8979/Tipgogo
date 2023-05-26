@@ -162,7 +162,7 @@ const RequestList = (props) => {
             if (optionSort) {
                 const distanceA = distanceTwoGeo(currentLocation, a.type === 1 ? a.geo1 : a.geo2);
                 const distanceB = distanceTwoGeo(currentLocation, b.type === 1 ? b.geo1 : b.geo2);
-                if (distanceA < distanceB) 
+                if (distanceA < distanceB)
                     return -1;
                 else
                     return 1;
@@ -194,17 +194,6 @@ const RequestList = (props) => {
                     setRequests(Object.keys(snapshotObject)
                         .filter(k => snapshotObject[k].requestStatus != -1)
                         .filter(k => k.split('-')[0] != userID)
-                        // .sort((a, b) => {
-                        //     const distanceA = distanceTwoGeo(currentLocation, snapshotObject[a].typeRequest===1? snapshotObject[a].geo1 :snapshotObject[a].geo2);
-                        //     const distanceB = distanceTwoGeo(currentLocation, snapshotObject[b].typeRequest===1? snapshotObject[b].geo1 :snapshotObject[b].geo2);
-                        //     if (distanceA < distanceB){
-                        //         return -1;
-                        //     } 
-                        //     if (distanceA > distanceB){
-                        //         return 1;
-                        //     } 
-                        //     return 0;
-                        // })
                         .map(eachKey => {
                             let eachObject = snapshotObject[eachKey]
                             const time = new Date(eachObject.timestamp).toLocaleString();
@@ -397,7 +386,7 @@ const RequestList = (props) => {
                     size={30}
                     color={"black"}
                     marginStart={5}
-                    onPress={()=>setOptionSort(!optionSort)}
+                    onPress={() => setOptionSort(!optionSort)}
                 />
             </View>
         </View>
@@ -487,7 +476,7 @@ const RequestList = (props) => {
                             geo2={selectedRequest.geo2}
                             direction={selectedRequest.direction}
                             type={selectedRequest.type}
-                            screen="ListRequest"
+                            screen="ModalListRequest"
                         />
                     </View>
                 )}

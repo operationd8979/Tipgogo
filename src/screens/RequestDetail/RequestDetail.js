@@ -33,7 +33,6 @@ import { CameraQR } from '../../screens'
 import { CLButton } from '../../components'
 import LinearGradient from 'react-native-linear-gradient'
 import Icon from 'react-native-vector-icons/FontAwesome5'
-import LocationService from '../../service/LocationService';
 
 
 
@@ -115,7 +114,7 @@ const RequestDetail = () => {
 
     useEffect(() => {
         checkLocationPermission();
-        //getCurrentPosition();
+        getCurrentPosition();
         getDirections().then((direction) => setRoad(direction));
         if (type === 1) {
             getUserByUserID(requestId.split('-')[0]).then((user) => setBoss(user));
@@ -126,6 +125,24 @@ const RequestDetail = () => {
         // LocationService.start();
         // return cleanup;
     }, [])
+
+    useEffect(() => {
+        if (currentLocation) {
+            updateCurrentDriver();
+        }
+    }, [currentLocation])
+
+    const updateCurrentDriver = async () => {
+        const userID = await getUserIDByTokken();
+        const userRef = ref(firebaseDatabase, `direction/${userID}`);
+        update(userRef, { currentDriver: currentLocation })
+            .then(() => {
+                console.log("Update currentDriver successfully!.");
+            })
+            .catch((error) => {
+                console.error("Error updating currentDriver: ", error);
+            });
+    }
 
     const getDirections = () => {
         return new Promise(async (resolve, reject) => {
@@ -168,7 +185,7 @@ const RequestDetail = () => {
         scrollEnabled={true}
         contentContainerStyle={{ flexGrow: 1 }}
     >
-        {currentLocation && road && <FullMap geo2={geo2} direction={road} direction2={direction} type={type} request={request} screen="DetailRequest" />}
+        {currentLocation && road && <FullMap geo1={geo1} geo2={geo2} direction={road} direction2={direction} type={type} request={request} screen="DetailRequest" />}
         {road && type === 2 && <View style={{
             //backgroundColor:"green",
             //height: 400,
@@ -241,7 +258,7 @@ const RequestDetail = () => {
                     size={30}>
                     <Text style={{ color: 'white', fontWeight: '800' }}>1</Text>
                 </Circle>
-                <Text style={{ fontSize: fontSizes.h4, color: primary, marginStart: normalize(5) }}>On going {currentLocation}</Text>
+                <Text style={{ fontSize: fontSizes.h4, color: primary, marginStart: normalize(5) }}>On going</Text>
                 <Text style={{ fontSize: fontSizes.h4, color: "black", marginStart: normalize(5), position: 'absolute', end: normalize(20) }}>{distance.text}/{duration.text}</Text>
             </View>
             <View style={{

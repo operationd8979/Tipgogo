@@ -1,4 +1,4 @@
-import { Login, Welcome, Register,RequestDetail, MyRequest , MyRequestList} from "../screens"
+import { Login, Welcome, Register, RequestDetail, MyRequest, MyRequestList } from "../screens"
 import { NavigationContainer } from '@react-navigation/native';
 
 
@@ -13,7 +13,7 @@ const App = (props) => {
     <UserPositionProvider>
       <NavigationContainer>
         <Stack.Navigator
-          initialRouteName="Welcome"
+          initialRouteName="UItab"
           screenOptions={{
             headerShown: false,
           }}>

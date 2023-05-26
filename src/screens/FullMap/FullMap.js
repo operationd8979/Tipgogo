@@ -99,33 +99,33 @@ const useMap = () => {
     const watchPosition = async () => {
         console.log("[WATCHPOSITION RUNNING] ID:");
         console.log(
-        Geolocation.watchPosition(
-            (position) => {
-                console.log("watchPosition")
-                const latitude = position.coords.latitude;
-                const longitude = position.coords.longitude;
-                console.log(`[Geolocation]:latitude=${latitude},longitude=${longitude}`);
-                setCurrentLocation({ latitude, longitude });
-                AsyncStorage.setItem('currentLocation', JSON.stringify({ latitude, longitude }));
-                console.log("Updated current location to AsyncStorage!");
-            },
-            (error) => {
-                checkLocationPermission();
-                console.log("watchPosition")
-            },
-            {
-                enableHighAccuracy: true,
-                distanceFilter: 10, 
-                interval: 5000, //5000
-                fastestInterval: 2000, //2000
-            }
-        ))
+            Geolocation.watchPosition(
+                (position) => {
+                    console.log("watchPosition")
+                    const latitude = position.coords.latitude;
+                    const longitude = position.coords.longitude;
+                    console.log(`[Geolocation]:latitude=${latitude},longitude=${longitude}`);
+                    setCurrentLocation({ latitude, longitude });
+                    AsyncStorage.setItem('currentLocation', JSON.stringify({ latitude, longitude }));
+                    console.log("Updated current location to AsyncStorage!");
+                },
+                (error) => {
+                    checkLocationPermission();
+                    console.log("watchPosition")
+                },
+                {
+                    enableHighAccuracy: true,
+                    distanceFilter: 10,
+                    interval: 5000, //5000
+                    fastestInterval: 2000, //2000
+                }
+            ))
     }
 
-    const FullMap = (props) => { 
+    const FullMap = (props) => {
 
         //element init map
-        let { geo1, geo2, lite, direction, direction2, type, screen, locationFromItem, currentDriver, request} = props;
+        let { geo1, geo2, lite, direction, direction2, type, screen, locationFromItem, currentDriver, request } = props;
         const mapRef = useRef(null);
 
         const [uriMap, setUriMap] = useState(null);
@@ -146,7 +146,7 @@ const useMap = () => {
         }, [mapRef.current]);
 
         //element func
-        const [isEnabledSmartCal,setIsEnabledSmartCal] = useState(false);
+        const [isEnabledSmartCal, setIsEnabledSmartCal] = useState(false);
 
         // const initialRegion = {
         //     latitude: LATITUDE,
@@ -157,32 +157,30 @@ const useMap = () => {
 
         const calInitialRegion = () => {
 
+            let locationA = currentLocation;
+            let locationB = geo2;
 
-            let minLat
-            let maxLat
-            let minLng
-            let maxLng
+            if (currentDriver)
+                locationB = currentDriver;
+            if (screen === "RequestList")
+                locationA = geo1;
+            else {
+                if (type === 1 && geo1)
+                    locationB = geo1;
+            }
 
-            if(currentDriver){
-                minLat = Math.min(currentLocation.latitude, currentDriver.latitude);
-                maxLat = Math.max(currentLocation.latitude, currentDriver.latitude);
-                minLng = Math.min(currentLocation.longitude, currentDriver.longitude);
-                maxLng = Math.max(currentLocation.longitude, currentDriver.longitude);
-            }
-            else{
-                minLat = Math.min(currentLocation.latitude, geo2.latitude);
-                maxLat = Math.max(currentLocation.latitude, geo2.latitude);
-                minLng = Math.min(currentLocation.longitude, geo2.longitude);
-                maxLng = Math.max(currentLocation.longitude, geo2.longitude);
-            }
+            const minLat = Math.min(locationA.latitude, locationB.latitude);
+            const maxLat = Math.max(locationA.latitude, locationB.latitude);
+            const minLng = Math.min(locationA.longitude, locationB.longitude);
+            const maxLng = Math.max(locationA.longitude, locationB.longitude);
 
             // Calculate the center of the bounds
             const centerLat = (minLat + maxLat) / 2;
             const centerLng = (minLng + maxLng) / 2;
 
             // Calculate the delta (difference) between the min and max values
-            const latDelta = (maxLat - minLat) *1.5;
-            const lngDelta = (maxLng - minLng) *1.5;
+            const latDelta = (maxLat - minLat) * 1.5;
+            const lngDelta = (maxLng - minLng) * 1.5;
 
             const initialRegion = {
                 latitude: centerLat,
@@ -208,8 +206,8 @@ const useMap = () => {
         };
 
         useEffect(() => {
-            console.log(`__________init map(${screen?screen:null})__________`);
-            if(locationFromItem){
+            console.log(`__________init map(${screen ? screen : null})__________`);
+            if (locationFromItem) {
                 setCurrentLocation(locationFromItem);
             }
         }, [])
@@ -221,13 +219,13 @@ const useMap = () => {
                 marginHorizontal: split.s5,
                 marginVertical: split.s5,
             }}>
-                {uriMap&&<Image 
-                    source={{uri:uriMap}} 
+                {uriMap && <Image
+                    source={{ uri: uriMap }}
                     style={{
                         ...StyleSheet.absoluteFillObject,
                     }}
                 />}
-                {!uriMap&&<MapView
+                {!uriMap && <MapView
                     ref={mapRef}
                     provider={PROVIDER_GOOGLE} // remove if not using Google Maps
                     style={{
@@ -237,15 +235,15 @@ const useMap = () => {
                     liteMode={lite}
                     zoomControlEnabled={true}
                     rotateEnabled={false}
-                    initialRegion={geo2? calInitialRegion():{
+                    initialRegion={geo2 ? calInitialRegion() : {
                         latitude: currentLocation.latitude,
                         longitude: currentLocation.longitude,
                         latitudeDelta: 0.008,
                         longitudeDelta: 0.011,
                     }}
-                    //onMapReady={lite?takeSnapshot:null}
+                //onMapReady={lite?takeSnapshot:null}
                 >
-                    {currentLocation&&screen!="RequestList"&&<Marker
+                    {currentLocation && screen != "RequestList" && <Marker
                         key={1}
                         coordinate={currentLocation}
                         tile={"User"}
@@ -256,7 +254,7 @@ const useMap = () => {
                             style={{ width: 35, height: 35 }} // Thiết lập kích thước của hình ảnh
                         />
                     </Marker>}
-                    {screen!="MyRequestList"&&geo1&&<Marker
+                    {(screen != "MyRequestList" || screen != "MyRequest") && geo1 && <Marker
                         key={2}
                         coordinate={geo1}
                         tile={"aim"}
@@ -267,18 +265,18 @@ const useMap = () => {
                             style={{ width: 35, height: 35 }} // Thiết lập kích thước của hình ảnh
                         />
                     </Marker>}
-                    {geo2&&<Marker
+                    {geo2 && <Marker
                         key={3}
                         coordinate={geo2}
                         tile={"aim"}
                         description={"Location of aim.geo2"}
                     >
                         <Image
-                            source={(screen=="MyRequest"||screen=="MyRequestList")?images.markerMyAim:images.markerUrAim}
+                            source={(screen == "MyRequest" || screen == "MyRequestList") ? images.markerMyAim : images.markerUrAim}
                             style={{ width: 35, height: 35, }} // Thiết lập kích thước của hình ảnh
                         />
                     </Marker>}
-                    {currentDriver&&<Marker
+                    {currentDriver && <Marker
                         key={4}
                         coordinate={currentDriver}
                         tile={"aim"}
@@ -289,18 +287,18 @@ const useMap = () => {
                             style={{ width: 35, height: 35, }} // Thiết lập kích thước của hình ảnh
                         />
                     </Marker>}
-                    {!lite&&direction&&<Polyline
+                    {!lite && direction && <Polyline
                         coordinates={direction.route}
                         strokeColor="#ff0000"
                         strokeWidth={2}
                     />}
-                    {!lite&&direction2&&<Polyline
+                    {!lite && direction2 && <Polyline
                         coordinates={direction2.route}
                         strokeColor={colors.primary}
                         strokeWidth={2}
                     />}
                 </MapView>}
-                {!lite&&<TouchableOpacity
+                {!lite && <TouchableOpacity
                     style={{
                         position: 'absolute',
                         top: split.s2,

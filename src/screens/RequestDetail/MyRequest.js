@@ -124,17 +124,27 @@ const RequestDetail = (props) => {
 
     useEffect(() => {
         //bổ xung value on tracking location of driver....
-        if(stateRequest==-1){
+        if (stateRequest == -1) {
             navigation.navigate('UItab')
         }
-        else{
-            if(stateRequest!=0){
+        else {
+            if (stateRequest != 0) {
                 getDirections().then((direction) => {
                     setRoad(direction);
                     if (direction) {
                         const time = new Date(direction.timestamp);
                         setTime(time);
-                        setCurrentDriver(direction.currentDriver);
+                        //setCurrentDriver(direction.currentDriver);
+                        const dbRef = ref(firebaseDatabase, `direction/${stateRequest}/${requestId}`)
+                        onValue(dbRef, async (snapshot) => {
+                            if (snapshot.exists()) {
+                                console.log('Listenning this request........');
+                                let snapshotObject = snapshot.val();
+                                setCurrentDriver(snapshotObject.currentDriver);
+                            } else {
+                                console.log('Can not get this request!')
+                            }
+                        })
                         SetStateDisplay(2);
                     }
                 });
@@ -190,7 +200,7 @@ const RequestDetail = (props) => {
             <View style={{
                 paddingHorizontal: split.s4,
                 paddingVertical: split.s5,
-                backgroundColor:primary
+                backgroundColor: primary
             }}>
                 <Text style={{
                     color: 'white',
@@ -349,51 +359,51 @@ const RequestDetail = (props) => {
             <View style={{
                 flexDirection: 'row',
             }}>
-                {type==2&&<Image source={{ uri: url }} style={{ minHeight: 120, height: "100%", width: 120, borderRadius: 20 }} />}
+                {type == 2 && <Image source={{ uri: url }} style={{ minHeight: 120, height: "100%", width: 120, borderRadius: 20 }} />}
                 <View style={{ marginStart: 10, flex: 1 }}>
                     <Text style={{
                         marginTop: normalize(5),
                         color: 'black',
-                        alignSelf:'center',
+                        alignSelf: 'center',
                         fontSize: fontSizes.h4,
                     }}>Title: {name} </Text>
                     <Text style={{
                         marginTop: normalize(5),
                         color: 'black',
-                        alignSelf:'center',
+                        alignSelf: 'center',
                         fontSize: fontSizes.h4,
                     }}>Mô tả: {des} </Text>
                     {type == 1 && <View style={{
-                        borderRadius:30,
-                        borderWidth:1,
+                        borderRadius: 30,
+                        borderWidth: 1,
                         padding: normalize(11),
-                        margin:3,
-                        alignItems:'center'
+                        margin: 3,
+                        alignItems: 'center'
                     }}>
-                                    <Text style={{
-                                        color: 'black',
-                                        fontSize: fontSizes.h4,
-                                    }}>Khoảng cách: {direction.distance.text}</Text>
-                                    <Text style={{
-                                        color: 'black',
-                                        fontSize: fontSizes.h4,
-                                    }}>Thời gian: {direction.duration.text}</Text>
-                                    <Text style={{
-                                        color: 'black',
-                                        fontSize: fontSizes.h4,
-                                        fontWeight:'bold'
-                                    }}>Từ: {direction.startAddress}</Text>
-                                    <Text style={{
-                                        color: 'black',
-                                        fontSize: fontSizes.h4,
-                                        fontWeight:'bold'
-                                    }}>Tới: {direction.endAddress}</Text>
-                                </View>}
+                        <Text style={{
+                            color: 'black',
+                            fontSize: fontSizes.h4,
+                        }}>Khoảng cách: {direction.distance.text}</Text>
+                        <Text style={{
+                            color: 'black',
+                            fontSize: fontSizes.h4,
+                        }}>Thời gian: {direction.duration.text}</Text>
+                        <Text style={{
+                            color: 'black',
+                            fontSize: fontSizes.h4,
+                            fontWeight: 'bold'
+                        }}>Từ: {direction.startAddress}</Text>
+                        <Text style={{
+                            color: 'black',
+                            fontSize: fontSizes.h4,
+                            fontWeight: 'bold'
+                        }}>Tới: {direction.endAddress}</Text>
+                    </View>}
                     <Text style={{
                         marginTop: normalize(5),
                         color: price == 0 ? success : 'black',
                         fontSize: fontSizes.h4,
-                        alignSelf:'center',
+                        alignSelf: 'center',
                     }}>Giá: {price == 0 ? "FREE" : `${price}k vnd`} </Text>
                 </View>
             </View>
@@ -406,12 +416,16 @@ const RequestDetail = (props) => {
             height: normalize(70),
             flexDirection: 'row',
             justifyContent: 'space-around',
-            alignItems:'center'
+            alignItems: 'center'
             //backgroundColor:"red",
         }}>
             {/*onPress,title,colorBG,colorBD,colorT,sizeF,sizeBT,sizeB,radius,disabled*/}
             <TouchableOpacity
-                onPress={() => setModalVisible(true)}>
+                //onPress={() => setModalVisible(true)}
+                onPress={() => {
+                    console.log(currentDriver);
+                }}
+            >
                 <LinearGradient
                     colors={[primary, 'white', 'navy']}
                     style={{
