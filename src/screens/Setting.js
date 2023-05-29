@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from "react"
-import { View, Text, Switch, TouchableOpacity, TextInput, Linking, Modal, StyleSheet, Image } from "react-native"
+import { View, Text, Switch, TouchableOpacity, TextInput, Linking, Modal, StyleSheet, Image, Alert } from "react-native"
 import { colors, fontSizes, icons, images, normalize, split } from "../constants"
 import Icon from 'react-native-vector-icons/FontAwesome5'
 import {
@@ -26,11 +26,12 @@ import {
 } from "../../firebase/firebase"
 import { Camera, useCameraDevices } from 'react-native-vision-camera'
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view'
-
+import { Picker } from '@react-native-picker/picker'
 import { StackActions } from '@react-navigation/native'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { Dropdown, CLButton } from '../components'
 import ImageResizer from 'react-native-image-resizer';
+import i18n from '../../i18n'
 
 const getUserByTokken = () => {
     return new Promise(async (resolve, reject) => {
@@ -82,6 +83,7 @@ const checkCameraPermission = async () => {
 const Setting = (props) => {
 
     const [init,setInit] = useState(0);
+    const [selectedOption,setSelectedOption] = useState(i18n.locale=='vi'?2:i18n.locale=='jp'?3:1);
 
     const [user, setUser] = useState(null);
     const [modalVisible, setModalVisible] = useState(false);
@@ -170,25 +172,48 @@ const Setting = (props) => {
     const { navigation } = props
 
     const { primary, inactive, success, warning, zalert, placeholder } = colors
+
+    const showConfirmDialog = () => {
+        return Alert.alert(
+          "Are your sure?",
+          "Are you sure you want to Log Out?",
+          [
+            {
+              text: "Yes",
+              onPress: async () => {
+                auth.signOut()
+                await AsyncStorage.removeItem('token');
+                navigation.dispatch(StackActions.replace('Login'));
+                console.log("Sign out!");
+              },
+            },
+            {
+              text: "No",
+            },
+          ]
+        );
+      };
+
     return <KeyboardAwareScrollView
             enableResetScrollToCoords={true}
             contentContainerStyle={{ flexGrow: 1, height:normalize(440) }}
         >
         <View style={{
-            flex: 10,
-            marginHorizontal: 5,
+            paddingHorizontal: split.s4,
+            paddingVertical: split.s5,
+            backgroundColor: primary
         }}>
             <Text style={{
-                color: 'black',
-                fontSize: normalize(20),
+                color: "white",
+                fontSize: normalize(18),
                 fontWeight: 'bold',
-                padding: 10
+                padding: 10,
             }}>Settings</Text>
-            <View style={{ height: 1, backgroundColor: primary }} />
         </View>
         <View style={{
             flex: 15,
-            marginHorizontal: 10
+            marginHorizontal: 10,
+            marginTop: 5,
         }}>
             <Text style={{
                 color: primary,
@@ -361,7 +386,7 @@ const Setting = (props) => {
                 justifyContent: 'center',
                 alignItems: 'center',
             }}>
-                <Icon name='facebook' size={20} />
+                <Icon name='adjust' size={20} />
                 <Text style={{
                     fontSize: fontSizes.h5,
                     color: 'black',
@@ -372,21 +397,53 @@ const Setting = (props) => {
             </View>
         </View>
         <View style={{
-            flex: 8,
+            borderWidth: 1,
+            borderColor: 'black',
+            borderRadius: 7,
+            width: normalize(300),
+            flexDirection: 'row',
+            alignItems: 'center',
+            paddingStart: 10,
+            marginHorizontal: 10,
+        }}>
+            {/* <Text style={{ fontSize: fontSizes.h5, color: "#191970" }}>Ngôn ngữ |</Text> */}
+            <Image 
+                source={selectedOption==1? images.fagUSA :selectedOption==2? images.fagVN : images.fagJP} 
+                style={{
+                    height:normalize(30),
+                    width:normalize(30),
+            }}/>
+            <Picker
+                selectedValue={selectedOption}
+                style={{
+                    flex: 1,
+                    height: 50,
+                    color: 'black',
+                }}
+                onValueChange={(itemValue, itemIndex) => {
+                    setSelectedOption(itemValue);
+                    i18n.locale = itemValue==1?'en':itemValue==2?'vi':'jp';
+                }}
+            >
+                <Picker.Item label={i18n.t('w_item1')} value={1} />
+                <Picker.Item label={i18n.t('w_item2')} value={2} />
+                <Picker.Item label={i18n.t('w_item3')} value={3} />
+            </Picker>
+        </View>
+        <View style={{
             marginHorizontal: 10,
             //backgroundColor:"red"
         }}>
             <TouchableOpacity style={{
+                marginTop: 15,
                 flexDirection: 'row',
                 paddingVertical: 10,
                 alignItems: 'center',
-                //backgroundColor:"green"
+                //backgroundColor:"green",
+                borderTopWidth: 1,
+                borderBottomWidth: 1,
             }} onPress={async () => {
-                auth.signOut()
-                await AsyncStorage.removeItem('token');
-                navigation.dispatch(StackActions.replace('Welcome'));
-                //navigation.dispatch(StackActions.popToTop());
-                console.log("Sign out!");
+                showConfirmDialog();
             }}>
                 <Icon
                     name='sign-out-alt'
@@ -406,7 +463,7 @@ const Setting = (props) => {
                         paddingEnd: 10,
                         opacity: 0.5,
                     }}
-                    size={20} color={'black'}
+                    size={normalize(15)} color={'black'}
                 />
             </TouchableOpacity>
         </View>

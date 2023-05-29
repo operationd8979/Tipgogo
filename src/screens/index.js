@@ -9,6 +9,7 @@ import CreateRequest from "./RequestAction/CreateRequest";
 import {RequestDetail,MyRequest} from "./RequestDetail";
 import CameraQR from "./CameraQR/CameraQR";
 import MyRequestList from "./RequestScreen/MyRequestList";
+import SmartCal from './SmartCal/SmartCal'
 
 export {
     Welcome,
@@ -22,5 +23,6 @@ export {
     RequestDetail,
     MyRequest,
     CameraQR,
-    MyRequestList
+    MyRequestList,
+    SmartCal,
 }

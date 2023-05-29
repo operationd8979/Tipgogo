@@ -28,7 +28,8 @@ const RequestItem = ({ onPress, request: { name, url, price, des, geo1, geo2 , t
             //backgroundColor:'purple',
             marginHorizontal: split.s3,
             marginTop: split.s3,
-            flexDirection:'row'
+            flexDirection:'row',
+            opacity: status==-1? 0.5 : 1,
     }}>
         {type===2&&<Image 
             style={{
@@ -57,7 +58,6 @@ const RequestItem = ({ onPress, request: { name, url, price, des, geo1, geo2 , t
         </View>}
         <View style={{
             flex:1,
-            //backgroundColor:'green',
             marginRight: split.s5
         }}>
             <Text style={{

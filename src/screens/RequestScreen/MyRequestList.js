@@ -108,7 +108,7 @@ const MyRequestList = (props) => {
                             accepted: userID==eachObject.requestStatus,
                             timestamp: eachObject.timestamp,
                             time : time,
-                            mine: eachKey.split('-')[0]==userID,
+                            mine: true,
                         }
                     }))
             } else {
@@ -204,11 +204,6 @@ const MyRequestList = (props) => {
                         color: "black",
                         paddingStart: 30
                     }}
-                />
-                <Icon name={"bars"}
-                    size={30}
-                    color={"black"}
-                    marginStart={5}
                 />
             </View>
         </View>

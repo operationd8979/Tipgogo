@@ -29,8 +29,6 @@ import {
 } from "../../../firebase/firebase"
 import useMap from '../FullMap/FullMap'
 import axios from 'axios';
-import Geolocation from '@react-native-community/geolocation';
-
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import Credentials from '../../../Credentials'
 import { distanceTwoGeo } from '../../utilies'
@@ -124,6 +122,7 @@ const WaitingScreen = () => {
 const RequestList = (props) => {
 
     const [typeSelected, setTypeSelected] = useState(null);
+    const [onAvaiable, setOnAvaiable] = useState(true);
     const [optionSort, setOptionSort] = useState(false);
     //constant
     const { hitchhiking, secondHand, helpBuy } = images
@@ -139,11 +138,11 @@ const RequestList = (props) => {
             url: secondHand,
             value: 2,
         },
-        {
-            name: 'Your Request',
-            url: helpBuy,
-            value: 0,
-        },
+        // {
+        //     name: 'Your Request',
+        //     url: helpBuy,
+        //     value: 0,
+        // },
     ])
 
     //element init
@@ -152,11 +151,13 @@ const RequestList = (props) => {
 
     //element function
     const [modalVisible, setModalVisible] = useState(false);
+    const [sortModalVisible, setSortModalVisible] = useState(false);
     const [selectedRequest, setSelectedRequest] = useState(null);
     const [requests, setRequests] = useState([]);
     const [searchText, setSearchText] = useState('')
     const filterRequest = useCallback(() => requests.filter(eachRequest =>
         eachRequest.name.toLowerCase().includes(searchText.toLowerCase())
+        && (onAvaiable|| eachRequest.accepted)
         && (typeSelected == null || eachRequest.type == typeSelected))
         .sort((a, b) => {
             if (optionSort) {
@@ -176,7 +177,6 @@ const RequestList = (props) => {
         })
         , [searchText, typeSelected, requests, optionSort])
 
-
     useEffect(() => {
         console.log("__________Init listRequest__________");
         checkLocationPermission();
@@ -189,6 +189,7 @@ const RequestList = (props) => {
             onValue(dbRef, async (snapshot) => {
                 if (snapshot.exists()) {
                     console.log('Importing data to listRequest')
+                    setOnAvaiable(true);
                     const userID = await getUserIDByTokken();
                     let snapshotObject = snapshot.val()
                     setRequests(Object.keys(snapshotObject)
@@ -197,6 +198,7 @@ const RequestList = (props) => {
                         .map(eachKey => {
                             let eachObject = snapshotObject[eachKey]
                             const time = new Date(eachObject.timestamp).toLocaleString();
+                            if(userID == eachObject.requestStatus) setOnAvaiable(false);
                             return {
                                 requestId: eachKey,
                                 name: eachObject.title,
@@ -211,7 +213,6 @@ const RequestList = (props) => {
                                 accepted: userID == eachObject.requestStatus,
                                 timestamp: eachObject.timestamp,
                                 time: time,
-                                mine: eachKey.split('-')[0] == userID,
                             }
                         }))
                 } else {
@@ -254,20 +255,14 @@ const RequestList = (props) => {
     };
 
     const handleTapRequest = async (item) => {
-        if (item.mine) {
+        if (item.accepted) {
             console.log("1");
-            navigation.navigate("MyRequest", { request: item });
+            navigation.navigate("RequestDetail", { request: item });
         }
         else {
-            if (item.accepted) {
-                console.log("2");
-                navigation.navigate("RequestDetail", { request: item });
-            }
-            else {
-                console.log("3");
-                setSelectedRequest(item);
-                setModalVisible(true);
-            }
+            console.log("2");
+            setSelectedRequest(item);
+            setModalVisible(true);
         }
     }
 
@@ -343,11 +338,12 @@ const RequestList = (props) => {
     }}>
         <View style={{ height: normalize(95) }}>
             <View style={{
-                marginHorizontal: split.s4,
-                marginVertical: split.s5,
+                paddingHorizontal: split.s4,
+                paddingVertical: split.s5,
+                backgroundColor: primary
             }}>
                 <Text style={{
-                    color: primary,
+                    color: "white",
                     fontSize: normalize(18),
                     fontWeight: 'bold',
                     padding: 10,
@@ -386,8 +382,59 @@ const RequestList = (props) => {
                     size={30}
                     color={"black"}
                     marginStart={5}
-                    onPress={() => setOptionSort(!optionSort)}
+                    onPress={() => setSortModalVisible(!sortModalVisible)}
                 />
+                <Modal visible={sortModalVisible} animationType="fade" transparent={true}>
+                    <TouchableOpacity
+                        onPress={()=>{setSortModalVisible(false)}}
+                        style={{
+                            flex:1,
+                            //backgroundColor:'green'
+                        }}
+                    />
+                    <View style={{
+                        backgroundColor:"green",
+                        position:'absolute',
+                        width: 200,
+                        right: 0,
+                        top: 110,
+                        borderWidth: 1,
+                    }}>
+                        <TouchableOpacity style={{
+                            height:25,
+                            flexDirection:'row',
+                            alignItems:'center',
+                            paddingStart: 5,
+                            backgroundColor: optionSort? 'white' : primary
+                            }}
+                            onPress={() => {
+                                setOptionSort(false);
+                                setSortModalVisible(false);
+                            }}
+                        >
+                            <Icon name="history" color={optionSort? inactive : "white"}/>
+                            <Text style={{color: optionSort? inactive : "white"}}>  Sắp xếp theo thời gian</Text>
+                        </TouchableOpacity>
+                        
+                        <View style={{height:1,backgroundColor:"black"}} />
+
+                        <TouchableOpacity style={{
+                            height:25,
+                            flexDirection:'row',
+                            alignItems:'center',
+                            paddingStart: 5,
+                            backgroundColor: optionSort? primary : 'white'
+                            }}
+                            onPress={() => {
+                                setOptionSort(true);
+                                setSortModalVisible(false);
+                            }}
+                        >
+                            <Icon name="shoe-prints" color={optionSort? "white" : inactive}/>
+                            <Text style={{color: optionSort? "white" : inactive}}>  Sắp xếp theo khoảng cách</Text>
+                        </TouchableOpacity>
+                    </View>
+                </Modal>
             </View>
         </View>
         <View style={{
@@ -401,10 +448,7 @@ const RequestList = (props) => {
                 renderItem={({ item }) => <Category
                     category={item}
                     onPress={() => {
-                        if (item.value == 0) {
-                            navigation.navigate("MyRequestList");
-                        }
-                        else {
+                        if (onAvaiable) {
                             setTypeSelected(item.value == typeSelected ? null : item.value);
                         }
                     }} />}

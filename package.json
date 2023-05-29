@@ -22,6 +22,7 @@
     "firebase": "^9.20.0",
     "i18n-js": "^4.2.3",
     "lodash.debounce": "^4.0.8",
+    "openrouteservice-js": "^0.3.0",
     "react": "18.2.0",
     "react-native": "0.71.7",
     "react-native-background-fetch": "^4.1.0",

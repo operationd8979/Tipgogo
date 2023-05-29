@@ -12,6 +12,9 @@ export default{
     markerUrGeo2: require('../assets/marker-ur-request-geo2.png'),
     markerMyAim: require('../assets/marker-end-my.png'),
     markerUrAim: require('../assets/marker-end-your.png'),
+    fagUSA: require('../assets/usa.png'),
+    fagVN: require('../assets/vietnam.png'),
+    fagJP: require('../assets/japan.png'),
     userPhoto: require('../assets/photo-user.jpg'),
     uriUserPhoto: "https://firebasestorage.googleapis.com/v0/b/tipgogo-3a1a9.appspot.com/o/UserPhoto%2Fphoto-user.jpg?alt=media&token=31fde32c-dfea-42e5-ad18-c51227d6d409"
 }

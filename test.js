@@ -13,7 +13,6 @@ const Test = () => {
 
   useEffect(() => {
     findShortestPaths();
-    console.log([{ lat: 10.805000, lng: 106.635414 }, ...routes[1].coordinates, ...routes[2].coordinates, { lat: 10.783812, lng: 106.661724 }]);
   }, []);
 
   const findShortestPaths = () => {

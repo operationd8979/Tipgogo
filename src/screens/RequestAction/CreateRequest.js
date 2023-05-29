@@ -372,13 +372,13 @@ const CreateRequest = (props) => {
         >
             <View style={{
                 flex: 6,
-                marginHorizontal: split.s4,
-                marginVertical: split.s5,
-                //backgroundColor:'red',
+                paddingHorizontal: split.s4,
+                paddingVertical: split.s5,
+                backgroundColor: primary,
             }}>
                 <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
                     <Text style={{
-                        color: primary,
+                        color: "white",
                         fontSize: normalize(18),
                         fontWeight: 'bold',
                         padding: 10,
@@ -401,7 +401,7 @@ const CreateRequest = (props) => {
                     borderWidth: 1,
                     borderColor: 'black',
                     borderRadius: 7,
-                    width: 380,
+                    width: normalize(310),
                     flexDirection: 'row',
                     alignItems: 'center',
                     paddingStart: 10,
@@ -661,8 +661,7 @@ const CreateRequest = (props) => {
                 >
                     <Image source={images.iconCurrentLocation} style={{ height: 50, width: 50 }} />
                 </TouchableOpacity>
-            </View>
-            }
+            </View>}
             {showIndicator && <ActivityIndicator size={'large'} animating={showIndicator} />}
             <View style={{
                 flex: 20,

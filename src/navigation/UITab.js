@@ -1,5 +1,5 @@
-import {RequestList,Setting,CreateRequest,Register} from '../screens'
-import {colors, fontSizes} from '../constants'
+import {RequestList,Setting,CreateRequest,Register, MyRequestList,SmartCal} from '../screens'
+import {colors, fontSizes, normalize} from '../constants'
 import Icon from 'react-native-vector-icons/FontAwesome5'
 const { createBottomTabNavigator } = require("@react-navigation/bottom-tabs")
 import {StyleSheet,View,Image} from 'react-native'
@@ -27,7 +27,8 @@ const UItab = (props) => {
             tabBarLabelStyle : route.name == "Create" ? {fontSize:fontSizes.h4,fontWeight:'bold'} :{fontSize:fontSizes.h5},
             tabBarIcon: ({focused})=>{
                 let screenName = route.name
-                let iconName = route.name == "Requests"? "motorcycle" : route.name == "Create" ? "feather" : route.name == "Setting" ? "user" : ""
+                let iconName = route.name == "Requests"? "motorcycle" : route.name == "Create" ? "feather" : route.name == "Setting" ? "user" 
+                    : route.name == "SmartDi" ? "broom" : "newspaper"
                 return route.name == "Create"? <LinearGradient colors={focused? ['pink', primary] :[primary, 'pink']} style={styles.gradientBackground}>
                     <Icon name={iconName} size={35} color={focused? zalert :'black'} style={{marginBottom:15}}/>
                 </LinearGradient> :<Icon name={iconName} size={30} color={focused?primary:inactive}/>
@@ -56,11 +57,13 @@ const UItab = (props) => {
 
     return (
     <Tab.Navigator 
-        initialRouteName= "Requests"
+        initialRouteName= "SmartDi"
         screenOptions={screenOptions}
     >
         <Tab.Screen name="Requests" component={RequestList} />
+        <Tab.Screen name="YRR" component={MyRequestList} />
         <Tab.Screen name="Create" component={CreateRequest} />
+        <Tab.Screen name="SmartDi" component={SmartCal} />
         <Tab.Screen name="Setting" component={Setting} />
     </Tab.Navigator>);
 }
@@ -68,8 +71,8 @@ const UItab = (props) => {
 const styles = StyleSheet.create({
     gradientBackground: {
       marginBottom: -7,
-      width: 105,
-      height: 105,
+      width: normalize(80),
+      height: normalize(80),
       borderRadius: 60,
       borderWidth: 5, 
       borderColor: 'black', 

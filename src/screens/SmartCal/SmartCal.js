@@ -1,10 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
-import { Text, Image, View, TouchableOpacity, Keyboard, KeyboardAvoidingView, TextInput, ImageBackground, ScrollView, FlatList, Modal, StyleSheet, ActivityIndicator } from "react-native"
+import { Alert,Text, Image, View, TouchableOpacity, Keyboard, KeyboardAvoidingView, TextInput, ImageBackground, ScrollView, FlatList, Modal, StyleSheet, ActivityIndicator } from "react-native"
 import Icon from "react-native-vector-icons/FontAwesome5"
 import { colors, fontSizes, icons, images, normalize, split } from "../../constants"
-import RequestItem from "./RequestItem";
-import Category from "./Category";
-import { Dropdown, CLButton } from '../../components'
 import {
     auth,
     firebaseDatabase,
@@ -34,59 +31,61 @@ import Geolocation from '@react-native-community/geolocation';
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import Credentials from '../../../Credentials'
 import { distanceTwoGeo } from '../../utilies'
-/** 
- - ListView from a map of objects
- - FlatList
- */
-const GOOGLE_MAPS_APIKEY = Credentials.APIkey_Direction;
+import MapView, { PROVIDER_GOOGLE, Marker, Callout, Polyline } from 'react-native-maps'; // remove PROVIDER_GOOGLE import if not using Google Maps
+import { mapStyle,findShortestPaths } from '../../utilies'
+import Openrouteservice from 'openrouteservice-js'
+const orsDirections = new Openrouteservice.Directions({ api_key: Credentials.APIKey_OpenRouteService });
+const Geocode = new Openrouteservice.Geocode({ api_key: Credentials.APIKey_OpenRouteService })
 
-const getDirections = (origin, destination) => {
-    console.log("API direction RUNNING...................!");
-    return new Promise(async (resolve, reject) => {
-        try {
+
+const getCurrentRouteDirection = (origin, destination) => {
+    if (origin && destination)
+        return new Promise(async (resolve, reject) => {
             console.log("API direction RUNNING...................!");
-            const response = await axios.get(
-                'https://maps.googleapis.com/maps/api/directions/json',
-                {
-                    params: {
-                        origin: origin,
-                        destination: destination,
-                        key: GOOGLE_MAPS_APIKEY,
+            try {
+                let response = await orsDirections.calculate({
+                    coordinates: [[origin.longitude, origin.latitude], [destination.longitude, destination.latitude]],
+                    profile: 'driving-hgv',
+                    restrictions: {
+                        height: 10,
+                        weight: 5
                     },
+                    extra_info: ['waytype', 'steepness'],
+                    avoidables: ['highways', 'tollways', 'ferries', 'fords'],
+                    format: 'json'
+                })
+                const start = await getAddressFromLocation(origin.latitude, origin.longitude);
+                const end = await getAddressFromLocation(destination.latitude, destination.longitude);
+                const routes = response.routes;
+                if (routes && routes.length > 0) {
+                    const points = routes[0].geometry;
+                    const decodedPoints = decodePolyline(points);
+                    const direction = {
+                        summary: `${start.address.road ? start.address.road : start.address.suburb} ${start.address.city_district}-${end.address.road ? end.address.road : end.address.suburb} ${end.address.city_district}-${response.metadata.timestamp}`,
+                        startAddress: start.display_name,
+                        endAddress: end.display_name,
+                        distance: routes[0].summary.distance,
+                        duration: routes[0].summary.duration,
+                        steps: routes[0].segments[0].steps,
+                        route: decodedPoints,
+                        state: '0',
+                        timestamp: response.metadata.timestamp,
+                        destination: destination,
+                    };
+                    console.log("Direction OK! URL:", direction.summary);
+                    resolve(direction);
+                } else {
+                    console.error('Error building directions!');
+                    resolve(null);
                 }
-            );
-            console.log("-----------------------------------")
-            console.log(response)
-            const routes = response.data.routes;
-            console.log("-----------------------------------")
-            console.log(routes)
-            if (routes && routes.length > 0) {
-                const points = routes[0].overview_polyline.points;
-                const decodedPoints = decodePolyline(points);
-                console.log("-----------------------------------")
-                console.log(routes[0])
-                const direction = {
-                    summary: routes[0].summary,
-                    startAddress: routes[0].legs[0].start_address,
-                    endAddress: routes[0].legs[0].end_address,
-                    distance: routes[0].legs[0].distance,
-                    duration: routes[0].legs[0].duration,
-                    steps: routes[0].legs[0].steps,
-                    route: decodedPoints,
-                    state: '0',
-                    timestamp: new Date().getTime(),
-                };
-                console.log("Direction OK! URL:", direction);
-                resolve(direction);
-            } else {
-                console.error('Error building directions!');
-                resolve(null);
+            } catch (err) {
+                console.log("An error occurred: " + err.status)
+                console.error(await err.response.json())
+                reject(err);
             }
-        } catch (error) {
-            console.error('Error fetching directions:', error);
-            resolve(null);
-        }
-    });
+        });
+    else
+        return null;
 };
 
 const decodePolyline = (encodedPolyline) => {
@@ -96,6 +95,54 @@ const decodePolyline = (encodedPolyline) => {
         latitude: coordinate[0],
         longitude: coordinate[1],
     }));
+};
+
+const getAddressFromLocation = (latitude, longitude) => {
+    if (latitude && longitude)
+        return new Promise(async (resolve, reject) => {
+            console.log("API reverseGeocode RUNNING...................!");
+            try {
+                const response = await axios.get(
+                    `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`
+                );
+                //console.log(response);
+                if (response.data && response.data.address) {
+                    const address = response.data.address;
+                    console.log('Address:', address);
+                    resolve(response.data);
+                }
+                resolve(null);
+
+            } catch (error) {
+                console.log(error);
+                reject(err);
+            }
+        });
+    else
+        return null;
+};
+
+const getAddress = (latitude, longitude) => {
+    if (latitude && longitude)
+        return new Promise(async (resolve, reject) => {
+            console.log("API reverseGeocode RUNNING...................!");
+            try {
+                let response_reverse = await Geocode.reverseGeocode({
+                    point: { lat_lng: [latitude, longitude], radius: 50 },
+                    boundary_country: ["DE"]
+                })
+                // Add your own result handling here
+                console.log("response: ", response_reverse)
+                resolve(response_reverse);
+
+            } catch (err) {
+                console.log("An error occurred: " + err.status)
+                console.error(await err.response.json())
+                reject(err);
+            }
+        });
+    else
+        return null;
 };
 
 const getUserIDByTokken = async () => {
@@ -109,7 +156,7 @@ const getUserIDByTokken = async () => {
 
 const WaitingScreen = () => {
     return (
-        <View style={{ alignItems: 'center' }}>
+        <View style={{ alignItems: 'center', marginTop: '50%' }}>
             <ActivityIndicator size="large" color="blue" />
             <Text style={{
                 color: 'black',
@@ -120,52 +167,52 @@ const WaitingScreen = () => {
     );
 };
 
+const WaitingOnProcess = () => {
+    return (
+        <View style={{ alignItems: 'center', marginTop: '50%' }}>
+            <ActivityIndicator size="large" color="blue" />
+            <Text style={{
+                color: 'black',
+            }}>
+                You on request, do it first!...</Text>
+            <Image source={images.logo} style={{ height: normalize(200), width: normalize(200) }} />
+        </View>
+    );
+};
+
 const SmartCal = (props) => {
 
-    const [typeSelected, setTypeSelected] = useState(null);
-    const [optionSort, setOptionSort] = useState(false);
+    const mapRef = useRef(null);
+
     //constant
     const { primary, zalert, success, warning, inactive } = colors
-    const [destination,setDestination] = useState(null);
-
+    const [currentRoute, setCurrentRoute] = useState(null);
+    const {
+        currentLocation,
+        pressLocation,
+        setPressLocation,
+        checkLocationPermission,
+        getCurrentPosition,
+    } = useMap();
     //element init
     const { navigation } = props
-    const { FullMap, currentLocation, getCurrentPosition, checkLocationPermission } = useMap();
 
     //element function
-    const [modalVisible, setModalVisible] = useState(false);
-    const [selectedRequest, setSelectedRequest] = useState(null);
+    const [isLoading, setIsLoading] = useState(false)
+    const [onAvaiable, setOnAvaiable] = useState(false);
     const [requests, setRequests] = useState([]);
-    const [searchText, setSearchText] = useState('')
-    const filterRequest = useCallback(() => requests.filter(eachRequest =>
-        eachRequest.name.toLowerCase().includes(searchText.toLowerCase())
-        && (typeSelected == null || eachRequest.type == typeSelected))
-        .sort((a, b) => {
-            if (optionSort) {
-                const distanceA = distanceTwoGeo(currentLocation, a.type === 1 ? a.geo1 : a.geo2);
-                const distanceB = distanceTwoGeo(currentLocation, b.type === 1 ? b.geo1 : b.geo2);
-                if (distanceA < distanceB) 
-                    return -1;
-                else
-                    return 1;
-            }
-            else {
-                if (a.timestamp > b.timestamp)
-                    return -1;
-                else
-                    return 1;
-            }
-        })
-        , [searchText, typeSelected, requests, optionSort])
+    const [start_address, setStart_address] = useState(null);
+    const [end_address, setEnd_address] = useState(null);
+    const [time, setTime] = useState(null);
 
 
     useEffect(() => {
-        console.log("__________Init listRequest__________");
+        console.log("__________Init SmartDirection__________");
         checkLocationPermission();
         getCurrentPosition();
     }, [])
 
-    const inside = (currentLocation, destination, geo1 , geo2) => {
+    const inside = (currentLocation, destination, geo1, geo2) => {
         const minLat = Math.min(currentLocation.latitude, destination.latitude);
         const maxLat = Math.max(currentLocation.latitude, destination.latitude);
         const minLong = Math.min(currentLocation.longitude, destination.longitude);
@@ -179,26 +226,27 @@ const SmartCal = (props) => {
             geo2.latitude <= maxLat &&
             geo2.longitude >= minLong &&
             geo2.longitude <= maxLong &&
-            distanceTwoGeo(geo1,currentLocation)<distanceTwoGeo(geo2,currentLocation)
+            distanceTwoGeo(geo1, currentLocation) < distanceTwoGeo(geo2, currentLocation)
         );
     };
 
     useEffect(() => {
-        if (currentLocation,destination) {
+        if (currentLocation) {
             const dbRef = ref(firebaseDatabase, 'request')
             onValue(dbRef, async (snapshot) => {
                 if (snapshot.exists()) {
                     console.log('Importing data to listRequest')
+                    setOnAvaiable(true);
                     const userID = await getUserIDByTokken();
                     let snapshotObject = snapshot.val()
                     setRequests(Object.keys(snapshotObject)
-                        .filter(k => snapshotObject[k].typeRequest === 1
-                        && k.split('-')[0] != userID
-                        && inside(currentLocation,destination,snapshotObject[k].geo1,snapshotObject[k].geo2)
+                        .filter(k => k.split('-')[0] != userID
+                            //&& inside(currentLocation,destination,snapshotObject[k].geo1,snapshotObject[k].geo2)
                         )
                         .map(eachKey => {
                             let eachObject = snapshotObject[eachKey]
                             const time = new Date(eachObject.timestamp).toLocaleString();
+                            if (userID == eachObject.requestStatus) setOnAvaiable(false);
                             return {
                                 requestId: eachKey,
                                 name: eachObject.title,
@@ -213,7 +261,6 @@ const SmartCal = (props) => {
                                 accepted: userID == eachObject.requestStatus,
                                 timestamp: eachObject.timestamp,
                                 time: time,
-                                mine: eachKey.split('-')[0] == userID,
                             }
                         }))
                 } else {
@@ -223,278 +270,319 @@ const SmartCal = (props) => {
         }
     }, [currentLocation])
 
-    //func render requests
-    const renderNotRequest = () => {
-        return (
-            <View style={{ flex: 1, justifyContent: 'center' }}>
-                <Text style={{
-                    color: 'black',
-                    fontSize: fontSizes.h2,
+    const handleMapPress = (event) => {
+        if (!isLoading) {
+            const { coordinate } = event.nativeEvent;
+            setPressLocation(coordinate);
+        }
+    };
+
+    const handleGetCurrentLocation = () => {
+        if (!isLoading) {
+            setPressLocation(null);
+            if (currentLocation) {
+                const { latitude, longitude } = currentLocation;
+                const region = {
+                    latitude,
+                    longitude,
+                    latitudeDelta: 0.015,
+                    longitudeDelta: 0.0121,
+                };
+                mapRef.current.animateToRegion(region, 1000);
+            }
+        }
+    };
+
+    const handlePressInitCurrentRoute = async () => {
+        if(currentRoute){
+            if(currentRoute.destination==pressLocation){
+                console.log("No different pressLocation!");
+                return;
+            }
+        }
+        if (currentLocation && pressLocation) {
+            const direction = await getCurrentRouteDirection(currentLocation, pressLocation);
+            const time = new Date(direction.timestamp);
+            setTime(time);
+            setCurrentRoute(direction);
+        }
+        else {
+            console.log("PressLocation is null!");
+        }
+    }
+    const handleSmartDirection = async () => {
+        if (requests) {
+            const requestInside = requests.filter(r=>r.status==0 && inside(currentLocation,pressLocation,r.geo1,r.geo2));
+            if(requestInside.length>2){
+                const result = findShortestPaths(currentLocation,requestInside,pressLocation);
+                if(result){
+                    console.log(result);
+                    //currentLocation
+                    //result[0].geo1 result[0].geo2 
+                    //result[1].geo1 result[1].geo2
+                    //pressLocation
+                    //currentLocation->result[0].geo1
+                    //result[0].geo2->result[1].geo1
+                    //result[1].geo2->pressLocation
+                }
+                else{
+                    console.log("Fail smart direction!");
+                }
+            }
+            else{
+                return Alert.alert(
+                    "Unlucky",
+                    "No request on your way!",
+                    [
+                      {
+                        text: "OK",
+                      },
+                    ]
+                  );
+            }
+        }
+        else {
+            console.log("Requests is null!");
+        }
+    }
+    
+
+
+    return currentLocation ?
+        onAvaiable ?
+            <View style={{
+                backgroundColor: 'white',
+                flex: 1
+            }}>
+                <View>
+                    <View style={{
+                        paddingHorizontal: split.s4,
+                        paddingVertical: split.s5,
+                        backgroundColor: primary,
+                    }}>
+                        <Text style={{
+                            color: "white",
+                            fontSize: normalize(18),
+                            fontWeight: 'bold',
+                            padding: 10,
+                        }}>Smart Direction</Text>
+                    </View>
+                </View>
+               {currentRoute&&<View style={{
+                    borderRadius: 30,
+                    backgroundColor: 'white',
+                    width: '80%',
+                    alignItems: 'center',
                     alignSelf: 'center',
                 }}>
-                    No Request found!
-                </Text>
-            </View>
-        );
-    };
-    const renderRequestList = () => {
-        return (
-            <FlatList
-                data={filterRequest()}
-                renderItem={({ item }) => <RequestItem
-                    onPress={() => {
-                        const userID = item.requestId.split("-")[0];
-                        handleTapRequest(item);
-                    }}
-                    screen="RequestList"
-                    request={item}
-                    currentLocation={currentLocation}
-                />}
-                keyExtractor={eachRequest => eachRequest.requestId}
-            />
-        );
-    };
-
-    const handleTapRequest = async (item) => {
-        if (item.mine) {
-            console.log("1");
-            navigation.navigate("MyRequest", { request: item });
-        }
-        else {
-            if (item.accepted) {
-                console.log("2");
-                navigation.navigate("RequestDetail", { request: item });
-            }
-            else {
-                console.log("3");
-                setSelectedRequest(item);
-                setModalVisible(true);
-            }
-        }
-    }
-
-    const handleCloseRequest = () => {
-        setModalVisible(false);
-        setSelectedRequest(null);
-    }
-
-    const acceptRequest = async () => {
-        if (selectedRequest) {
-            const {
-                requestId,
-                status,
-                geo1,
-                geo2,
-                type,
-            } = selectedRequest;
-            const userID = await getUserIDByTokken();
-            if (status == 0) {
-                if (currentLocation && userID) {
-                    if (type === 2 || true) {
-                        const origin = `${currentLocation.latitude.toFixed(6)},${currentLocation.longitude.toFixed(6)}`;
-                        let destination = "";
-                        let direction = null;
-                        if (type === 1)
-                            destination = `${geo1.latitude.toFixed(6)},${geo1.longitude.toFixed(6)}`;
-                        if (type === 2)
-                            destination = `${geo2.latitude.toFixed(6)},${geo2.longitude.toFixed(6)}`;
-                        if (destination != "")
-                            direction = await getDirections(origin, destination, currentLocation);
-                        if (!direction) {
-                            debugger
-                            console.error("Get direction failed!");
-                            return;
-                        }
-                        set(ref(firebaseDatabase, `direction/${userID}/${requestId}`), direction)
-                            .then(async () => {
-                                console.log("Direction update!.");
-                                const userID = await getUserIDByTokken();
-                                const requestRef = ref(firebaseDatabase, `request/${requestId}`);
-                                update(requestRef, { requestStatus: userID })
-                                    .then(() => {
-                                        console.log("Accepted request! GOGOGO TIP!.");
-                                    })
-                                    .catch((error) => {
-                                        console.error("Error updating request status: ", error);
-                                    });
-                            })
-                            .catch((error) => {
-                                console.error("Error updating direction: ", error);
-                            });
-                    }
-                }
-                else {
-                    console.error("Current location is null!");
-                }
-
-            }
-            else {
-                alert("Request in process!");
-            }
-        }
-        else {
-            console.error("No request selected!");
-        }
-        setModalVisible(false);
-        setSelectedRequest(null);
-    }
-
-    return currentLocation ? <View style={{
-        backgroundColor: 'white',
-        flex: 1
-    }}>
-        <View style={{ height: normalize(95) }}>
-            <View style={{
-                marginHorizontal: split.s4,
-                marginVertical: split.s5,
-            }}>
-                <Text style={{
-                    color: primary,
-                    fontSize: normalize(18),
-                    fontWeight: 'bold',
-                    padding: 10,
-                }}>Request List</Text>
-            </View>
-            <View style={{ height: 1, backgroundColor: primary }} />
-            <View style={{
-                flexDirection: 'row',
-                alignItems: 'center',
-                marginHorizontal: split.s3,
-                marginTop: split.s4,
-            }}>
-                <Icon name={"search"}
-                    size={20}
-                    color={'black'}
-                    marginStart={5}
-                    style={{
-                        position: 'absolute'
-                    }}
-                />
-                <TextInput
-                    value={searchText}
-                    onChangeText={setSearchText}
-                    autoCorrect={false}
-                    style={{
-                        backgroundColor: colors.inactive,
-                        flex: 1,
-                        height: normalize(36),
-                        borderRadius: 5,
-                        opacity: 0.6,
-                        color: "black",
-                        paddingStart: 30
-                    }}
-                />
-                <Icon name={"bars"}
-                    size={30}
-                    color={"black"}
-                    marginStart={5}
-                    onPress={()=>setOptionSort(!optionSort)}
-                />
-            </View>
-        </View>
-        <View style={{
-            height: normalize(80),
-            //backgroundColor:'purple'
-        }}>
-            <View style={{ height: 1, backgroundColor: primary }} />
-            <FlatList
-                data={categories}
-                horizontal={true}
-                renderItem={({ item }) => <Category
-                    category={item}
-                    onPress={() => {
-                        if (item.value == 0) {
-                            navigation.navigate("MyRequestList");
-                        }
-                        else {
-                            setTypeSelected(item.value == typeSelected ? null : item.value);
-                        }
-                    }} />}
-                style={{
-                    flex: 1
-                }} />
-            <View style={{ height: 1, backgroundColor: primary }} />
-        </View>
-        <Modal visible={modalVisible} animationType="fade" transparent={true}  >
-            <View style={{ flex: 1, justifyContent: 'center' }}>
-                {modalVisible && selectedRequest && (
-                    <View style={styles.container}>
-                        <View style={{
-                            flexDirection: 'row',
-                            marginBottom: split.s4,
-                        }}>
-                            {selectedRequest.type == 2 && <Image
-                                style={{
-                                    width: normalize(130),
-                                    height: normalize(130),
-                                    resizeMode: 'cover',
-                                    borderRadius: 15,
-                                    marginRight: split.s3,
-                                }}
-                                source={{ uri: selectedRequest.url }}
-                            />}
-                            <View style={{
-                                flex: 1,
-                                //backgroundColor:'green',
-                                marginRight: split.s3,
-                            }}>
-                                <Text style={{
-                                    color: 'black',
-                                    fontSize: fontSizes.h4,
-                                    fontWeight: 'bold'
-                                }}>{selectedRequest.name}</Text>
-                                <View style={{ height: 1, backgroundColor: 'black' }} />
-                                <Text style={{
-                                    color: 'black',
-                                    fontSize: fontSizes.h4,
-                                }}>Price: {selectedRequest.price} vnd</Text>
-                                <Text style={{
-                                    color: 'black',
-                                    fontSize: fontSizes.h4,
-                                }}>Mô tả: {selectedRequest.des}</Text>
-                                {selectedRequest.type == 1 && <View>
-                                    <Text style={{
-                                        color: 'black',
-                                        fontSize: fontSizes.h4,
-                                    }}>Distance: {selectedRequest.direction.distance.text}</Text>
-                                    <Text style={{
-                                        color: 'black',
-                                        fontSize: fontSizes.h4,
-                                    }}>Duration: {selectedRequest.direction.duration.text}</Text>
-                                    <Text style={{
-                                        color: 'black',
-                                        fontSize: fontSizes.h4,
-                                    }}>Từ: {selectedRequest.direction.startAddress}</Text>
-                                    <Text style={{
-                                        color: 'black',
-                                        fontSize: fontSizes.h4,
-                                    }}>Tới: {selectedRequest.direction.endAddress}</Text>
-                                </View>}
-                            </View>
-                        </View>
-                        <View style={{ height: 1, backgroundColor: 'black' }} />
-                        <FullMap
-                            geo1={selectedRequest.geo1}
-                            geo2={selectedRequest.geo2}
-                            direction={selectedRequest.direction}
-                            type={selectedRequest.type}
-                            screen="ListRequest"
+                    <View style={{
+                        flexDirection: 'row',
+                        alignItems: 'center',
+                    }}>
+                        <Icon
+                            name={'clock'}
+                            size={normalize(12)}
+                            color={inactive}
                         />
+                        <Text style={{
+                            color: 'black',
+                            position: 'relative',
+                            marginStart: 2,
+                        }}>Thời gian: {Math.ceil(currentRoute.duration/60)} phút</Text>
                     </View>
-                )}
-                <View style={{
-                    flexDirection: 'row',
-                    justifyContent: 'center',
+                    <View style={{
+                        flexDirection: 'row',
+                        alignItems: 'center',
+                    }}>
+                        <Icon
+                            name={'clock'}
+                            size={normalize(12)}
+                            color={inactive}
+                        />
+                        <Text style={{
+                            color: 'black',
+                            position: 'relative',
+                            marginStart: 2,
+                        }}>Khoảng cách: {Math.ceil(currentRoute.distance/100)/10} km</Text>
+                    </View>
+                    <Text style={{
+                        color: 'black',
+                        position: 'relative',
+
+                    }}>Địa chỉ hiện tại: {currentRoute.startAddress}</Text>
+                    <Text style={{
+                        color: 'black',
+                        position: 'relative',
+                    }}>Địa chỉ tới: {currentRoute.endAddress}</Text>
+                </View>}
+                {currentLocation && <View style={{
+                    flex: 30,
+                    height: normalize(420),
+                    marginHorizontal: split.s5,
+                    marginVertical: split.s5,
                 }}>
-                    <CLButton title="Accept" sizeBT={"35%"} height={normalize(30)}
-                        onPress={() => acceptRequest()} />
-                    <CLButton title="Close Modal" sizeBT={"35%"} height={normalize(30)}
-                        onPress={() => handleCloseRequest()} />
-                </View>
-            </View>
-        </Modal>
-        {filterRequest().length > 0 ? renderRequestList() : renderNotRequest()}
-    </View> : <WaitingScreen />
+                    <MapView
+                        ref={mapRef}
+                        provider={PROVIDER_GOOGLE}
+                        style={{
+                            ...StyleSheet.absoluteFillObject,
+                        }}
+                        customMapStyle={mapStyle.mapRetroStyle}
+                        zoomControlEnabled={true}
+                        rotateEnabled={false}
+                        initialRegion={{
+                            latitude: currentLocation.latitude,
+                            longitude: currentLocation.longitude,
+                            latitudeDelta: 0.008,
+                            longitudeDelta: 0.011,
+                        }}
+                        onPress={(event)=>{
+                            if (currentRoute) {
+                                return Alert.alert(
+                                    "Current Route is aviable",
+                                    "Are you sure you want change your route?",
+                                    [
+                                        {
+                                            text: "Yes",
+                                            onPress:() => {
+                                                setCurrentRoute(null);
+                                            },
+                                        },
+                                        {
+                                            text: "No",
+                                        },
+                                    ]
+                                );
+                            }
+                            else{
+                                handleMapPress(event);
+                            }
+                        }}
+                    >
+                        <Marker
+                            key={1}
+                            coordinate={currentLocation}
+                            tile={"User"}
+                            description={"Current User Location"}
+                        >
+                            <Image
+                                source={images.markerUrGeo2}
+                                style={{ width: 35, height: 35, }}
+                            />
+                        </Marker>
+                        {pressLocation && <Marker
+                            key={2}
+                            coordinate={pressLocation}
+                            tile={"Destination"}
+                            description={"Destination Location"}
+                        >
+                            <Image
+                                source={images.markerUrGeo1}
+                                style={{ width: 35, height: 35, }}
+                            />
+                        </Marker>}
+                        {currentRoute && <Polyline
+                            coordinates={currentRoute.route}
+                            strokeColor={colors.primary}
+                            strokeWidth={2}
+                        />}
+                    </MapView>
+                    <TouchableOpacity
+                        style={{
+                            position: 'absolute',
+                            top: split.s2,
+                            right: split.s4,
+                            borderRadius: 5,
+                        }}
+                        onPress={handleGetCurrentLocation}
+                    >
+                        <Image source={images.iconCurrentLocation} style={{ height: 50, width: 50 }} />
+                    </TouchableOpacity>
+                </View>}
+                <TouchableOpacity
+                    onPress={() => {
+                        handlePressInitCurrentRoute();
+                    }}
+                    disabled={!pressLocation}
+                    style={{
+                        borderColor: primary,
+                        borderWidth: 1,
+                        height:  45,
+                        width: '90%',
+                        borderRadius: 30,
+                        marginHorizontal: 14,
+                        marginVertical: 8,
+                        justifyContent: 'center',
+                        alignItems: 'center',
+                        alignSelf: 'center',
+                        backgroundColor: pressLocation?primary:inactive,
+                    }}>
+                    <Text style={{
+                        fontSize: fontSizes.h3,
+                        color:'white',
+                    }}>Cập nhật đường đi</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                    onPress={() => {
+                        handleSmartDirection();
+                    }}
+                    disabled={!currentRoute}
+                    style={{
+                        borderColor: primary,
+                        borderWidth: 1,
+                        height:  45,
+                        width: '90%',
+                        borderRadius: 30,
+                        marginHorizontal: 14,
+                        marginVertical: 8,
+                        justifyContent: 'center',
+                        alignItems: 'center',
+                        alignSelf: 'center',
+                        backgroundColor: currentRoute?primary:inactive,
+                    }}>
+                    <Text style={{
+                        fontSize: fontSizes.h3,
+                        color:'white',
+                    }}>Smart Direction</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                    onPress={() => {
+                        console.log(requests.filter(r=>r.status==0 
+                            && inside(currentLocation,pressLocation,r.geo1,r.geo2)))
+                        //         requestId: eachKey,
+                        //         name: eachObject.title,
+                        //         url: eachObject.photo,
+                        //         status: eachObject.requestStatus,
+                        //         price: eachObject.price,
+                        //         type: eachObject.typeRequest,
+                        //         des: eachObject.des,
+                        //         geo1: eachObject.geo1,
+                        //         geo2: eachObject.geo2,
+                        //         direction: eachObject.direction,
+                        //         accepted: userID == eachObject.requestStatus,
+                        //         timestamp: eachObject.timestamp,
+                        //         time: time,
+                    }}
+                    style={{
+                        borderColor: primary,
+                        borderWidth: 1,
+                        height:  45,
+                        width: '90%',
+                        borderRadius: 30,
+                        marginHorizontal: 14,
+                        marginVertical: 8,
+                        justifyContent: 'center',
+                        alignItems: 'center',
+                        alignSelf: 'center',
+                        backgroundColor: primary,
+                    }}>
+                    <Text style={{
+                        fontSize: fontSizes.h3,
+                        color:'white',
+                    }}> console</Text>
+                </TouchableOpacity>
+                <View style={{height:50}}/>
+            </View> : <WaitingOnProcess /> : <WaitingScreen />
 }
 
 

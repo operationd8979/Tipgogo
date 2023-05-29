@@ -148,13 +148,6 @@ const useMap = () => {
         //element func
         const [isEnabledSmartCal, setIsEnabledSmartCal] = useState(false);
 
-        // const initialRegion = {
-        //     latitude: LATITUDE,
-        //     longitude: LONGITUDE,
-        //     latitudeDelta: LATITUDE_DELTA,
-        //     longitudeDelta: LONGITUDE_DELTA,
-        // };
-
         const calInitialRegion = () => {
 
             let locationA = currentLocation;
