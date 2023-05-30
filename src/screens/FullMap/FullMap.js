@@ -135,14 +135,14 @@ const useMap = () => {
             }
             setTimeout(() => {
                 const snapshot = mapRef.current.takeSnapshot({
-                    format: 'png', // image formats: 'png', 'jpg' (default: 'png')
-                    quality: 0.5, // image quality: 0..1 (only relevant for jpg, default: 1)
-                    result: 'file', // result types: 'file', 'base64' (default: 'file')
+                    format: 'png', 
+                    quality: 0.5, 
+                    result: 'file', 
                 });
                 snapshot.then((uri) => {
                     setUriMap(uri);
                 });
-            }, 50); // I add some timeout delay because without delay snapnot won't have map or marker.
+            }, 0); // add some timeout delay wait map loading element
         }, [mapRef.current]);
 
         //element func
@@ -234,7 +234,7 @@ const useMap = () => {
                         latitudeDelta: 0.008,
                         longitudeDelta: 0.011,
                     }}
-                //onMapReady={lite?takeSnapshot:null}
+                    //onMapReady={lite?takeSnapshot:null}
                 >
                     {currentLocation && screen != "RequestList" && <Marker
                         key={1}

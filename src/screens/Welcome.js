@@ -5,7 +5,7 @@ import Icon from 'react-native-vector-icons/FontAwesome5'
 //create a variable which reference to a function
 import i18n from '../../i18n'
 import { images, icons, colors, fontSizes } from '../constants'
-import { UIButton } from '../components'
+import { CLButton, UIButton } from '../components'
 
 import { useFocusEffect } from '@react-navigation/native';
 import { StackActions } from '@react-navigation/native'
@@ -184,6 +184,7 @@ function Welcome(props) {
                 {options.map(option =>
                     <UIButton 
                         key={option.value}
+                        value={option.value}
                         title={option.lable}
                         isSelected={selectedOption === option.value}
                         onPress={() => {
@@ -197,7 +198,7 @@ function Welcome(props) {
                 flex: 20,
                 //backgroundColor: 'purple'
             }}>
-                <UIButton 
+                <CLButton 
                     onPress={()=>{
                         navigate('Login');
                     }}

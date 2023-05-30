@@ -231,7 +231,7 @@ const RequestDetail = (props) => {
                     color: 'black',
                     position: 'relative',
                     marginStart: 2,
-                }}>Hẹn lúc: {time.getHours()}:{time.getMinutes() + Math.ceil(road.duration.value / 60)} {time.getDate()}/{time.getMonth() + 1}</Text>
+                }}>Hẹn lúc: {time.getHours()}:{time.getMinutes() + Math.ceil(road.duration / 60)} {time.getDate()}/{time.getMonth() + 1}</Text>
             </View>
             <Text style={{
                 color: 'black',
@@ -383,11 +383,11 @@ const RequestDetail = (props) => {
                         <Text style={{
                             color: 'black',
                             fontSize: fontSizes.h4,
-                        }}>Khoảng cách: {direction.distance.text}</Text>
+                        }}>Khoảng cách: {Math.ceil(direction.distance/10)/100} km</Text>
                         <Text style={{
                             color: 'black',
                             fontSize: fontSizes.h4,
-                        }}>Thời gian: {direction.duration.text}</Text>
+                        }}>Thời gian: {Math.ceil(direction.duration/60)} phút</Text>
                         <Text style={{
                             color: 'black',
                             fontSize: fontSizes.h4,

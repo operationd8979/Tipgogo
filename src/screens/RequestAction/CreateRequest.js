@@ -47,63 +47,7 @@ import axios from 'axios';
 const RNFS = require('react-native-fs');
 //const polyline = require('@mapbox/polyline');
 import Credentials from '../../../Credentials'
-
-const GOOGLE_MAPS_APIKEY = Credentials.APIkey_Direction;
-
-const relatitude = 37.78825
-const relongitude = -122.4324
-const relatitudeDelta = 0.015
-const relongitudeDelta = 0.0121
-
-const getDirections = (origin, destination) => {
-    console.log("API direction RUNNING...................!");
-    return new Promise(async (resolve, reject) => {
-        try {
-            console.log("API direction RUNNING...................!");
-            const response = await axios.get(
-                'https://maps.googleapis.com/maps/api/directions/json',
-                {
-                    params: {
-                        origin: origin,
-                        destination: destination,
-                        key: GOOGLE_MAPS_APIKEY,
-                    },
-                }
-            );
-            const routes = response.data.routes;
-            if (routes && routes.length > 0) {
-                const points = routes[0].overview_polyline.points;
-                const decodedPoints = decodePolyline(points);
-                const direction = {
-                    summary: routes[0].summary,
-                    startAddress: routes[0].legs[0].start_address,
-                    endAddress: routes[0].legs[0].end_address,
-                    distance: routes[0].legs[0].distance,
-                    duration: routes[0].legs[0].duration,
-                    steps: routes[0].legs[0].steps,
-                    route: decodedPoints,
-                };
-                console.log("Direction OK! URL:", direction);
-                resolve(direction);
-            } else {
-                console.error('Error building directions!');
-                resolve(null);
-            }
-        } catch (error) {
-            console.error('Error fetching directions:', error);
-            resolve(null);
-        }
-    });
-};
-
-const decodePolyline = (encodedPolyline) => {
-    const polyline = require('@mapbox/polyline');
-    const decoded = polyline.decode(encodedPolyline);
-    return decoded.map((coordinate) => ({
-        latitude: coordinate[0],
-        longitude: coordinate[1],
-    }));
-};
+import {getAddressFromLocation,getRouteDirection,getLocationFromAddress} from '../../service/MapService'
 
 const checkCameraPermission = async () => {
     const cameraPermission = await Camera.getCameraPermissionStatus();
@@ -145,7 +89,11 @@ const CreateRequest = (props) => {
         setRefreshing(true);
         setTimeout(() => {
             setPhotoPath(null);
-            setPhotoUri(null);
+            setCurrentRoute(null);
+            setDisplaySearch(null);
+            setSearchAddress(null);
+            setAddress(null);
+            setDetailAddress(null);
             setTypeRequest(1);
             setTitle("");
             setPrice(null);
@@ -163,11 +111,13 @@ const CreateRequest = (props) => {
     const { primary, zalert, warning, success, inactive } = colors
 
     //request's const
-    const [photoUri, setPhotoUri] = useState(null);
     const [typeRequest, setTypeRequest] = useState(1);
     const [title, setTitle] = useState("");
     const [price, setPrice] = useState(null);
     const [des, setDes] = useState("");
+    const [currentRoute, setCurrentRoute] = useState(null);
+    const [address, setAddress] = useState(null);
+    const [detailAddress, setDetailAddress] = useState(null);
     //error const request
     const [errorPhotoUri, setErrorPhotoUri] = useState(null);
     const [errorCurrentLocation, setErrorCurrentLocation] = useState(null);
@@ -175,7 +125,7 @@ const CreateRequest = (props) => {
     const [errorTypeRequest, setErrorTypeRequest] = useState(null);
     const [errorTitle, setErrorTitle] = useState(null);
     const [errorPrice, setErrorPrice] = useState(null);
-    const [errorDes, setErrorDes] = useState(null);
+    const [errorAddress, setErrorAddress] = useState(null);
 
     //function's const
     const [photoPath, setPhotoPath] = useState(null);
@@ -185,8 +135,10 @@ const CreateRequest = (props) => {
     const device = devices.back
     const [titleAmount, setTitleAmount] = useState("Pay");
     const [isEnabledFree, setIsEnabledFree] = useState(false);
-    const [selected, setSelected] = useState(false);
-    const [showIndicator, setShowIndicator] = useState(false)
+    const [showIndicator, setShowIndicator] = useState(false);
+    const [searchAddress, setSearchAddress] = useState(null);
+    const [displaySearch, setDisplaySearch] = useState(null);
+    
 
 
     const startLoading = () => {
@@ -205,6 +157,13 @@ const CreateRequest = (props) => {
 
     const handleMapPress = (event) => {
         if (!isLoading) {
+            if(currentRoute){
+                if(displaySearch){
+                    setDisplaySearch(null);
+                    setSearchAddress(null);
+                }
+                setCurrentRoute(null);
+            }   
             const { coordinate } = event.nativeEvent;
             setPressLocation(coordinate);
         }
@@ -212,16 +171,37 @@ const CreateRequest = (props) => {
 
     const handleGetCurrentLocation = () => {
         if (!isLoading) {
-            setPressLocation(null);
-            if (currentLocation) {
-                const { latitude, longitude } = currentLocation;
-                const region = {
-                    latitude,
-                    longitude,
-                    latitudeDelta: 0.015,
-                    longitudeDelta: 0.0121,
-                };
-                mapRef.current.animateToRegion(region, 1000);
+            if (typeRequest === 2) {
+                if (currentLocation) {
+                    const { latitude, longitude } = currentLocation;
+                    const region = {
+                        latitude,
+                        longitude,
+                        latitudeDelta: 0.015,
+                        longitudeDelta: 0.0121,
+                    };
+                    mapRef.current.animateToRegion(region, 1000);
+                }
+            }
+            else{
+                if(currentRoute){
+                    if(displaySearch){
+                        setDisplaySearch(null);
+                        setSearchAddress(null);
+                    }
+                    setCurrentRoute(null);
+                }  
+                setPressLocation(null);
+                if (currentLocation) {
+                    const { latitude, longitude } = currentLocation;
+                    const region = {
+                        latitude,
+                        longitude,
+                        latitudeDelta: 0.015,
+                        longitudeDelta: 0.0121,
+                    };
+                    mapRef.current.animateToRegion(region, 1000);
+                }
             }
         }
     };
@@ -268,7 +248,7 @@ const CreateRequest = (props) => {
         let result = true;
         setErrorTitle(null);
         setErrorPrice(null);
-        setErrorDes(null);
+        setErrorAddress(null);
         setErrorPhotoUri(null);
         setErrorCurrentLocation(null);
         setErrorPressLocation(null);
@@ -285,8 +265,8 @@ const CreateRequest = (props) => {
                 result = false;
             }
         }
-        if (!des) {
-            setErrorDes(i18n.t('desErr1'))
+        if (typeRequest===2 && (!address || !detailAddress)) {
+            setErrorAddress(i18n.t('addressErr1'))
             result = false;
         }
         if (typeRequest === 2 && !photoPath) {
@@ -303,6 +283,69 @@ const CreateRequest = (props) => {
         }
 
         return result
+    }
+
+    const handleLoadMap = async () =>{
+        setIsLoading(true);
+        if(typeRequest===1){
+            if(currentLocation&&pressLocation){
+                try{
+                    const route = await getRouteDirection(currentLocation,pressLocation);
+                    setCurrentRoute(route);
+                }catch(error){
+                    console.log(error)
+                }
+            }
+            else{
+                console.log("Presslocation is not avaiable!");
+            }
+        }
+        else{
+            const location = pressLocation||currentLocation;
+            const response = await getAddressFromLocation(location.latitude,location.longitude);
+            const address = {
+                road : response.address.road,
+                suburb : response.address.suburb,
+                district : response.address.city_district,
+                city : response.address.city,
+            }
+            setDetailAddress(`${address.road?address.road+", ":""}${address.suburb?address.suburb+", ":""}${address.district?address.district+", ":""}${address.city}`);
+        }
+        setIsLoading(false);
+    }
+
+    const handleSearchAddress = async () => {
+        setIsLoading(true);
+        if (searchAddress) {
+            const reponse = await getLocationFromAddress(searchAddress);
+            console.log(reponse.data[0])
+            if (reponse.data.length>0) {
+                console.log(reponse.data[0].display_name);
+                const coordinate = {
+                    latitude: parseFloat(reponse.data[0].lat),
+                    longitude: parseFloat(reponse.data[0].lon),
+                }
+                setDisplaySearch(reponse.data[0].display_name);
+                setPressLocation(coordinate);
+                if (coordinate) {
+                    const { latitude, longitude } = coordinate;
+                    const region = {
+                        latitude,
+                        longitude,
+                        latitudeDelta: 0.015,
+                        longitudeDelta: 0.0121,
+                    };
+                    mapRef.current.animateToRegion(region, 1000);
+                }
+            }
+            else{
+                console.log("Get address fail!");
+            }
+        }
+        else{
+            console.log("Search String is not ")
+        }
+        setIsLoading(false);
     }
 
     const handlePostRequest = async () => {
@@ -324,21 +367,20 @@ const CreateRequest = (props) => {
                     return;
                 }
             }
-            if (typeRequest === 1) {
-                const origin = `${currentLocation.latitude.toFixed(6)},${currentLocation.longitude.toFixed(6)}`;
-                const destination = `${pressLocation.latitude.toFixed(6)},${pressLocation.longitude.toFixed(6)}`;
-                direction = await getDirections(origin, destination);
+            if (typeRequest === 1){
+                if(currentRoute&&currentRoute.destination===pressLocation)
+                    direction = currentRoute;
+                else
+                    direction = await getRouteDirection(currentLocation, pressLocation);
                 if (!direction) {
                     console.error("Get direction failed!");
                     setIsLoading(false);
                     return;
                 }
             }
-
             const timestamp = (new Date()).getTime();
-
             let request = {
-                title: typeRequest === 1 ? `${direction.summary}${direction.duration.value}` : title,
+                title: typeRequest === 1 ? `${direction.summary}` : title,
                 des: des,
                 price: price ? parseInt(price) : 0,
                 geo1: currentLocation,
@@ -347,6 +389,7 @@ const CreateRequest = (props) => {
                 direction: direction,
                 typeRequest: typeRequest,
                 requestStatus: 0,
+                address: typeRequest===2? `${address}, ${detailAddress}` : null,
                 timestamp: timestamp,
             }
             set(ref(firebaseDatabase, `request/${userID}-${timestamp}`), request)
@@ -445,6 +488,7 @@ const CreateRequest = (props) => {
                     marginHorizontal: 10,
                     color: "black",
                 }}
+                    numberOfLines={1}
                     editable={!isLoading}
                     value={title}
                     onChangeText={setTitle}
@@ -479,6 +523,7 @@ const CreateRequest = (props) => {
                         const filteredText = text.replace(/[^0-9]/g, '');
                         setPrice(filteredText);
                     }}
+                    numberOfLines={1}
                     autoCorrect={false}
                     keyboardType="numeric"
                     placeholderTextColor={!isEnabledFree ? (errorPrice ? zalert : inactive) : success}
@@ -505,7 +550,7 @@ const CreateRequest = (props) => {
                 flexDirection: 'row',
                 marginHorizontal: split.s5,
                 marginVertical: split.s5,
-                height: normalize(70),
+                height: normalize(60),
                 //backgroundColor:"red",
             }}>
                 {/*onPress,title,colorBG,colorBD,colorT,sizeF,sizeBT,sizeB,radius,disabled*/}
@@ -523,8 +568,9 @@ const CreateRequest = (props) => {
                     photoPath && <Image
                         style={{
                             width: "20%",
-                            height: "80%",
+                            height: "100%",
                             alignSelf: "center",
+                            borderRadius: 10
                         }}
                         defaultSource={require('../../assets/helpbuy.jpg')}
                         source={{ uri: "file://" + photoPath }}
@@ -571,6 +617,252 @@ const CreateRequest = (props) => {
                     </View>
                 </Modal>
             </View>}
+            {typeRequest === 2 && <View style={{
+                flex: 8,
+                alignItems: 'center',
+                flexDirection: 'row',
+                marginHorizontal: split.s5,
+                marginVertical: split.s5,
+                justifyContent: 'center',
+                //backgroundColor:'red'
+            }}>
+                <Text style={{
+                    fontSize: fontSizes.h5,
+                    position: 'absolute',
+                    left: split.s1,
+                    color: "black",
+                }}>Số nhà:</Text>
+                <TextInput style={{
+                    borderWidth: 1,
+                    borderColor: 'black',
+                    borderRadius: 15,
+                    width: normalize(295),
+                    paddingStart: "15%",
+                    marginHorizontal: 10,
+                    color: "black",
+                }}
+                    numberOfLines={1}
+                    editable={!isLoading}
+                    value={address}
+                    onChangeText={setAddress}
+                    autoCorrect={false}
+                    placeholder={errorAddress ? errorAddress : "số nhà, tên đường"}
+                    placeholderTextColor={errorAddress?zalert:inactive}
+                />
+            </View>}
+            {typeRequest === 2 && <View style={{
+                flex: 8,
+                alignItems: 'center',
+                justifyContent: 'center',
+                flexDirection: 'row',
+                marginHorizontal: split.s5,
+                marginVertical: split.s5,
+                //backgroundColor:'red'
+            }}>
+                <Text style={{
+                    fontSize: fontSizes.h5,
+                    position: 'absolute',
+                    left: split.s1,
+                    color: "black",
+                }}>Địa chỉ:</Text>
+                <TextInput style={{
+                    borderWidth: 1,
+                    borderColor: 'black',
+                    borderRadius: 15,
+                    width: normalize(295),
+                    paddingStart: "15%",
+                    color: "black",
+                    fontSize: fontSizes.h4*0.9,
+                }}
+                    multiline={true}
+                    editable={!isLoading}
+                    value={detailAddress}
+                    onChangeText={setDetailAddress}
+                    autoCorrect={false}
+                    placeholder={errorAddress ? errorAddress : "phường , quận, thành phố"}
+                    placeholderTextColor={errorAddress ? zalert : inactive}
+                />
+            </View>}
+            {currentLocation && <View style={{
+                flex: 30,
+                height: normalize(typeRequest === 1 ? 280 : 180),
+                marginHorizontal: split.s5,
+                marginVertical: split.s5,
+            }}> 
+                <MapView
+                    ref={mapRef}
+                    provider={PROVIDER_GOOGLE}
+                    style={{
+                        ...StyleSheet.absoluteFillObject,
+                    }}
+                    customMapStyle={mapStyle.mapRetroStyle}
+                    zoomControlEnabled={true}
+                    rotateEnabled={false}
+                    initialRegion={{
+                        latitude: currentLocation.latitude,
+                        longitude: currentLocation.longitude,
+                        latitudeDelta: 0.008,
+                        longitudeDelta: 0.011,
+                    }}
+                    onPress={(event)=>{
+                        if ((currentRoute||displaySearch)&&typeRequest===1) {
+                            return Alert.alert(
+                                "Current Route is aviable",
+                                "Are you sure you want change your route?",
+                                [
+                                    {
+                                        text: "Yes",
+                                        onPress:() => {
+                                            setCurrentRoute(null);
+                                            setDisplaySearch(null);
+                                            setSearchAddress(null);
+                                        },
+                                    },
+                                    {
+                                        text: "No",
+                                    },
+                                ]
+                            );
+                        }
+                        else{
+                            handleMapPress(event);
+                        }
+                    }}
+                >
+                    <Marker
+                        key={1}
+                        coordinate={typeRequest === 2 ? (pressLocation || currentLocation) : currentLocation}
+                        tile={"User"}
+                        description={"Current User Location"}
+                    >
+                    </Marker>
+                    {typeRequest === 1 && pressLocation && <Marker
+                        key={2}
+                        coordinate={pressLocation}
+                        tile={"Des"}
+                        description={"Des Location"}
+                    >
+                        <Image
+                            source={images.markerUrGeo1}
+                            style={{ width: 35, height: 35, }} 
+                        />
+                    </Marker>}
+                    {typeRequest === 1 && currentRoute && <Polyline
+                        coordinates={currentRoute.route}
+                        strokeColor={colors.primary}
+                        strokeWidth={2}
+                    />}
+                </MapView>
+                {typeRequest === 1 && <View style={{
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    marginHorizontal: split.s3,
+                    marginTop: split.s4,
+                    //backgroundColor: 'white',
+                }}>
+                    <Icon name={"search"}
+                        size={20}
+                        color={'black'}
+                        marginStart={5}
+                        style={{
+                            position: 'absolute'
+                        }}
+                    />
+                    <TextInput
+                        value={searchAddress}
+                        onChangeText={setSearchAddress}
+                        onEndEditing={()=>{
+                            handleSearchAddress();
+                        }}
+                        autoCorrect={false}
+                        numberOfLines={1}
+                        style={{
+                            backgroundColor: 'rgba(255, 255, 255, 0.9)',
+                            flex: 1,
+                            height: normalize(36),
+                            borderRadius: 5,
+                            opacity: 0.6,
+                            color: "black",
+                            paddingStart: 30,
+                        }}
+                    />
+                </View>}
+                <TouchableOpacity
+                    style={{
+                        position: 'absolute',
+                        top: split.s2,
+                        right: split.s4,
+                        borderRadius: 5,
+                        marginTop: normalize(40),
+                        //backgroundColor:'red'
+                    }}
+                    onPress={handleGetCurrentLocation}
+                >
+                    <Image source={images.iconCurrentLocation} style={{ height: 50, width: 50 }} />
+                </TouchableOpacity>
+                {displaySearch && <Text style={{
+                        color: 'black',
+                        fontSize: fontSizes.h4,
+                        position:'absolute',
+                        bottom: normalize(20),
+                        left: normalize(60),
+                        right: normalize(45),
+                        backgroundColor:'white'
+                }}>{displaySearch}</Text>}
+            </View>}
+            {currentRoute && <View style={{
+                marginHorizontal: normalize(10),
+                alignItems: 'center',
+            }}>
+                <Text style={{ fontSize: fontSizes.h3, color: primary }}>Detail route: {Math.ceil(currentRoute.distance/100)/10} km, {Math.ceil(currentRoute.duration/60)} phút</Text>
+                <View>
+                    <Text style={{
+                        marginTop: normalize(5),
+                        color: 'black',
+                        fontSize: fontSizes.h4,
+                    }}>Từ: {currentRoute.startAddress} </Text>
+                    <Text style={{
+                        marginTop: normalize(5),
+                        color: 'black',
+                        fontSize: fontSizes.h4,
+                    }}>Đến: {currentRoute.endAddress} </Text>
+                </View>
+            </View>}
+            {showIndicator && <ActivityIndicator size={'large'} animating={showIndicator} />}
+            <View style={{
+                flex: 20,
+                flexDirection: 'row',
+                justifyContent: 'space-between',
+                marginHorizontal: split.s1,
+                marginVertical: split.s5,
+            }}>
+                <CLButton
+                    title={"Load map"}
+                    colorBG={primary}
+                    colorBD={"white"}
+                    colorT={"white"}
+                    sizeF={fontSizes.h4}
+                    sizeBT={130}
+                    radius={15}
+                    disabled={isLoading}
+                    onPress={() => {
+                        handleLoadMap();
+                    }}
+                />
+                <CLButton
+                    title={"Post request"}
+                    colorBG={primary}
+                    colorBD={"white"}
+                    colorT={"white"}
+                    sizeF={fontSizes.h4}
+                    sizeBT={130}
+                    radius={15}
+                    disabled={isLoading}
+                    onPress={() => {
+                        handlePostRequest();
+                    }}
+                />
+            </View>
             <View style={{
                 flex: 30,
                 marginHorizontal: 5,
@@ -603,98 +895,8 @@ const CreateRequest = (props) => {
                     onChangeText={setDes}
                     autoCorrect={false}
                     multiline={true}
-                    placeholder={errorDes ? errorDes : ""}
-                    placeholderTextColor={zalert}
-                />
-            </View>
-            {currentLocation && <View style={{
-                flex: 30,
-                height: normalize(typeRequest === 1 ? 280 : 180),
-                marginHorizontal: split.s5,
-                marginVertical: split.s5,
-            }}>
-                <MapView
-                    ref={mapRef}
-                    provider={PROVIDER_GOOGLE}
-                    style={{
-                        ...StyleSheet.absoluteFillObject,
-                    }}
-                    customMapStyle={mapStyle.mapRetroStyle}
-                    zoomControlEnabled={true}
-                    rotateEnabled={false}
-                    initialRegion={{
-                        latitude: currentLocation.latitude,
-                        longitude: currentLocation.longitude,
-                        latitudeDelta: 0.008,
-                        longitudeDelta: 0.011,
-                    }}
-                    onPress={handleMapPress}
-                >
-                    <Marker
-                        key={1}
-                        coordinate={typeRequest === 2 ? (pressLocation || currentLocation) : currentLocation}
-                        tile={"User"}
-                        description={"Current User Location"}
-                    >
-                    </Marker>
-                    {typeRequest === 1 && pressLocation && <Marker
-                        key={2}
-                        coordinate={pressLocation}
-                        tile={"Des"}
-                        description={"Des Location"}
-                    >
-                        <Image
-                            source={images.markerUrGeo1}
-                            style={{ width: 35, height: 35, }} // Thiết lập kích thước của hình ảnh
-                        />
-                    </Marker>}
-                </MapView>
-                <TouchableOpacity
-                    style={{
-                        position: 'absolute',
-                        top: split.s2,
-                        right: split.s4,
-                        borderRadius: 5,
-                        //backgroundColor:'red'
-                    }}
-                    onPress={handleGetCurrentLocation}
-                >
-                    <Image source={images.iconCurrentLocation} style={{ height: 50, width: 50 }} />
-                </TouchableOpacity>
-            </View>}
-            {showIndicator && <ActivityIndicator size={'large'} animating={showIndicator} />}
-            <View style={{
-                flex: 20,
-                flexDirection: 'row',
-                justifyContent: 'space-between',
-                marginHorizontal: split.s1,
-                marginVertical: split.s5,
-            }}>
-                <CLButton
-                    title={"Preview"}
-                    colorBG={primary}
-                    colorBD={"white"}
-                    colorT={"white"}
-                    sizeF={fontSizes.h4}
-                    sizeBT={130}
-                    radius={15}
-                    disabled={isLoading}
-                    onPress={() => {
-                        console.log("press preview!");
-                    }}
-                />
-                <CLButton
-                    title={"Post request"}
-                    colorBG={primary}
-                    colorBD={"white"}
-                    colorT={"white"}
-                    sizeF={fontSizes.h4}
-                    sizeBT={130}
-                    radius={15}
-                    disabled={isLoading}
-                    onPress={() => {
-                        handlePostRequest();
-                    }}
+                    placeholder={"không bắt buộc..."}
+                    placeholderTextColor={inactive}
                 />
             </View>
 
@@ -730,13 +932,3 @@ const styles = StyleSheet.create({
 
 
 export default CreateRequest;
-
-{/* <View>
-        {!!selected && (
-            <Text>
-                Selected: label = {selected.label} and value = {selected.value}
-            </Text>
-        )}
-        <Dropdown label="Select Item" data={data} onSelect={setSelected} />
-        <Text>This is the rest of the form.</Text>
-    </View> */}

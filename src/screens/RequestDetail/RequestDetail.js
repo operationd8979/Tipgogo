@@ -97,6 +97,7 @@ const RequestDetail = () => {
         des,
         geo1,
         geo2,
+        address,
         direction,
         accepted,
         timestamp
@@ -204,7 +205,7 @@ const RequestDetail = () => {
                     <Text style={{ color: 'white', fontWeight: '800' }}>1</Text>
                 </Circle>
                 <Text style={{ fontSize: fontSizes.h4, color: primary, marginStart: normalize(5) }}>Pick up your item</Text>
-                <Text style={{ fontSize: fontSizes.h4, color: "black", marginStart: normalize(5), position: 'absolute', end: normalize(20) }}>{distance.text}/{duration.text}</Text>
+                <Text style={{ fontSize: fontSizes.h4, color: "black", marginStart: normalize(5), position: 'absolute', end: normalize(20) }}>{Math.ceil(distance/10)/100}km/{Math.ceil(duration/60)}phút</Text>
             </View>
             <View style={{
                 flexDirection: 'row',
@@ -237,7 +238,7 @@ const RequestDetail = () => {
                         marginTop: normalize(5),
                         color: 'black',
                         fontSize: fontSizes.h4,
-                    }}>Địa chỉ đến: {endAddress} </Text>
+                    }}>Địa chỉ đến: {type===1?endAddress:address} </Text>
                 </View>
             </View>
         </View>}
@@ -259,7 +260,7 @@ const RequestDetail = () => {
                     <Text style={{ color: 'white', fontWeight: '800' }}>1</Text>
                 </Circle>
                 <Text style={{ fontSize: fontSizes.h4, color: primary, marginStart: normalize(5) }}>On going</Text>
-                <Text style={{ fontSize: fontSizes.h4, color: "black", marginStart: normalize(5), position: 'absolute', end: normalize(20) }}>{distance.text}/{duration.text}</Text>
+                <Text style={{ fontSize: fontSizes.h4, color: "black", marginStart: normalize(5), position: 'absolute', end: normalize(20) }}>{distance}/{duration}</Text>
             </View>
             <View style={{
                 flexDirection: 'row',
@@ -273,7 +274,7 @@ const RequestDetail = () => {
                     <Text style={{ color: 'white', fontWeight: '800' }}>2</Text>
                 </Circle>
                 <Text style={{ fontSize: fontSizes.h4, color: primary, marginStart: normalize(5) }}>Hitchhiking</Text>
-                <Text style={{ fontSize: fontSizes.h4, color: "black", marginStart: normalize(5), position: 'absolute', end: normalize(20) }}>{road ? `${direction.distance.text}/${direction.duration.text}` : "==/=="}</Text>
+                <Text style={{ fontSize: fontSizes.h4, color: "black", marginStart: normalize(5), position: 'absolute', end: normalize(20) }}>{road ? `${direction.distance}/${direction.duration}` : "==/=="}</Text>
             </View>
             <View style={{
                 flexDirection: 'row',

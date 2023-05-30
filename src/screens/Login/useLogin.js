@@ -55,8 +55,11 @@ const userLogin = () => {
                                     responseUser.accessToken,
                                 ).then(() => {
                                     console.log("Logined to app");
-                                    navigation.dispatch(StackActions.replace('UItab'));
-                                    //navigation.navigate('UItab');
+                                    navigation.reset({
+                                        index: 0,
+                                        routes: [{ name: 'UItab' }],
+                                    });
+                                    //navigation.dispatch(StackActions.replace('UItab'));
                                     console.log("Set Token successfully!");
                                 }).catch(() => {
                                     console.log("Error set Token!");

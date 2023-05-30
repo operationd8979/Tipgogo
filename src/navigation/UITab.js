@@ -57,7 +57,7 @@ const UItab = (props) => {
 
     return (
     <Tab.Navigator 
-        initialRouteName= "SmartDi"
+        initialRouteName= "SmartCal"
         screenOptions={screenOptions}
     >
         <Tab.Screen name="Requests" component={RequestList} />

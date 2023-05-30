@@ -6,7 +6,7 @@ import { colors, fontSizes, icons, images, normalize , split } from "../../const
 import useMap from '../FullMap/FullMap'
 
 
-const RequestItem = ({ onPress, request: { name, url, price, des, geo1, geo2 , type, status, accepted, direction, mine, time}, currentLocation, screen }) => {
+const RequestItem = ({ onPress, request: { name, url, price, des, geo1, geo2 , type, status, accepted, address, direction, mine, time}, currentLocation, screen }) => {
 
     const {FullMap} = useMap();
 
@@ -84,14 +84,14 @@ const RequestItem = ({ onPress, request: { name, url, price, des, geo1, geo2 , t
                     fontSize: fontSizes.h4,
                     fontWeight: 'bold',
             }}>Price: {price==0?'Free':`${price} vnd`}</Text>
+            {des&&<Text style={{
+                    color:'black',
+                    fontSize: fontSizes.h4,
+            }}>Mô tả: {des}</Text>}
             <Text style={{
                     color:'black',
                     fontSize: fontSizes.h4,
-            }}>Mô tả: {des}</Text>
-            <Text style={{
-                    color:'black',
-                    fontSize: fontSizes.h4,
-            }}>Adress: {direction? `${direction.startAddress}` :`${geo1.latitude}-${geo1.longitude}`}</Text>
+            }}>Address: {type===1? `${direction.startAddress}` :`${address}`}</Text>
             <Text style={{
                     color:'black',
                     fontSize: fontSizes.h4,

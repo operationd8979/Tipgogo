@@ -32,6 +32,7 @@ import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import Credentials from '../../../Credentials'
 import { distanceTwoGeo } from '../../utilies'
+import {getDirectionDriver} from '../../service/MapService'
 /** 
  - ListView from a map of objects
  - FlatList
@@ -188,7 +189,7 @@ const RequestList = (props) => {
             const dbRef = ref(firebaseDatabase, 'request')
             onValue(dbRef, async (snapshot) => {
                 if (snapshot.exists()) {
-                    console.log('Importing data to listRequest')
+                    console.log('Importing data to smartRequest')
                     setOnAvaiable(true);
                     const userID = await getUserIDByTokken();
                     let snapshotObject = snapshot.val()
@@ -209,6 +210,7 @@ const RequestList = (props) => {
                                 des: eachObject.des,
                                 geo1: eachObject.geo1,
                                 geo2: eachObject.geo2,
+                                address: eachObject.address,
                                 direction: eachObject.direction,
                                 accepted: userID == eachObject.requestStatus,
                                 timestamp: eachObject.timestamp,
@@ -284,15 +286,14 @@ const RequestList = (props) => {
             if (status == 0) {
                 if (currentLocation && userID) {
                     if (type === 2 || true) {
-                        const origin = `${currentLocation.latitude.toFixed(6)},${currentLocation.longitude.toFixed(6)}`;
                         let destination = "";
                         let direction = null;
                         if (type === 1)
-                            destination = `${geo1.latitude.toFixed(6)},${geo1.longitude.toFixed(6)}`;
+                            destination = geo1;
                         if (type === 2)
-                            destination = `${geo2.latitude.toFixed(6)},${geo2.longitude.toFixed(6)}`;
+                            destination = geo2;
                         if (destination != "")
-                            direction = await getDirections(origin, destination, currentLocation);
+                            direction = await getDirectionDriver(currentLocation, destination);
                         if (!direction) {
                             debugger
                             console.error("Get direction failed!");
@@ -490,19 +491,25 @@ const RequestList = (props) => {
                                     color: 'black',
                                     fontSize: fontSizes.h4,
                                 }}>Price: {selectedRequest.price} vnd</Text>
-                                <Text style={{
-                                    color: 'black',
-                                    fontSize: fontSizes.h4,
-                                }}>Mô tả: {selectedRequest.des}</Text>
+                                {selectedRequest.type == 2 &&<View>
+                                    <Text style={{
+                                        color: 'black',
+                                        fontSize: fontSizes.h4,
+                                    }}>Address: {selectedRequest.address}</Text>
+                                    <Text style={{
+                                        color: 'black',
+                                        fontSize: fontSizes.h4,
+                                    }}>Thời gian: {selectedRequest.time} </Text>
+                                </View>}
                                 {selectedRequest.type == 1 && <View>
                                     <Text style={{
                                         color: 'black',
                                         fontSize: fontSizes.h4,
-                                    }}>Distance: {selectedRequest.direction.distance.text}</Text>
+                                    }}>Distance: {Math.ceil(selectedRequest.direction.distance/10)/100} km</Text>
                                     <Text style={{
                                         color: 'black',
                                         fontSize: fontSizes.h4,
-                                    }}>Duration: {selectedRequest.direction.duration.text}</Text>
+                                    }}>Duration: {Math.ceil(selectedRequest.direction.duration/60)} phút</Text>
                                     <Text style={{
                                         color: 'black',
                                         fontSize: fontSizes.h4,
@@ -514,13 +521,19 @@ const RequestList = (props) => {
                                 </View>}
                             </View>
                         </View>
+                        {selectedRequest.des && <View>
+                            <Text style={{
+                                color: 'black',
+                                fontSize: fontSizes.h4,
+                            }}>Mô tả: {selectedRequest.des}</Text>
+                        </View>}
                         <View style={{ height: 1, backgroundColor: 'black' }} />
                         <FullMap
-                            geo1={selectedRequest.geo1}
+                            geo1={selectedRequest.type==1&&selectedRequest.geo1}
                             geo2={selectedRequest.geo2}
                             direction={selectedRequest.direction}
                             type={selectedRequest.type}
-                            screen="ModalListRequest"
+                            screen="ModalRequestList"
                         />
                     </View>
                 )}

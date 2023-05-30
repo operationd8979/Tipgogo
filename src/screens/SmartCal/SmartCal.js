@@ -36,114 +36,8 @@ import { mapStyle,findShortestPaths } from '../../utilies'
 import Openrouteservice from 'openrouteservice-js'
 const orsDirections = new Openrouteservice.Directions({ api_key: Credentials.APIKey_OpenRouteService });
 const Geocode = new Openrouteservice.Geocode({ api_key: Credentials.APIKey_OpenRouteService })
+import {getAddressFromLocation,getRouteDirection} from '../../service/MapService'
 
-
-const getCurrentRouteDirection = (origin, destination) => {
-    if (origin && destination)
-        return new Promise(async (resolve, reject) => {
-            console.log("API direction RUNNING...................!");
-            try {
-                let response = await orsDirections.calculate({
-                    coordinates: [[origin.longitude, origin.latitude], [destination.longitude, destination.latitude]],
-                    profile: 'driving-hgv',
-                    restrictions: {
-                        height: 10,
-                        weight: 5
-                    },
-                    extra_info: ['waytype', 'steepness'],
-                    avoidables: ['highways', 'tollways', 'ferries', 'fords'],
-                    format: 'json'
-                })
-                const start = await getAddressFromLocation(origin.latitude, origin.longitude);
-                const end = await getAddressFromLocation(destination.latitude, destination.longitude);
-                const routes = response.routes;
-                if (routes && routes.length > 0) {
-                    const points = routes[0].geometry;
-                    const decodedPoints = decodePolyline(points);
-                    const direction = {
-                        summary: `${start.address.road ? start.address.road : start.address.suburb} ${start.address.city_district}-${end.address.road ? end.address.road : end.address.suburb} ${end.address.city_district}-${response.metadata.timestamp}`,
-                        startAddress: start.display_name,
-                        endAddress: end.display_name,
-                        distance: routes[0].summary.distance,
-                        duration: routes[0].summary.duration,
-                        steps: routes[0].segments[0].steps,
-                        route: decodedPoints,
-                        state: '0',
-                        timestamp: response.metadata.timestamp,
-                        destination: destination,
-                    };
-                    console.log("Direction OK! URL:", direction.summary);
-                    resolve(direction);
-                } else {
-                    console.error('Error building directions!');
-                    resolve(null);
-                }
-            } catch (err) {
-                console.log("An error occurred: " + err.status)
-                console.error(await err.response.json())
-                reject(err);
-            }
-        });
-    else
-        return null;
-};
-
-const decodePolyline = (encodedPolyline) => {
-    const polyline = require('@mapbox/polyline');
-    const decoded = polyline.decode(encodedPolyline);
-    return decoded.map((coordinate) => ({
-        latitude: coordinate[0],
-        longitude: coordinate[1],
-    }));
-};
-
-const getAddressFromLocation = (latitude, longitude) => {
-    if (latitude && longitude)
-        return new Promise(async (resolve, reject) => {
-            console.log("API reverseGeocode RUNNING...................!");
-            try {
-                const response = await axios.get(
-                    `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`
-                );
-                //console.log(response);
-                if (response.data && response.data.address) {
-                    const address = response.data.address;
-                    console.log('Address:', address);
-                    resolve(response.data);
-                }
-                resolve(null);
-
-            } catch (error) {
-                console.log(error);
-                reject(err);
-            }
-        });
-    else
-        return null;
-};
-
-const getAddress = (latitude, longitude) => {
-    if (latitude && longitude)
-        return new Promise(async (resolve, reject) => {
-            console.log("API reverseGeocode RUNNING...................!");
-            try {
-                let response_reverse = await Geocode.reverseGeocode({
-                    point: { lat_lng: [latitude, longitude], radius: 50 },
-                    boundary_country: ["DE"]
-                })
-                // Add your own result handling here
-                console.log("response: ", response_reverse)
-                resolve(response_reverse);
-
-            } catch (err) {
-                console.log("An error occurred: " + err.status)
-                console.error(await err.response.json())
-                reject(err);
-            }
-        });
-    else
-        return null;
-};
 
 const getUserIDByTokken = async () => {
     const accessToken = await AsyncStorage.getItem('token');
@@ -265,6 +159,7 @@ const SmartCal = (props) => {
                         }))
                 } else {
                     console.log('No data available')
+                    setOnAvaiable(true);
                 }
             })
         }
@@ -301,10 +196,14 @@ const SmartCal = (props) => {
             }
         }
         if (currentLocation && pressLocation) {
-            const direction = await getCurrentRouteDirection(currentLocation, pressLocation);
-            const time = new Date(direction.timestamp);
-            setTime(time);
-            setCurrentRoute(direction);
+            try{
+                const direction = await getRouteDirection(currentLocation, pressLocation);
+                const time = new Date(direction.timestamp);
+                setTime(time);
+                setCurrentRoute(direction);
+            }catch(error){
+                console.log(error);
+            } 
         }
         else {
             console.log("PressLocation is null!");

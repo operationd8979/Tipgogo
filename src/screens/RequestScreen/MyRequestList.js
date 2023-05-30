@@ -104,6 +104,7 @@ const MyRequestList = (props) => {
                             des: eachObject.des,
                             geo1: eachObject.geo1,
                             geo2: eachObject.geo2,
+                            address: eachObject.address,
                             direction: eachObject.direction,
                             accepted: userID==eachObject.requestStatus,
                             timestamp: eachObject.timestamp,

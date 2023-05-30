@@ -96,7 +96,11 @@ const useRegister = () => {
                     'token',
                     responseUser.accessToken,
                   ).then(() => {
-                    navigation.dispatch(StackActions.replace('UItab'));
+                    //navigation.dispatch(StackActions.replace('UItab'));
+                    navigation.reset({
+                      index: 0,
+                      routes: [{ name: 'UItab' }],
+                    });
                     console.log("Set Token successfully!");
                   }).catch(() => {
                     console.error("Error set Token!");
