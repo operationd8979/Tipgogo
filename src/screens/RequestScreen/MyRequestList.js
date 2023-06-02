@@ -51,9 +51,7 @@ const getUserIDByTokken= async () => {
 
 const MyRequestList = (props) => {
 
-    const [isEnableMine,setIsEnableMine] = useState(false);
     //constant
-    const { hitchhiking, secondHand, helpBuy } = images
     const { primary, zalert, success, warning, inactive } = colors
 
     //element init
@@ -61,7 +59,6 @@ const MyRequestList = (props) => {
     const { FullMap, currentLocation, getCurrentPosition,checkLocationPermission } = useMap();
 
     //element function
-    const [selectedRequest, setSelectedRequest] = useState(null);
     const [requests, setRequests] = useState([]);
     const [searchText, setSearchText] = useState('')
     const filterRequest = useCallback(() => requests.filter(eachRequest => 
@@ -74,9 +71,9 @@ const MyRequestList = (props) => {
         checkLocationPermission();
         getCurrentPosition();
         const dbRef = ref(firebaseDatabase, 'request') 
-        onValue(dbRef, async (snapshot) => {
+        const unsubscribe = onValue(dbRef, async (snapshot) => {
             if (snapshot.exists()) {
-                console.log('Importing data to listRequest')
+                console.log('Importing data to listRequest (MyRequestList)')
                 const userID = await getUserIDByTokken();
                 let snapshotObject = snapshot.val()
                 setRequests(Object.keys(snapshotObject).filter(k=>k.split('-')[0]==userID)
@@ -116,6 +113,7 @@ const MyRequestList = (props) => {
                 console.log('No data available')
             }
         })
+        return unsubscribe;
     }, [])
 
     //func render requests

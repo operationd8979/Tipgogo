@@ -4,6 +4,7 @@ import Icon from "react-native-vector-icons/FontAwesome5"
 
 import { colors, fontSizes, icons, images, normalize , split } from "../../constants"
 import useMap from '../FullMap/FullMap'
+import {formatNumber} from '../../utilies'
 
 
 const RequestItem = ({ onPress, request: { name, url, price, des, geo1, geo2 , type, status, accepted, address, direction, mine, time}, currentLocation, screen }) => {
@@ -83,7 +84,7 @@ const RequestItem = ({ onPress, request: { name, url, price, des, geo1, geo2 , t
                     color: price==0?colors.success:"red",
                     fontSize: fontSizes.h4,
                     fontWeight: 'bold',
-            }}>Price: {price==0?'Free':`${price} vnd`}</Text>
+            }}>Price: {price==0?'Free':`${formatNumber(price)} vnd`}</Text>
             {des&&<Text style={{
                     color:'black',
                     fontSize: fontSizes.h4,

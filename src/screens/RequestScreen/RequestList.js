@@ -28,75 +28,10 @@ import {
     update,
 } from "../../../firebase/firebase"
 import useMap from '../FullMap/FullMap'
-import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage'
-import Credentials from '../../../Credentials'
-import { distanceTwoGeo } from '../../utilies'
+import { distanceTwoGeo, formatNumber } from '../../utilies'
 import {getDirectionDriver} from '../../service/MapService'
-/** 
- - ListView from a map of objects
- - FlatList
- */
-const GOOGLE_MAPS_APIKEY = Credentials.APIkey_Direction;
 
-const getDirections = (origin, destination, currentLocation) => {
-    console.log("API direction RUNNING...................!");
-    return new Promise(async (resolve, reject) => {
-        try {
-            console.log("API direction RUNNING...................!");
-            const response = await axios.get(
-                'https://maps.googleapis.com/maps/api/directions/json',
-                {
-                    params: {
-                        origin: origin,
-                        destination: destination,
-                        key: GOOGLE_MAPS_APIKEY,
-                    },
-                }
-            );
-            console.log("-----------------------------------")
-            console.log(response)
-            const routes = response.data.routes;
-            console.log("-----------------------------------")
-            console.log(routes)
-            if (routes && routes.length > 0) {
-                const points = routes[0].overview_polyline.points;
-                const decodedPoints = decodePolyline(points);
-                console.log("-----------------------------------")
-                console.log(routes[0])
-                const direction = {
-                    summary: routes[0].summary,
-                    startAddress: routes[0].legs[0].start_address,
-                    endAddress: routes[0].legs[0].end_address,
-                    distance: routes[0].legs[0].distance,
-                    duration: routes[0].legs[0].duration,
-                    steps: routes[0].legs[0].steps,
-                    route: decodedPoints,
-                    currentDriver: currentLocation,
-                    state: '0',
-                    timestamp: new Date().getTime(),
-                };
-                console.log("Direction OK! URL:", direction);
-                resolve(direction);
-            } else {
-                console.error('Error building directions!');
-                resolve(null);
-            }
-        } catch (error) {
-            console.error('Error fetching directions:', error);
-            resolve(null);
-        }
-    });
-};
-
-const decodePolyline = (encodedPolyline) => {
-    const polyline = require('@mapbox/polyline');
-    const decoded = polyline.decode(encodedPolyline);
-    return decoded.map((coordinate) => ({
-        latitude: coordinate[0],
-        longitude: coordinate[1],
-    }));
-};
 
 const getUserIDByTokken = async () => {
     const accessToken = await AsyncStorage.getItem('token');
@@ -185,44 +120,43 @@ const RequestList = (props) => {
     }, [])
 
     useEffect(() => {
-        if (currentLocation) {
-            const dbRef = ref(firebaseDatabase, 'request')
-            onValue(dbRef, async (snapshot) => {
-                if (snapshot.exists()) {
-                    console.log('Importing data to smartRequest')
-                    setOnAvaiable(true);
-                    const userID = await getUserIDByTokken();
-                    let snapshotObject = snapshot.val()
-                    setRequests(Object.keys(snapshotObject)
-                        .filter(k => snapshotObject[k].requestStatus != -1)
-                        .filter(k => k.split('-')[0] != userID)
-                        .map(eachKey => {
-                            let eachObject = snapshotObject[eachKey]
-                            const time = new Date(eachObject.timestamp).toLocaleString();
-                            if(userID == eachObject.requestStatus) setOnAvaiable(false);
-                            return {
-                                requestId: eachKey,
-                                name: eachObject.title,
-                                url: eachObject.photo,
-                                status: eachObject.requestStatus,
-                                price: eachObject.price,
-                                type: eachObject.typeRequest,
-                                des: eachObject.des,
-                                geo1: eachObject.geo1,
-                                geo2: eachObject.geo2,
-                                address: eachObject.address,
-                                direction: eachObject.direction,
-                                accepted: userID == eachObject.requestStatus,
-                                timestamp: eachObject.timestamp,
-                                time: time,
-                            }
-                        }))
-                } else {
-                    console.log('No data available')
-                }
-            })
-        }
-    }, [currentLocation])
+        const dbRef = ref(firebaseDatabase, 'request')
+        const unsubscribe = onValue(dbRef, async (snapshot) => {
+            if (snapshot.exists()) {
+                console.log('Importing data to listRequest (RequestList)')
+                setOnAvaiable(true);
+                const userID = await getUserIDByTokken();
+                let snapshotObject = snapshot.val()
+                setRequests(Object.keys(snapshotObject)
+                    .filter(k => snapshotObject[k].requestStatus != -1)
+                    .filter(k => k.split('-')[0] != userID)
+                    .map(eachKey => {
+                        let eachObject = snapshotObject[eachKey]
+                        const time = new Date(eachObject.timestamp).toLocaleString();
+                        if (userID == eachObject.requestStatus) setOnAvaiable(false);
+                        return {
+                            requestId: eachKey,
+                            name: eachObject.title,
+                            url: eachObject.photo,
+                            status: eachObject.requestStatus,
+                            price: eachObject.price,
+                            type: eachObject.typeRequest,
+                            des: eachObject.des,
+                            geo1: eachObject.geo1,
+                            geo2: eachObject.geo2,
+                            address: eachObject.address,
+                            direction: eachObject.direction,
+                            accepted: userID == eachObject.requestStatus,
+                            timestamp: eachObject.timestamp,
+                            time: time,
+                        }
+                    }))
+            } else {
+                console.log('No data available')
+            }
+        })
+        return unsubscribe;
+    }, [])
 
     //func render requests
     const renderNotRequest = () => {
@@ -295,7 +229,6 @@ const RequestList = (props) => {
                         if (destination != "")
                             direction = await getDirectionDriver(currentLocation, destination);
                         if (!direction) {
-                            debugger
                             console.error("Get direction failed!");
                             return;
                         }
@@ -460,7 +393,7 @@ const RequestList = (props) => {
         </View>
         <Modal visible={modalVisible} animationType="fade" transparent={true}  >
             <View style={{ flex: 1, justifyContent: 'center' }}>
-                {modalVisible && selectedRequest && (
+                {selectedRequest && (
                     <View style={styles.container}>
                         <View style={{
                             flexDirection: 'row',
@@ -490,7 +423,7 @@ const RequestList = (props) => {
                                 <Text style={{
                                     color: 'black',
                                     fontSize: fontSizes.h4,
-                                }}>Price: {selectedRequest.price} vnd</Text>
+                                }}>Price: {formatNumber(selectedRequest.price)} vnd</Text>
                                 {selectedRequest.type == 2 &&<View>
                                     <Text style={{
                                         color: 'black',

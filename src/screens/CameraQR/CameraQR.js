@@ -29,6 +29,15 @@ import {
 
 import { useNavigation } from '@react-navigation/native';
 
+const getUserIDByTokken = async () => {
+    const accessToken = await AsyncStorage.getItem('token');
+    const dbRef = ref(firebaseDatabase, "users");
+    const dbQuery = query(dbRef, orderByChild("accessToken"), equalTo(accessToken));
+    const data = await get(dbQuery);
+    const userID = Object.keys(data.val())[0];
+    return userID;
+}
+
 export default function CameraQR({requestId}) {
 
     const devices = useCameraDevices();
@@ -64,14 +73,24 @@ export default function CameraQR({requestId}) {
         console.log("Run Completing request!");
         return new Promise(async (resolve, reject) => {
             try {
+                const userID = await getUserIDByTokken();
                 const requestRef = ref(firebaseDatabase, `request/${requestID}`);
-                update(requestRef, { requestStatus: -1 })
+                update(requestRef, { requestStatus: 1 })
                     .then(() => {
                         console.log("Update data complete request successfully!");
                         navigation.navigate("UItab")
                     })
                     .catch((error) => {
                         console.error("Error Update data complete request: ", error);
+                    });
+                const directionRef = ref(firebaseDatabase, `direction/${userID}/${requestId}`)
+                update(directionRef, { state: 1 })
+                    .then(() => {
+                        console.log("Update data complete direction successfully!");
+                        navigation.navigate("UItab")
+                    })
+                    .catch((error) => {
+                        console.error("Error Update data complete direction: ", error);
                     });
             } catch (error) {
                 console.error('Error Completing request:', error);

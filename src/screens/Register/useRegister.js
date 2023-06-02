@@ -47,14 +47,14 @@ const useRegister = () => {
       setEmailError(i18n.t('emailErr2'))
       result = false
     }
-    /*
+    
     if (!password) {
       setPasswordError(i18n.t('passErr1'))
       result = false
     } else if (passRegex.test(password) !== true) {
       setPasswordError(i18n.t('passErr2'))
       result = false
-    }*/
+    }
 
     if (!fullname) {
       setFullnameError(i18n.t('fullnameErr1'))

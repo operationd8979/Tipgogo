@@ -101,7 +101,7 @@ const useMap = () => {
         console.log(
             Geolocation.watchPosition(
                 (position) => {
-                    console.log("watchPosition")
+                    console.log("Ready to update!Current location changed!")
                     const latitude = position.coords.latitude;
                     const longitude = position.coords.longitude;
                     console.log(`[Geolocation]:latitude=${latitude},longitude=${longitude}`);
@@ -111,13 +111,12 @@ const useMap = () => {
                 },
                 (error) => {
                     checkLocationPermission();
-                    console.log("watchPosition")
                 },
                 {
                     enableHighAccuracy: true,
                     distanceFilter: 10,
-                    interval: 5000, //5000
-                    fastestInterval: 2000, //2000
+                    interval: 8000, //5000
+                    fastestInterval: 4000, //2000
                 }
             ))
     }

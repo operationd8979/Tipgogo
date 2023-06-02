@@ -5,6 +5,7 @@ import {
     createUserWithEmailAndPassword,
     sendEmailVerification,
     signInWithEmailAndPassword,
+    updatePassword,
 } from "firebase/auth"
 import {
     getDatabase,
@@ -68,4 +69,5 @@ export {
     equalTo,
     query,
     update,
+    updatePassword,
 }

@@ -135,8 +135,8 @@ const RequestDetail = () => {
 
     const updateCurrentDriver = async () => {
         const userID = await getUserIDByTokken();
-        const userRef = ref(firebaseDatabase, `direction/${userID}`);
-        update(userRef, { currentDriver: currentLocation })
+        const directionRef = ref(firebaseDatabase, `direction/${userID}/${requestId}`)
+        update(directionRef, { currentDriver: currentLocation })
             .then(() => {
                 console.log("Update currentDriver successfully!.");
             })

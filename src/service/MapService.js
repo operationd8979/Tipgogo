@@ -28,7 +28,7 @@ const getRouteDirection = (origin, destination) => {
                     const points = routes[0].geometry;
                     const decodedPoints = decodePolyline(points);
                     const direction = {
-                        summary: `${start.address.road ? start.address.road : start.address.suburb} ${start.address.city_district}-${end.address.road ? end.address.road : end.address.suburb} ${end.address.city_district}-${response.metadata.timestamp}`,
+                        summary: `${start.address.road ? start.address.road : start.address.suburb}, ${start.address.city_district?start.address.city_district:start.address.city}-${end.address.road ? end.address.road : end.address.suburb}, ${end.address.city_district?end.address.city_district:end.address.city}-${response.metadata.timestamp}`,
                         startAddress: start.display_name,
                         endAddress: end.display_name,
                         distance: routes[0].summary.distance,
@@ -217,7 +217,7 @@ const getDirectionDriver = (origin, destination) => {
                         duration: routes[0].summary.duration,
                         steps: routes[0].segments[0].steps,
                         route: decodedPoints,
-                        state: '0',
+                        state: 0,
                         timestamp: response.metadata.timestamp,
                         currentDriver: origin,
                     };

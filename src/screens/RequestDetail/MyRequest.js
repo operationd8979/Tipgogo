@@ -35,6 +35,7 @@ import LinearGradient from 'react-native-linear-gradient'
 import QRCode from 'react-native-qrcode-svg';
 import { State } from "react-native-gesture-handler";
 import Icon from 'react-native-vector-icons/FontAwesome5'
+import {} from 'lodash.debounce'
 
 const getUserByUserID = (userID) => {
     return new Promise(async (resolve, reject) => {
@@ -110,7 +111,7 @@ const RequestDetail = (props) => {
         checkLocationPermission();
         getCurrentPosition();
         const dbRef = ref(firebaseDatabase, `request/${requestId}`)
-        onValue(dbRef, async (snapshot) => {
+        const unsubscribe = onValue(dbRef, async (snapshot) => {
             if (snapshot.exists()) {
                 console.log('Listenning this request........');
                 let snapshotObject = snapshot.val();
@@ -119,12 +120,12 @@ const RequestDetail = (props) => {
                 console.log('Can not get this request!')
             }
         })
-        console.log(driver);
+        return unsubscribe;
     }, [])
 
     useEffect(() => {
         //bổ xung value on tracking location of driver....
-        if (stateRequest == -1) {
+        if (stateRequest == 1||stateRequest == -1) {
             navigation.navigate('UItab')
         }
         else {
@@ -134,18 +135,24 @@ const RequestDetail = (props) => {
                     if (direction) {
                         const time = new Date(direction.timestamp);
                         setTime(time);
-                        //setCurrentDriver(direction.currentDriver);
                         const dbRef = ref(firebaseDatabase, `direction/${stateRequest}/${requestId}`)
-                        onValue(dbRef, async (snapshot) => {
+                        const unsubscribe = onValue(dbRef, async (snapshot) => {
+                            console.log('Listenning this direction........');
                             if (snapshot.exists()) {
-                                console.log('Listenning this request........');
                                 let snapshotObject = snapshot.val();
-                                setCurrentDriver(snapshotObject.currentDriver);
+                                if(snapshotObject.state != 0){
+                                    console.log("This direction end!Stop listenning this direction!");
+                                    unsubscribe();
+                                }
+                                else{
+                                    console.log("Current driver is updated!");
+                                    setCurrentDriver(snapshotObject.currentDriver);
+                                    SetStateDisplay(2);
+                                }
                             } else {
-                                console.log('Can not get this request!')
+                                console.log('Can not get Current driver!')
                             }
                         })
-                        SetStateDisplay(2);
                     }
                 });
                 getUserByUserID(stateRequest).then((user) => setDriver(user));
@@ -173,6 +180,23 @@ const RequestDetail = (props) => {
             }
         });
     }
+
+    const handleCancelRequest = () => {
+        if (!currentDriver) {
+            const userRef = ref(firebaseDatabase, `request/${requestId}`);
+            update(userRef, { requestStatus: -1 })
+                    .then(() => {
+                        console.log("Cancel request successfully!.");
+                    })
+                    .catch((error) => {
+                        console.error("Error cancel request: ", error);
+                    });
+        }
+        else{
+            console.error("Cancel is denied! Request on process!");
+        }
+    }
+
     const Circle = ({ children, color, size, style }) => {
         return (
             <View
@@ -421,10 +445,7 @@ const RequestDetail = (props) => {
         }}>
             {/*onPress,title,colorBG,colorBD,colorT,sizeF,sizeBT,sizeB,radius,disabled*/}
             <TouchableOpacity
-                //onPress={() => setModalVisible(true)}
-                onPress={() => {
-                    console.log(currentDriver);
-                }}
+                onPress={() => setModalVisible(true)}
             >
                 <LinearGradient
                     colors={[primary, 'white', 'navy']}
@@ -441,7 +462,23 @@ const RequestDetail = (props) => {
             </TouchableOpacity>
             <TouchableOpacity
                 disabled={driver != null}
-                onPress={() => console.log('press huy request')}>
+                onPress={()=>{
+                    return Alert.alert(
+                        "Cancel request",
+                        "Are you sure you want cancel this request?",
+                        [
+                            {
+                                text: "Yes",
+                                onPress:() => {
+                                    handleCancelRequest()
+                                },
+                            },
+                            {
+                                text: "No",
+                            },
+                        ]
+                    );
+                }}>
                 <LinearGradient
                     colors={driver == null ? [zalert, 'white', 'red'] : [inactive, 'white', inactive]}
                     style={{

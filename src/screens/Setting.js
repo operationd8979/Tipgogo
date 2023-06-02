@@ -23,6 +23,7 @@ import {
     equalTo,
     query,
     update,
+    updatePassword,
 } from "../../firebase/firebase"
 import { Camera, useCameraDevices } from 'react-native-vision-camera'
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view'
@@ -32,6 +33,8 @@ import AsyncStorage from '@react-native-async-storage/async-storage'
 import { Dropdown, CLButton } from '../components'
 import ImageResizer from 'react-native-image-resizer';
 import i18n from '../../i18n'
+import {passRegex} from '../utilies'
+
 
 const getUserByTokken = () => {
     return new Promise(async (resolve, reject) => {
@@ -66,13 +69,7 @@ const checkCameraPermission = async () => {
     if (cameraPermission !== 'authorized') {
         const newPermission = await Camera.requestCameraPermission();
         if (newPermission !== 'authorized') {
-            FlashMessage({
-                message:
-                    'Tap on this message to open Settings then allow app to use camera from permissions.',
-                onPress: async () => {
-                    await Linking.openSettings()
-                }
-            })
+            //xử lý
         }
     }
     else {
@@ -82,25 +79,37 @@ const checkCameraPermission = async () => {
 
 const Setting = (props) => {
 
-    const [init,setInit] = useState(0);
-    const [selectedOption,setSelectedOption] = useState(i18n.locale=='vi'?2:i18n.locale=='jp'?3:1);
-
-    const [user, setUser] = useState(null);
-    const [modalVisible, setModalVisible] = useState(false);
-    const [photoPath, setPhotoPath] = useState(null);
-    const [fullName, setFullName] = useState(null);
-
+    //constant
     const camera = useRef(null);
     const devices = useCameraDevices('wide-angle-camera')
     const device = devices.front
+    const { navigation } = props
+    const { primary, inactive, success, warning, zalert, placeholder } = colors
+
+    //func
+    const [init, setInit] = useState(0);
+    const [selectedOption, setSelectedOption] = useState(i18n.locale == 'vi' ? 2 : i18n.locale == 'jp' ? 3 : 1);
+    const [modalVisible, setModalVisible] = useState(false);
+    const [modalPasswordVisible, setModalPasswordVisible] = useState(false);
+    const [newPassword,setNewPassword] = useState(null);
+    const [reNewPassword,setReNewPassword] = useState(null);
+    const [errorPassword,setErrorPassword] = useState(null);
+    const [errorRePassword,setErrorRePassword] = useState(null);
+
+    //data user
+    const [user, setUser] = useState(null);
+    const [photoPath, setPhotoPath] = useState(null);
+    const [fullName, setFullName] = useState(null);
+
 
     useEffect(() => {
         console.log("__________Init setting__________");
+        checkCameraPermission();
         getUserByTokken().then((user) => {
             setUser(user);
         })
-        checkCameraPermission();
     }, [init])
+
 
     const handlePressCamera = async () => {
         console.log('-------Press camera--------');
@@ -116,40 +125,40 @@ const Setting = (props) => {
         }
     };
 
-    const updatePhotoUser = async() => {
+    const updatePhotoUser = async () => {
         if (photoPath) {
             const uploadedImageUrl = await uploadImage(photoPath);
             const userRef = ref(firebaseDatabase, `users/${user.userID}`);
             update(userRef, { photo: uploadedImageUrl })
-                    .then(() => {
-                        console.log("Update photo's user successfully!.");
-                        setPhotoPath(null);
-                        setInit(init+1);
-                    })
-                    .catch((error) => {
-                        console.error("Error updating photo's user: ", error);
-                    });
+                .then(() => {
+                    console.log("Update photo's user successfully!.");
+                    setPhotoPath(null);
+                    setInit(init + 1);
+                })
+                .catch((error) => {
+                    console.error("Error updating photo's user: ", error);
+                });
         }
-        else{
+        else {
             console.error("PhotoPath is null!");
         }
         setModalVisible(false);
     }
 
-    const updateNameUser = async() => {
+    const updateNameUser = async () => {
         if (fullName) {
             const userRef = ref(firebaseDatabase, `users/${user.userID}`);
             update(userRef, { name: fullName })
-                    .then(() => {
-                        console.log("Update name's user successfully!.");
-                        setFullName(null);
-                        setInit(init+1);
-                    })
-                    .catch((error) => {
-                        console.error("Error updating name's user: ", error);
-                    });
+                .then(() => {
+                    console.log("Update name's user successfully!.");
+                    setFullName(null);
+                    setInit(init + 1);
+                })
+                .catch((error) => {
+                    console.error("Error updating name's user: ", error);
+                });
         }
-        else{
+        else {
             console.error("PhotoPath is null!");
         }
     }
@@ -169,35 +178,75 @@ const Setting = (props) => {
         }
     };
 
-    const { navigation } = props
+    const handleChangePassword = () => {
+        let result = true;
 
-    const { primary, inactive, success, warning, zalert, placeholder } = colors
+        setErrorPassword(null);
+        setErrorRePassword(null);
+
+        if(!newPassword){
+            result = false;
+            setErrorPassword(i18n.t('passErr1'))
+        }else if (passRegex.test(newPassword) !== true) {
+            setErrorPassword(i18n.t('passErr2'))
+            result = false
+          }
+
+        if(!reNewPassword){
+            result = false;
+            setErrorRePassword(i18n.t('repassErr1'))
+        }else if (reNewPassword !== newPassword) {
+            setErrorRePassword(i18n.t('repassErr2'))
+            result = false
+          }
+
+        if(result){
+            const user = auth.currentUser;
+            updatePassword(user,newPassword)
+            .then(()=>{
+                setModalPasswordVisible(false);
+                console.log("change your password successfull!");
+                return Alert.alert(
+                    "Update password",
+                    "Your password was changed successfully!",
+                    [
+                        {
+                            text: "OK",
+                        },
+                    ]
+                );
+            })
+            .catch((error)=>{
+                console.log(`Error change password:${error}`);
+            })
+        }
+    }
 
     const showConfirmDialog = () => {
         return Alert.alert(
-          "Are your sure?",
-          "Are you sure you want to Log Out?",
-          [
-            {
-              text: "Yes",
-              onPress: async () => {
-                auth.signOut()
-                await AsyncStorage.removeItem('token');
-                navigation.dispatch(StackActions.replace('Login'));
-                console.log("Sign out!");
-              },
-            },
-            {
-              text: "No",
-            },
-          ]
+            "Are your sure?",
+            "Are you sure you want to Log Out?",
+            [
+                {
+                    text: "Yes",
+                    onPress: async () => {
+                        auth.signOut()
+                        await AsyncStorage.removeItem('token');
+                        navigation.dispatch(StackActions.replace('Login'));
+                        console.log("Sign out!");
+                    },
+                },
+                {
+                    text: "No",
+                },
+            ]
         );
-      };
+    };
 
     return <KeyboardAwareScrollView
-            enableResetScrollToCoords={true}
-            contentContainerStyle={{ flexGrow: 1, height:normalize(440) }}
-        >
+        enableResetScrollToCoords={true}
+        contentContainerStyle={{ flexGrow: 1, height: normalize(440) }}
+    >
         <View style={{
             paddingHorizontal: split.s4,
             paddingVertical: split.s5,
@@ -253,14 +302,14 @@ const Setting = (props) => {
                     }}>Your Photo</Text>
                     <View style={{ height: 1, backgroundColor: primary }} />
                 </View>
-                <View style={{ 
-                    flex: 2, 
-                    justifyContent: 'space-around', 
+                <View style={{
+                    flex: 2,
+                    justifyContent: 'space-around',
                     flexDirection: 'row',
                     alignItems: 'center',
                 }}>
                     <Image
-                        source={user?{ uri: user.photo||images.uriUserPhoto }:images.userPhoto}
+                        source={user ? { uri: user.photo || images.uriUserPhoto } : images.userPhoto}
                         style={{
                             width: "30%",
                             height: "80%",
@@ -268,17 +317,17 @@ const Setting = (props) => {
                             borderRadius: 90,
                         }}
                     />
-                    <CLButton 
-                        title="Update" 
-                        sizeBT="20%" 
-                        height="30%" 
-                        colorBG={photoPath!=null?primary:inactive}
+                    <CLButton
+                        title="Update"
+                        sizeBT="20%"
+                        height="30%"
+                        colorBG={photoPath != null ? primary : inactive}
                         colorBD={"white"}
-                        colorT={photoPath!=null?"white":"black"}
-                        disabled={photoPath==null}
-                        onPress={updatePhotoUser}/>
+                        colorT={photoPath != null ? "white" : "black"}
+                        disabled={photoPath == null}
+                        onPress={updatePhotoUser} />
                     <Image
-                        source={photoPath?{ uri: photoPath }:images.userPhoto}
+                        source={photoPath ? { uri: photoPath } : images.userPhoto}
                         style={{
                             width: "30%",
                             height: "80%",
@@ -288,7 +337,7 @@ const Setting = (props) => {
                     />
                 </View>
                 <View style={{ flex: 8, justifyContent: 'center' }}>
-                    {modalVisible && device && (
+                    {device && (
                         <View style={styles.container}>
                             <Camera
                                 ref={camera}
@@ -326,11 +375,11 @@ const Setting = (props) => {
                             </TouchableOpacity>
                         </View>
                     )}
-                    <CLButton title="Close Modal" 
+                    <CLButton title="Close Modal"
                         onPress={() => {
                             setPhotoPath(null);
                             setModalVisible(false)
-                    }}/>
+                        }} />
                 </View>
             </Modal>
         </View>
@@ -343,7 +392,7 @@ const Setting = (props) => {
                 color: primary,
             }}>Your name</Text>
             <View style={{
-                flexDirection:'row',
+                flexDirection: 'row',
                 alignItems: 'center',
             }}>
                 <TextInput
@@ -354,19 +403,19 @@ const Setting = (props) => {
                     onChangeText={setFullName}
                     style={{
                         color: 'black',
-                        flex:1,
+                        flex: 1,
                         //backgroundColor:'red'
-                }}/>
-                <TouchableOpacity 
+                    }} />
+                <TouchableOpacity
                     onPress={updateNameUser}
                     style={{
-                        padding:normalize(10),
+                        padding: normalize(10),
                         borderWidth: 1,
                         borderColor: primary,
                         backgroundColor: primary,
                         borderRadius: 20,
-                }}>
-                    <Text style={{color:"white"}}>Change</Text>
+                    }}>
+                    <Text style={{ color: "white" }}>Change</Text>
                 </TouchableOpacity>
             </View>
             <View style={{ height: 1, backgroundColor: primary }} />
@@ -407,12 +456,12 @@ const Setting = (props) => {
             marginHorizontal: 10,
         }}>
             {/* <Text style={{ fontSize: fontSizes.h5, color: "#191970" }}>Ngôn ngữ |</Text> */}
-            <Image 
-                source={selectedOption==1? images.fagUSA :selectedOption==2? images.fagVN : images.fagJP} 
+            <Image
+                source={selectedOption == 1 ? images.fagUSA : selectedOption == 2 ? images.fagVN : images.fagJP}
                 style={{
-                    height:normalize(30),
-                    width:normalize(30),
-            }}/>
+                    height: normalize(30),
+                    width: normalize(30),
+                }} />
             <Picker
                 selectedValue={selectedOption}
                 style={{
@@ -422,13 +471,139 @@ const Setting = (props) => {
                 }}
                 onValueChange={(itemValue, itemIndex) => {
                     setSelectedOption(itemValue);
-                    i18n.locale = itemValue==1?'en':itemValue==2?'vi':'jp';
+                    i18n.locale = itemValue == 1 ? 'en' : itemValue == 2 ? 'vi' : 'jp';
                 }}
             >
                 <Picker.Item label={i18n.t('w_item1')} value={1} />
                 <Picker.Item label={i18n.t('w_item2')} value={2} />
                 <Picker.Item label={i18n.t('w_item3')} value={3} />
             </Picker>
+        </View>
+        <View style={{
+            marginHorizontal: 10,
+            //backgroundColor:"red"
+        }}>
+            <TouchableOpacity style={{
+                marginTop: 15,
+                flexDirection: 'row',
+                paddingVertical: 10,
+                alignItems: 'center',
+                //backgroundColor:"green",
+                borderTopWidth: 1,
+                borderBottomWidth: 1,
+            }} onPress={async () => {
+                setModalPasswordVisible(true);
+            }}>
+                <Icon
+                    name='unlock-alt'
+                    style={{ marginStart: 10 }}
+                    size={16} color={'black'}
+                />
+                <Text style={{
+                    color: 'black',
+                    fontSize: fontSizes.h6,
+                    color: 'black',
+                    paddingStart: 10,
+                }}>Chnage your password</Text>
+                <View style={{ flex: 1 }} />
+                <Icon
+                    name='chevron-right'
+                    style={{
+                        paddingEnd: 10,
+                        opacity: 0.5,
+                    }}
+                    size={normalize(15)} color={'black'}
+                />
+            </TouchableOpacity>
+            <Modal visible={modalPasswordVisible} animationType="fade" transparent={true}  >
+                <View style={{ flex: 1, justifyContent: 'center' }}>
+                    <View style={styles.container}>
+                        <View>
+                            <View style={{backgroundColor:primary,padding:"5%",marginBottom:normalize(10)}}>
+                                <Text style={{color:'black',fontSize:fontSizes.h3}}>Change password</Text>
+                            </View>
+                            <Text style={{
+                                    color: 'red',
+                                    fontSize: fontSizes.h5,
+                                    marginStart: normalize(90)
+                            }}>{errorPassword}</Text>
+                            <View style={{
+                                alignItems: 'center',
+                                flexDirection: 'row',
+                                marginHorizontal: split.s3,
+                                marginVertical: split.s3,
+                                //backgroundColor:'red'
+                            }}>
+                                <Text style={{
+                                    fontSize: fontSizes.h5,
+                                    color: "black",
+                                    width: normalize(62)
+                                }}>NewPassword:</Text>
+                                <TextInput style={{
+                                    borderWidth: 1,
+                                    borderColor: 'black',
+                                    borderRadius: 5,
+                                    width: normalize(160),
+                                    marginHorizontal: 10,
+                                    color: "black",
+                                }}
+                                    numberOfLines={1}
+                                    value={newPassword}
+                                    onChangeText={setNewPassword}
+                                    autoCorrect={false}
+                                    placeholder={"mật khẩu mới"}
+                                    placeholderTextColor={inactive}
+                                />
+                            </View>
+                            <Text style={{
+                                    color: 'red',
+                                    fontSize: fontSizes.h5,
+                                    marginStart: normalize(90)
+                            }}>{errorRePassword}</Text>
+                            <View style={{
+                                alignItems: 'center',
+                                flexDirection: 'row',
+                                marginHorizontal: split.s3,
+                                marginVertical: split.s3,
+                                //backgroundColor:'red'
+                            }}>
+                                <Text style={{
+                                    fontSize: fontSizes.h5,
+                                    color: "black",
+                                    width: normalize(62)
+                                }}>Re-Password:</Text>
+                                <TextInput style={{
+                                    borderWidth: 1,
+                                    borderColor: 'black',
+                                    borderRadius: 5,
+                                    width: normalize(160),
+                                    marginHorizontal: 10,
+                                    color: "black",
+                                }}
+                                    numberOfLines={1}
+                                    value={reNewPassword}
+                                    onChangeText={setReNewPassword}
+                                    autoCorrect={false}
+                                    placeholder={"nhập lại mật khẩu mới"}
+                                    placeholderTextColor={inactive}
+                                />
+                            </View>
+                        </View>
+                        
+                        <View style={{
+                            flexDirection: 'row',
+                            justifyContent: 'center',
+                        }}>
+                            <CLButton title="Update" sizeBT={"35%"} height={normalize(30)} colorBG={primary} colorT={"white"}
+                                onPress={() => {
+                                    handleChangePassword();
+                                }} />
+                            <CLButton title="Cancel" sizeBT={"35%"} height={normalize(30)} colorBG={primary} colorT={"white"}
+                                onPress={() => setModalPasswordVisible(false)} />
+                        </View>
+                    </View>
+                </View>
+            </Modal>
         </View>
         <View style={{
             marginHorizontal: 10,
@@ -467,7 +642,7 @@ const Setting = (props) => {
                 />
             </TouchableOpacity>
         </View>
-        <View style={{
+        {user&&<View style={{
             //backgroundColor: 'purple',
             margin: split.s2,
             paddingHorizontal: split.s3,
@@ -488,7 +663,8 @@ const Setting = (props) => {
                 //backgroundColor:"red"
             }}>
                 <Image
-                    source={user ? { uri: user.photo||images.uriUserPhoto } : images.userPhoto}
+                    //source={user ? { uri: user.photo || images.uriUserPhoto } : images.userPhoto}
+                    source={{ uri: user.photo || images.uriUserPhoto }}
                     style={{
                         width: "35%",
                         //height: "60%",
@@ -513,24 +689,24 @@ const Setting = (props) => {
                         fontSize: fontSizes.h4,
                         fontWeight: '600',
                         alignSelf: 'center'
-                    }}>{user ? user.email : "Your email is not seted!"}</Text>
+                    }}>{user.email}</Text>
                     <View style={{ height: normalize(8) }} />
                     <Text style={{
                         color: "black",
                         fontSize: fontSizes.h4,
                         fontWeight: '600',
-                    }}>Name: {user ? user.name || "null!" : "null"}</Text>
+                    }}>Name: {user.name || "NULL!"}</Text>
                     <Text style={{
                         color: "black",
                         fontSize: fontSizes.h4,
                         fontWeight: '600',
-                    }}>Verified-Email: {user ? user.emailVerified? "Yes" : "No" : "null"}</Text>
+                    }}>Verified-Email: {user.emailVerified ? "Yes" : "No"}</Text>
                 </View>
             </View>
-        </View>
+        </View>}
         <View style={{
             flex: 10,
-        }}/>
+        }} />
     </KeyboardAwareScrollView>
 }
 
@@ -555,8 +731,12 @@ const styles = StyleSheet.create({
         ...StyleSheet.absoluteFillObject,
     },
     container: {
-        flex: 1,
-        backgroundColor: 'black',
+        marginHorizontal: '10%',
+        backgroundColor: 'white',
+        borderBottomLeftRadius: 5,
+        borderBottomRightRadius: 5,
+        borderWidth:1,
+        paddingBottom: '5%',
     },
 });
 

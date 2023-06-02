@@ -2,8 +2,6 @@ import React, { useState, useRef, useEffect, useContext, useCallback } from "rea
 import { View, Text, Switch, TouchableOpacity, StyleSheet, ScrollView, Modal, Alert, Platform, Image, Linking, RefreshControl, ActivityIndicator } from "react-native"
 import { colors, fontSizes, icons, images, normalize, split } from "../../constants"
 import Icon from 'react-native-vector-icons/FontAwesome5'
-import { Dimensions } from 'react-native';
-import { StackActions } from '@react-navigation/native'
 import { Dropdown, CLButton } from '../../components'
 import { Picker } from '@react-native-picker/picker'
 import { TextInput } from "react-native-gesture-handler";
@@ -32,17 +30,11 @@ import {
 } from "../../../firebase/firebase"
 import { Camera, useCameraDevices } from 'react-native-vision-camera'
 import MapView, { PROVIDER_GOOGLE, Marker, Callout, Polyline } from 'react-native-maps'; // remove PROVIDER_GOOGLE import if not using Google Maps
-import { isEnabled } from "react-native/Libraries/Performance/Systrace";
-import { UserPositionContext } from '../../context/UserPositionContext';
-import { check, PERMISSIONS, request } from "react-native-permissions";
-import Geolocation from '@react-native-community/geolocation';
 import { FlashMessage } from '../../ui'
 import i18n from '../../../i18n'
-import Geocoder from 'react-native-geocoding';
-import { mapStyle } from '../../utilies'
+import { mapStyle, formatNumber } from '../../utilies'
 import ImageResizer from 'react-native-image-resizer';
 import useMap from '../FullMap/FullMap'
-import MapViewDirections from 'react-native-maps-directions';
 import axios from 'axios';
 const RNFS = require('react-native-fs');
 //const polyline = require('@mapbox/polyline');
@@ -67,6 +59,7 @@ const checkCameraPermission = async () => {
         console.log("Camera already use!")
     }
 }
+
 
 const CreateRequest = (props) => {
 
@@ -171,7 +164,7 @@ const CreateRequest = (props) => {
 
     const handleGetCurrentLocation = () => {
         if (!isLoading) {
-            if (typeRequest === 2) {
+            if (typeRequest === 1) {
                 if (currentLocation) {
                     const { latitude, longitude } = currentLocation;
                     const region = {
@@ -185,10 +178,8 @@ const CreateRequest = (props) => {
             }
             else{
                 if(currentRoute){
-                    if(displaySearch){
-                        setDisplaySearch(null);
-                        setSearchAddress(null);
-                    }
+                    setDisplaySearch(null);
+                    setSearchAddress(null);
                     setCurrentRoute(null);
                 }  
                 setPressLocation(null);
@@ -287,6 +278,7 @@ const CreateRequest = (props) => {
 
     const handleLoadMap = async () =>{
         setIsLoading(true);
+        setShowIndicator(true);
         if(typeRequest===1){
             if(currentLocation&&pressLocation){
                 try{
@@ -312,6 +304,7 @@ const CreateRequest = (props) => {
             setDetailAddress(`${address.road?address.road+", ":""}${address.suburb?address.suburb+", ":""}${address.district?address.district+", ":""}${address.city}`);
         }
         setIsLoading(false);
+        setShowIndicator(false);
     }
 
     const handleSearchAddress = async () => {
@@ -351,6 +344,7 @@ const CreateRequest = (props) => {
     const handlePostRequest = async () => {
         if (validateCredentials()) {
             setIsLoading(true);
+            setShowIndicator(true);
             console.log('------------Postting request------------');
             const accessToken = await AsyncStorage.getItem('token');
             const dbRef = ref(firebaseDatabase, "users");
@@ -364,6 +358,7 @@ const CreateRequest = (props) => {
                 if (!uploadedImageUrl) {
                     console.error("Image upload failed!");
                     setIsLoading(false);
+                    setShowIndicator(false);
                     return;
                 }
             }
@@ -375,6 +370,7 @@ const CreateRequest = (props) => {
                 if (!direction) {
                     console.error("Get direction failed!");
                     setIsLoading(false);
+                    setShowIndicator(false);
                     return;
                 }
             }
@@ -396,11 +392,13 @@ const CreateRequest = (props) => {
                 .then(() => {
                     console.log("Data written to Firebase Realtime Database.");
                     setIsLoading(false);
+                    setShowIndicator(false);
                     onRefresh();
                 })
                 .catch((error) => {
                     console.error("Error writing data to Firebase Realtime Database: ", error);
                     setIsLoading(false);
+                    setShowIndicator(false);
                     onRefresh();
                 });
         }
@@ -518,7 +516,7 @@ const CreateRequest = (props) => {
                         color: "black",
                     }}
                     placeholder={!isEnabledFree ? (errorPrice ? errorPrice : "Price") : "0 VND"}
-                    value={price}
+                    value={formatNumber(price)}
                     onChangeText={(text) => {
                         const filteredText = text.replace(/[^0-9]/g, '');
                         setPrice(filteredText);
@@ -553,7 +551,6 @@ const CreateRequest = (props) => {
                 height: normalize(60),
                 //backgroundColor:"red",
             }}>
-                {/*onPress,title,colorBG,colorBD,colorT,sizeF,sizeBT,sizeB,radius,disabled*/}
                 <CLButton
                     title="Camera"
                     onPress={() => setModalVisible(true)}
