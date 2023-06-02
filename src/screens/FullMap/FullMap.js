@@ -1,21 +1,13 @@
 import React, { useState, useRef, useEffect, useContext, useCallback } from "react"
 import { View, Text, Switch, TouchableOpacity, StyleSheet, ScrollView, Modal, Alert, Platform, Image, Linking, RefreshControl } from "react-native"
-import MapView, { PROVIDER_GOOGLE, Marker, Callout, Polyline } from 'react-native-maps'; // remove PROVIDER_GOOGLE import if not using Google Maps
+import MapView, { PROVIDER_GOOGLE, Marker, Callout, Polyline } from 'react-native-maps';
 import i18n from '../../../i18n'
 import styles from './styles'
 import { mapStyle } from '../../utilies'
 import { colors, fontSizes, icons, images, normalize, split } from "../../constants"
-import Icon from 'react-native-vector-icons/FontAwesome5'
-import { Dropdown, CLButton } from '../../components'
 import { check, PERMISSIONS, request } from "react-native-permissions";
 import Geolocation from '@react-native-community/geolocation';
-import { FlashMessage } from '../../ui'
-import Geocoder from 'react-native-geocoding';
-import MapViewDirections from 'react-native-maps-directions';
 import AsyncStorage from '@react-native-async-storage/async-storage'
-import debounce from 'lodash.debounce';
-import { captureRef } from 'react-native-view-shot';
-
 
 
 const LATITUDE = 33.7001019
@@ -38,13 +30,18 @@ const useMap = () => {
                 if (permissionStatus === 'granted') {
                     console.log("Location is enabled");
                 } else {
-                    FlashMessage({
-                        message:
-                            'Tap on this message to open Settings then allow app to use location from permissions.',
-                        onPress: async () => {
-                            await Linking.openSettings()
-                        }
-                    })
+                    return  Alert.alert(
+                        "Permission ACCESS_LOCATION",
+                        "Click OK to open Settings then allow app to use Location of your Device",
+                        [
+                            {
+                                text: "OK",
+                                onPress:async () => {
+                                    await Linking.openSettings();
+                                }
+                            },
+                        ]
+                    );
                 }
             }
         } catch (error) {
@@ -141,11 +138,8 @@ const useMap = () => {
                 snapshot.then((uri) => {
                     setUriMap(uri);
                 });
-            }, 0); // add some timeout delay wait map loading element
+            }, 0); 
         }, [mapRef.current]);
-
-        //element func
-        const [isEnabledSmartCal, setIsEnabledSmartCal] = useState(false);
 
         const calInitialRegion = () => {
 
@@ -166,11 +160,9 @@ const useMap = () => {
             const minLng = Math.min(locationA.longitude, locationB.longitude);
             const maxLng = Math.max(locationA.longitude, locationB.longitude);
 
-            // Calculate the center of the bounds
             const centerLat = (minLat + maxLat) / 2;
             const centerLng = (minLng + maxLng) / 2;
 
-            // Calculate the delta (difference) between the min and max values
             const latDelta = (maxLat - minLat) * 1.5;
             const lngDelta = (maxLng - minLng) * 1.5;
 

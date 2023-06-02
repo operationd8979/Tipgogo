@@ -1,19 +1,14 @@
-import React, { useState, useRef, useEffect, useContext, useCallback } from "react"
+import React, { useState, useRef, useEffect, useCallback } from "react"
 import { View, Text, Switch, TouchableOpacity, StyleSheet, ScrollView, Modal, Alert, Platform, Image, Linking, RefreshControl, ActivityIndicator } from "react-native"
 import { colors, fontSizes, icons, images, normalize, split } from "../../constants"
 import Icon from 'react-native-vector-icons/FontAwesome5'
-import { Dropdown, CLButton } from '../../components'
+import { CLButton } from '../../components'
 import { Picker } from '@react-native-picker/picker'
 import { TextInput } from "react-native-gesture-handler";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view'
 import {
-    auth,
     firebaseDatabase,
-    signInWithEmailAndPassword,
-    createUserWithEmailAndPassword,
-    sendEmailVerification,
-    onAuthStateChanged,
     ref,
     get,
     set,
@@ -22,49 +17,24 @@ import {
     getDownloadURL,
     storageRef,
     storage,
-    app,
-    onValue,
-    child,
     equalTo,
     query,
 } from "../../../firebase/firebase"
 import { Camera, useCameraDevices } from 'react-native-vision-camera'
-import MapView, { PROVIDER_GOOGLE, Marker, Callout, Polyline } from 'react-native-maps'; // remove PROVIDER_GOOGLE import if not using Google Maps
-import { FlashMessage } from '../../ui'
+import MapView, { PROVIDER_GOOGLE, Marker, Callout, Polyline } from 'react-native-maps';
 import i18n from '../../../i18n'
 import { mapStyle, formatNumber } from '../../utilies'
 import ImageResizer from 'react-native-image-resizer';
 import useMap from '../FullMap/FullMap'
-import axios from 'axios';
-const RNFS = require('react-native-fs');
-//const polyline = require('@mapbox/polyline');
-import Credentials from '../../../Credentials'
 import {getAddressFromLocation,getRouteDirection,getLocationFromAddress} from '../../service/MapService'
-
-const checkCameraPermission = async () => {
-    const cameraPermission = await Camera.getCameraPermissionStatus();
-    if (cameraPermission !== 'authorized') {
-        const newPermission = await Camera.requestCameraPermission();
-        if (newPermission !== 'authorized') {
-            FlashMessage({
-                message:
-                    'Tap on this message to open Settings then allow app to use camera from permissions.',
-                onPress: async () => {
-                    await Linking.openSettings()
-                }
-            })
-        }
-    }
-    else {
-        console.log("Camera already use!")
-    }
-}
+import {checkCameraPermission} from '../../service/CameraService'
 
 
 const CreateRequest = (props) => {
 
+    //constant
+    const { primary, zalert, warning, success, inactive } = colors
     const mapRef = useRef(null);
-
     const {
         currentLocation,
         pressLocation,
@@ -73,9 +43,37 @@ const CreateRequest = (props) => {
         getCurrentPosition,
     } = useMap();
 
-    const [isLoading, setIsLoading] = useState(false)
+    //request's const
+    const [typeRequest, setTypeRequest] = useState(1);
+    const [title, setTitle] = useState("");
+    const [price, setPrice] = useState(null);
+    const [des, setDes] = useState("");
+    const [currentRoute, setCurrentRoute] = useState(null);
+    const [address, setAddress] = useState(null);
+    const [detailAddress, setDetailAddress] = useState(null);
+    //error const request
+    const [errorPhotoUri, setErrorPhotoUri] = useState(null);
+    const [errorCurrentLocation, setErrorCurrentLocation] = useState(null);
+    const [errorPressLocation, setErrorPressLocation] = useState(null);
+    const [errorTypeRequest, setErrorTypeRequest] = useState(null);
+    const [errorTitle, setErrorTitle] = useState(null);
+    const [errorPrice, setErrorPrice] = useState(null);
+    const [errorAddress, setErrorAddress] = useState(null);
 
+    //function's const
+    const [isLoading, setIsLoading] = useState(false);
     const [refreshing, setRefreshing] = useState(false);
+    const [photoPath, setPhotoPath] = useState(null);
+    const [modalVisible, setModalVisible] = useState(false);
+    const camera = useRef(null);
+    const devices = useCameraDevices('ultra-wide-angle-camera')
+    const device = devices.back
+    const [titleAmount, setTitleAmount] = useState("Pay");
+    const [isEnabledFree, setIsEnabledFree] = useState(false);
+    const [showIndicator, setShowIndicator] = useState(false);
+    const [searchAddress, setSearchAddress] = useState(null);
+    const [displaySearch, setDisplaySearch] = useState(null);
+
     const onRefresh = useCallback(() => {
         console.log("-------On refreshing------");
         setIsLoading(true);
@@ -99,47 +97,6 @@ const CreateRequest = (props) => {
         }, 1500);
         console.log("-------already done------");
     }, []);
-
-    //prop's const
-    const { primary, zalert, warning, success, inactive } = colors
-
-    //request's const
-    const [typeRequest, setTypeRequest] = useState(1);
-    const [title, setTitle] = useState("");
-    const [price, setPrice] = useState(null);
-    const [des, setDes] = useState("");
-    const [currentRoute, setCurrentRoute] = useState(null);
-    const [address, setAddress] = useState(null);
-    const [detailAddress, setDetailAddress] = useState(null);
-    //error const request
-    const [errorPhotoUri, setErrorPhotoUri] = useState(null);
-    const [errorCurrentLocation, setErrorCurrentLocation] = useState(null);
-    const [errorPressLocation, setErrorPressLocation] = useState(null);
-    const [errorTypeRequest, setErrorTypeRequest] = useState(null);
-    const [errorTitle, setErrorTitle] = useState(null);
-    const [errorPrice, setErrorPrice] = useState(null);
-    const [errorAddress, setErrorAddress] = useState(null);
-
-    //function's const
-    const [photoPath, setPhotoPath] = useState(null);
-    const [modalVisible, setModalVisible] = useState(false);
-    const camera = useRef(null);
-    const devices = useCameraDevices('ultra-wide-angle-camera')
-    const device = devices.back
-    const [titleAmount, setTitleAmount] = useState("Pay");
-    const [isEnabledFree, setIsEnabledFree] = useState(false);
-    const [showIndicator, setShowIndicator] = useState(false);
-    const [searchAddress, setSearchAddress] = useState(null);
-    const [displaySearch, setDisplaySearch] = useState(null);
-    
-
-
-    const startLoading = () => {
-        setIsLoading(true);
-        setTimeout(() => {
-            setIsLoading(false);
-        }, 1500)
-    }
 
     useEffect(() => {
         console.log('________________Init createRequest________________');
@@ -797,7 +754,7 @@ const CreateRequest = (props) => {
                 >
                     <Image source={images.iconCurrentLocation} style={{ height: 50, width: 50 }} />
                 </TouchableOpacity>
-                {displaySearch && <Text style={{
+                {typeRequest === 1 && displaySearch && <Text style={{
                         color: 'black',
                         fontSize: fontSizes.h4,
                         position:'absolute',

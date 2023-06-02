@@ -27,7 +27,6 @@ import {
 import useMap from '../FullMap/FullMap'
 import axios from 'axios';
 import Geolocation from '@react-native-community/geolocation';
-
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import Credentials from '../../../Credentials'
 import { distanceTwoGeo } from '../../utilies'
@@ -37,16 +36,8 @@ import Openrouteservice from 'openrouteservice-js'
 const orsDirections = new Openrouteservice.Directions({ api_key: Credentials.APIKey_OpenRouteService });
 const Geocode = new Openrouteservice.Geocode({ api_key: Credentials.APIKey_OpenRouteService })
 import {getAddressFromLocation,getRouteDirection} from '../../service/MapService'
+import {getUserIDByTokken} from '../../service/UserService'
 
-
-const getUserIDByTokken = async () => {
-    const accessToken = await AsyncStorage.getItem('token');
-    const dbRef = ref(firebaseDatabase, "users");
-    const dbQuery = query(dbRef, orderByChild("accessToken"), equalTo(accessToken));
-    const data = await get(dbQuery);
-    const userID = Object.keys(data.val())[0];
-    return userID;
-}
 
 const WaitingScreen = () => {
     return (

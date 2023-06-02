@@ -1,50 +1,25 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
-import { Text, Image, View, TouchableOpacity, Keyboard, KeyboardAvoidingView, TextInput, ImageBackground, ScrollView, FlatList, Modal, StyleSheet, ActivityIndicator } from "react-native"
+import { Text, Image, View, TouchableOpacity, Linking, Alert, TextInput, FlatList, Modal, StyleSheet, ActivityIndicator } from "react-native"
 import Icon from "react-native-vector-icons/FontAwesome5"
 import { colors, fontSizes, icons, images, normalize, split } from "../../constants"
 import RequestItem from "./RequestItem";
 import Category from "./Category";
 import { Dropdown, CLButton } from '../../components'
 import {
-    auth,
     firebaseDatabase,
-    signInWithEmailAndPassword,
-    createUserWithEmailAndPassword,
-    sendEmailVerification,
-    onAuthStateChanged,
     ref,
-    get,
     set,
-    orderByChild,
-    uploadBytes,
-    getDownloadURL,
-    storageRef,
-    storage,
-    app,
     onValue,
-    child,
-    equalTo,
-    query,
     update,
 } from "../../../firebase/firebase"
 import useMap from '../FullMap/FullMap'
-import AsyncStorage from '@react-native-async-storage/async-storage'
 import { distanceTwoGeo, formatNumber } from '../../utilies'
 import {getDirectionDriver} from '../../service/MapService'
-
-
-const getUserIDByTokken = async () => {
-    const accessToken = await AsyncStorage.getItem('token');
-    const dbRef = ref(firebaseDatabase, "users");
-    const dbQuery = query(dbRef, orderByChild("accessToken"), equalTo(accessToken));
-    const data = await get(dbQuery);
-    const userID = Object.keys(data.val())[0];
-    return userID;
-}
+import {getUserIDByTokken} from '../../service/UserService'
 
 const WaitingScreen = () => {
     return (
-        <View style={{ alignItems: 'center' }}>
+        <View style={{ alignItems: 'center', marginTop: '50%' }}>
             <ActivityIndicator size="large" color="blue" />
             <Text style={{
                 color: 'black',
@@ -57,9 +32,6 @@ const WaitingScreen = () => {
 
 const RequestList = (props) => {
 
-    const [typeSelected, setTypeSelected] = useState(null);
-    const [onAvaiable, setOnAvaiable] = useState(true);
-    const [optionSort, setOptionSort] = useState(false);
     //constant
     const { hitchhiking, secondHand, helpBuy } = images
     const { primary, zalert, success, warning, inactive } = colors
@@ -90,13 +62,16 @@ const RequestList = (props) => {
     const [sortModalVisible, setSortModalVisible] = useState(false);
     const [selectedRequest, setSelectedRequest] = useState(null);
     const [requests, setRequests] = useState([]);
-    const [searchText, setSearchText] = useState('')
+    const [searchText, setSearchText] = useState('');
+    const [typeSelected, setTypeSelected] = useState(null);
+    const [onAvaiable, setOnAvaiable] = useState(true);
+    const [optionSort, setOptionSort] = useState(false);
     const filterRequest = useCallback(() => requests.filter(eachRequest =>
         eachRequest.name.toLowerCase().includes(searchText.toLowerCase())
         && (onAvaiable|| eachRequest.accepted)
         && (typeSelected == null || eachRequest.type == typeSelected))
         .sort((a, b) => {
-            if (optionSort) {
+            if (optionSort&&currentLocation) {
                 const distanceA = distanceTwoGeo(currentLocation, a.type === 1 ? a.geo1 : a.geo2);
                 const distanceB = distanceTwoGeo(currentLocation, b.type === 1 ? b.geo1 : b.geo2);
                 if (distanceA < distanceB)
@@ -128,7 +103,7 @@ const RequestList = (props) => {
                 const userID = await getUserIDByTokken();
                 let snapshotObject = snapshot.val()
                 setRequests(Object.keys(snapshotObject)
-                    .filter(k => snapshotObject[k].requestStatus != -1)
+                    .filter(k => snapshotObject[k].requestStatus != -1 && snapshotObject[k].requestStatus != 1)
                     .filter(k => k.split('-')[0] != userID)
                     .map(eachKey => {
                         let eachObject = snapshotObject[eachKey]
@@ -158,7 +133,6 @@ const RequestList = (props) => {
         return unsubscribe;
     }, [])
 
-    //func render requests
     const renderNotRequest = () => {
         return (
             <View style={{ flex: 1, justifyContent: 'center' }}>
@@ -172,6 +146,7 @@ const RequestList = (props) => {
             </View>
         );
     };
+    
     const renderRequestList = () => {
         return (
             <FlatList

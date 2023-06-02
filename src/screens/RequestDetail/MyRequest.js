@@ -2,11 +2,9 @@ import React, { useState, useRef, useEffect, useContext, useCallback, Component 
 import { View, Text, Switch, TouchableOpacity, StyleSheet, ScrollView, Modal, Alert, Platform, Image, Linking, RefreshControl } from "react-native"
 import { useRoute } from '@react-navigation/native';
 import useMap from '../FullMap/FullMap'
-import { useEvent } from 'react-native-reanimated';
 import { colors, fontSizes, icons, images, normalize, split } from "../../constants"
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view'
 import { orderByKey } from "firebase/database";
-import AsyncStorage from '@react-native-async-storage/async-storage'
 import {
     auth,
     firebaseDatabase,
@@ -29,13 +27,12 @@ import {
     query,
     update,
 } from "../../../firebase/firebase"
-import { CameraQR } from '../../screens'
 import { CLButton } from '../../components'
 import LinearGradient from 'react-native-linear-gradient'
 import QRCode from 'react-native-qrcode-svg';
-import { State } from "react-native-gesture-handler";
 import Icon from 'react-native-vector-icons/FontAwesome5'
-import {} from 'lodash.debounce'
+//import {getUserByUserID} from '../../service/UserService'
+import {formatNumber} from '../../utilies'
 
 const getUserByUserID = (userID) => {
     return new Promise(async (resolve, reject) => {
@@ -45,6 +42,7 @@ const getUserByUserID = (userID) => {
                 const dbQuery = query(dbRef, orderByKey(), equalTo(userID));
                 const data = await get(dbQuery);
                 const snapshotObject = data.val();
+                console.log(userID)
                 if (snapshotObject) {
                     const data = snapshotObject[userID];
                     const user = {
@@ -60,8 +58,8 @@ const getUserByUserID = (userID) => {
             }
             else {
                 console.log("No driver!");
+                resolve(null);
             }
-
         }
         catch (error) {
             console.error('Error getting user:', error);
@@ -72,15 +70,15 @@ const getUserByUserID = (userID) => {
 
 const RequestDetail = (props) => {
 
+    //init
     const { navigation } = props
-
     const route = useRoute();
-
     const { request } = route.params;
+    const { FullMap, currentLocation, getCurrentPosition, checkLocationPermission } = useMap();
 
+    //constant
     const { primary, inactive, zalert, warning, success } = colors;
     const [modalVisible, setModalVisible] = useState(false);
-
     const {
         requestId,
         name,
@@ -96,16 +94,14 @@ const RequestDetail = (props) => {
         timestamp
     } = request;
 
+    //func
     const timePost = new Date(timestamp);
-
     const [road, setRoad] = useState(null);
     const [driver, setDriver] = useState(null);
     const [currentDriver, setCurrentDriver] = useState(null);
     const [time, setTime] = useState(null);
     const [stateDisplay, SetStateDisplay] = useState(1);
     const [stateRequest, SetStateRequest] = useState(status);
-
-    const { FullMap, currentLocation, getCurrentPosition, checkLocationPermission } = useMap();
 
     useEffect(() => {
         checkLocationPermission();
@@ -155,11 +151,12 @@ const RequestDetail = (props) => {
                         })
                     }
                 });
-                getUserByUserID(stateRequest).then((user) => setDriver(user));
+                getUserByUserID(stateRequest).then((user) => {
+                    setDriver(user);
+                });
             }
         }
     }, [stateRequest])
-
 
     const getDirections = () => {
         return new Promise(async (resolve, reject) => {
@@ -428,7 +425,7 @@ const RequestDetail = (props) => {
                         color: price == 0 ? success : 'black',
                         fontSize: fontSizes.h4,
                         alignSelf: 'center',
-                    }}>Giá: {price == 0 ? "FREE" : `${price}k vnd`} </Text>
+                    }}>Giá: {price == 0 ? "FREE" : `${formatNumber(price)} vnd`} </Text>
                 </View>
             </View>
         </View>

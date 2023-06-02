@@ -1,9 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Alert } from "react-native";
 import i18n from '../../../i18n';
-
 import { useNavigation,StackActions } from '@react-navigation/native'
-
 import {
     auth,
     onAuthStateChanged,

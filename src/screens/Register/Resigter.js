@@ -2,18 +2,30 @@ import React, { useState, useEffect, useCallback } from "react";
 import { Text, Image, View, TextInput, Alert, ActivityIndicator } from "react-native"
 import Icon from "react-native-vector-icons/FontAwesome5"
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
-
 import { CLButton } from "../../components"
 import { colors, fontSizes, images } from "../../constants"
 import i18n from "../../../i18n";
-
 import useRegister from './useRegister'
 
-const { logo } = images;
-const { primary, placeholder, facebook, google, inactive } = colors;
 
 const Register = (props) => {
 
+    //constant
+    const { logo } = images;
+    const { primary, placeholder, facebook, google, inactive } = colors;
+    const { navigation, route } = props
+    const { navigate, goBack } = navigation
+
+    //func
+    const [showIndicator,setShowIndicator] = useState(false)
+    const startLoading = () =>{
+        setShowIndicator(true);
+        setTimeout(()=>{
+            setShowIndicator(false);
+        }, 1500)
+    }
+
+    //data service
     const {
         email,
         setEmail,
@@ -32,20 +44,7 @@ const Register = (props) => {
         registerAction,
     } = useRegister()
 
-
-    const { navigation, route } = props
-    const { navigate, goBack } = navigation
-
-    const [showIndicator,setShowIndicator] = useState(false)
-
-    const startLoading = () =>{
-        setShowIndicator(true);
-        setTimeout(()=>{
-            setShowIndicator(false);
-        }, 1500)
-    }
-
-
+    
     return <KeyboardAwareScrollView
         enableResetScrollToCoords={true}
         contentContainerStyle={{ flexGrow: 1 }}

@@ -2,11 +2,9 @@ import React, { useState, useRef, useEffect, useContext, useCallback, Component 
 import { View, Text, Switch, TouchableOpacity, StyleSheet, ScrollView, Modal, Alert, Platform, Image, Linking, RefreshControl } from "react-native"
 import { useRoute } from '@react-navigation/native';
 import useMap from '../FullMap/FullMap'
-import { useEvent } from 'react-native-reanimated';
 import { colors, fontSizes, icons, images, normalize, split } from "../../constants"
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view'
 import { orderByKey } from "firebase/database";
-import AsyncStorage from '@react-native-async-storage/async-storage'
 import {
     auth,
     firebaseDatabase,
@@ -33,8 +31,8 @@ import { CameraQR } from '../../screens'
 import { CLButton } from '../../components'
 import LinearGradient from 'react-native-linear-gradient'
 import Icon from 'react-native-vector-icons/FontAwesome5'
-
-
+import {getUserIDByTokken} from '../../service/UserService'
+import {formatNumber} from '../../utilies'
 
 const getUserByUserID = (userID) => {
     return new Promise(async (resolve, reject) => {
@@ -44,6 +42,7 @@ const getUserByUserID = (userID) => {
                 const dbQuery = query(dbRef, orderByKey(), equalTo(userID));
                 const data = await get(dbQuery);
                 const snapshotObject = data.val();
+                console.log(userID)
                 if (snapshotObject) {
                     const data = snapshotObject[userID];
                     const user = {
@@ -59,8 +58,8 @@ const getUserByUserID = (userID) => {
             }
             else {
                 console.log("No driver!");
+                resolve(null);
             }
-
         }
         catch (error) {
             console.error('Error getting user:', error);
@@ -69,24 +68,16 @@ const getUserByUserID = (userID) => {
     });
 }
 
-const getUserIDByTokken = async () => {
-    const accessToken = await AsyncStorage.getItem('token');
-    const dbRef = ref(firebaseDatabase, "users");
-    const dbQuery = query(dbRef, orderByChild("accessToken"), equalTo(accessToken));
-    const data = await get(dbQuery);
-    const userID = Object.keys(data.val())[0];
-    return userID;
-}
 
 const RequestDetail = () => {
 
+    //init
     const route = useRoute();
-
     const { request } = route.params;
+    const { FullMap, currentLocation, getCurrentPosition, checkLocationPermission } = useMap();
 
+    //constant
     const { primary, inactive, zalert, warning, success } = colors;
-    const [modalVisible, setModalVisible] = useState(false);
-
     const {
         requestId,
         name,
@@ -103,22 +94,20 @@ const RequestDetail = () => {
         timestamp
     } = request;
 
+    //func
+    const [modalVisible, setModalVisible] = useState(false);
     const [road, setRoad] = useState("");
     const [boss, setBoss] = useState(null);
-
     const [stateDisplay, SetStateDisplay] = useState(1);
-
     const { distance, duration, endAddress, startAddress, summary } = road;
-
-
-    const { FullMap, currentLocation, getCurrentPosition, checkLocationPermission } = useMap();
 
     useEffect(() => {
         checkLocationPermission();
         getCurrentPosition();
         getDirections().then((direction) => setRoad(direction));
         if (type === 1) {
-            getUserByUserID(requestId.split('-')[0]).then((user) => setBoss(user));
+            const userId=requestId.split('-')[0];
+            getUserByUserID(userId).then((user) => setBoss(user));
         }
         // const cleanup = () => {
         //     LocationService.stop();
@@ -205,7 +194,13 @@ const RequestDetail = () => {
                     <Text style={{ color: 'white', fontWeight: '800' }}>1</Text>
                 </Circle>
                 <Text style={{ fontSize: fontSizes.h4, color: primary, marginStart: normalize(5) }}>Pick up your item</Text>
-                <Text style={{ fontSize: fontSizes.h4, color: "black", marginStart: normalize(5), position: 'absolute', end: normalize(20) }}>{Math.ceil(distance/10)/100}km/{Math.ceil(duration/60)}phút</Text>
+                <Text style={{ 
+                    fontSize: fontSizes.h4, 
+                    color: "black", 
+                    marginStart: normalize(5), 
+                    position: 'absolute', 
+                    end: normalize(20) 
+                }}>{Math.ceil(distance/10)/100}km/{Math.ceil(duration/60)}phút</Text>
             </View>
             <View style={{
                 flexDirection: 'row',
@@ -219,7 +214,13 @@ const RequestDetail = () => {
                     <Text style={{ color: 'white', fontWeight: '800' }}>2</Text>
                 </Circle>
                 <Text style={{ fontSize: fontSizes.h4, color: stateDisplay > 1 ? primary : inactive, marginStart: normalize(5) }}>Pay for it</Text>
-                <Text style={{ fontSize: fontSizes.h4, color: "black", marginStart: normalize(5), position: 'absolute', end: normalize(20) }}>{price}k vnd</Text>
+                <Text style={{ 
+                    fontSize: fontSizes.h4, 
+                    color: "black", 
+                    marginStart: normalize(5), 
+                    position: 'absolute', 
+                    end: normalize(20) 
+                }}>{price == 0 ? "FREE" : `${formatNumber(price)} vnd`}</Text>
             </View>
             <View style={{ height: 1, backgroundColor: primary, marginHorizontal: normalize(50) }} />
             <View style={{
@@ -260,7 +261,7 @@ const RequestDetail = () => {
                     <Text style={{ color: 'white', fontWeight: '800' }}>1</Text>
                 </Circle>
                 <Text style={{ fontSize: fontSizes.h4, color: primary, marginStart: normalize(5) }}>On going</Text>
-                <Text style={{ fontSize: fontSizes.h4, color: "black", marginStart: normalize(5), position: 'absolute', end: normalize(20) }}>{distance}/{duration}</Text>
+                <Text style={{ fontSize: fontSizes.h4, color: "black", marginStart: normalize(5), position: 'absolute', end: normalize(20) }}>{Math.ceil(distance/10)/100}km/{Math.ceil(duration/60)}phút</Text>
             </View>
             <View style={{
                 flexDirection: 'row',
@@ -274,7 +275,7 @@ const RequestDetail = () => {
                     <Text style={{ color: 'white', fontWeight: '800' }}>2</Text>
                 </Circle>
                 <Text style={{ fontSize: fontSizes.h4, color: primary, marginStart: normalize(5) }}>Hitchhiking</Text>
-                <Text style={{ fontSize: fontSizes.h4, color: "black", marginStart: normalize(5), position: 'absolute', end: normalize(20) }}>{road ? `${direction.distance}/${direction.duration}` : "==/=="}</Text>
+                <Text style={{ fontSize: fontSizes.h4, color: "black", marginStart: normalize(5), position: 'absolute', end: normalize(20) }}>{Math.ceil(direction.distance/10)/100}km/{Math.ceil(direction.duration/60)}phút</Text>
             </View>
             <View style={{
                 flexDirection: 'row',
@@ -288,7 +289,13 @@ const RequestDetail = () => {
                     <Text style={{ color: 'white', fontWeight: '800' }}>3</Text>
                 </Circle>
                 <Text style={{ fontSize: fontSizes.h4, color: stateDisplay > 2 ? primary : inactive, marginStart: normalize(5) }}>Get pay</Text>
-                <Text style={{ fontSize: fontSizes.h4, color: "black", marginStart: normalize(5), position: 'absolute', end: normalize(20) }}>{price}k vnd</Text>
+                <Text style={{ 
+                    fontSize: fontSizes.h4, 
+                    color: "black", 
+                    marginStart: normalize(5), 
+                    position: 'absolute', 
+                    end: normalize(20) 
+                }}>{price == 0 ? "FREE" : `${formatNumber(price)} vnd`}</Text>
             </View>
             <View style={{ height: 1, backgroundColor: primary, marginHorizontal: normalize(50) }} />
         </View>}

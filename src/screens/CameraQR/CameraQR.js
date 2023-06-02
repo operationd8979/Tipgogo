@@ -3,60 +3,32 @@ import { StyleSheet, Text } from 'react-native';
 import { useCameraDevices } from 'react-native-vision-camera';
 import { Camera } from 'react-native-vision-camera';
 import { useScanBarcodes, BarcodeFormat } from 'vision-camera-code-scanner';
-
 import {
-    auth,
     firebaseDatabase,
-    signInWithEmailAndPassword,
-    createUserWithEmailAndPassword,
-    sendEmailVerification,
-    onAuthStateChanged,
     ref,
     get,
-    set,
     orderByChild,
-    uploadBytes,
-    getDownloadURL,
-    storageRef,
-    storage,
-    app,
-    onValue,
-    child,
     equalTo,
     query,
     update,
 } from "../../../firebase/firebase"
-
 import { useNavigation } from '@react-navigation/native';
-
-const getUserIDByTokken = async () => {
-    const accessToken = await AsyncStorage.getItem('token');
-    const dbRef = ref(firebaseDatabase, "users");
-    const dbQuery = query(dbRef, orderByChild("accessToken"), equalTo(accessToken));
-    const data = await get(dbQuery);
-    const userID = Object.keys(data.val())[0];
-    return userID;
-}
+import {checkCameraPermission} from '../../service/CameraService'
+import {getUserIDByTokken} from '../../service/UserService'
 
 export default function CameraQR({requestId}) {
 
+    //const
     const devices = useCameraDevices();
     const device = devices.back;
+    const navigation = useNavigation();
+    //func
     const [frameProcessor, barcodes] = useScanBarcodes([BarcodeFormat.QR_CODE], {
         checkInverted: true,
     });
 
-    const navigation = useNavigation()
-
-    // Alternatively you can use the underlying function:
-    //
-    // const frameProcessor = useFrameProcessor((frame) => {
-    //   'worklet';
-    //   const detectedBarcodes = scanBarcodes(frame, [BarcodeFormat.QR_CODE], { checkInverted: true });
-    //   runOnJS(setBarcodes)(detectedBarcodes);
-    // }, []);
-
     React.useEffect(()=>{
+        checkCameraPermission();
         if(barcodes[0]){
             if(barcodes[0].content.data==requestId){
                 console.log("Key good");

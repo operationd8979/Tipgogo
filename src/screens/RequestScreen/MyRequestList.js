@@ -3,51 +3,14 @@ import { Text, Image, View, TouchableOpacity, Keyboard, KeyboardAvoidingView, Te
 import Icon from "react-native-vector-icons/FontAwesome5"
 import { colors, fontSizes, icons, images, normalize, split } from "../../constants"
 import RequestItem from "./RequestItem";
-import Category from "./Category";
-import { Dropdown, CLButton } from '../../components'
 import {
-    auth,
     firebaseDatabase,
-    signInWithEmailAndPassword,
-    createUserWithEmailAndPassword,
-    sendEmailVerification,
-    onAuthStateChanged,
     ref,
-    get,
-    set,
-    orderByChild,
-    uploadBytes,
-    getDownloadURL,
-    storageRef,
-    storage,
-    app,
     onValue,
-    child,
-    equalTo,
-    query,
-    update,
 } from "../../../firebase/firebase"
 import useMap from '../FullMap/FullMap'
-import axios from 'axios';
+import {getUserIDByTokken} from '../../service/UserService'
 
-import AsyncStorage from '@react-native-async-storage/async-storage'
-import Credentials from '../../../Credentials'
-import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view'
-
-/** 
- - ListView from a map of objects
- - FlatList
- */
-
-
-const getUserIDByTokken= async () => {
-    const accessToken = await AsyncStorage.getItem('token');
-    const dbRef = ref(firebaseDatabase,"users");
-    const dbQuery = query(dbRef,orderByChild("accessToken"),equalTo(accessToken));
-    const data = await get(dbQuery);
-    const userID = Object.keys(data.val())[0];
-    return userID;
-}
 
 const MyRequestList = (props) => {
 
@@ -116,7 +79,6 @@ const MyRequestList = (props) => {
         return unsubscribe;
     }, [])
 
-    //func render requests
     const renderNotRequest = () => {
         return (
             <View style={{ flex: 1, justifyContent: 'center' }}>
@@ -130,6 +92,7 @@ const MyRequestList = (props) => {
             </View>
         );
     };
+    
     const renderRequestList = () => {
         return (
             <FlatList

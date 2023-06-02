@@ -1,27 +1,15 @@
 import React, { useEffect, useState, useRef } from "react"
-import { View, Text, Switch, TouchableOpacity, TextInput, Linking, Modal, StyleSheet, Image, Alert } from "react-native"
+import { View, Text, Switch, TouchableOpacity, TextInput, Modal, StyleSheet, Image, Alert } from "react-native"
 import { colors, fontSizes, icons, images, normalize, split } from "../constants"
 import Icon from 'react-native-vector-icons/FontAwesome5'
 import {
     auth,
     firebaseDatabase,
-    signInWithEmailAndPassword,
-    createUserWithEmailAndPassword,
-    sendEmailVerification,
-    onAuthStateChanged,
     ref,
-    get,
-    set,
-    orderByChild,
     uploadBytes,
     getDownloadURL,
     storageRef,
     storage,
-    app,
-    onValue,
-    child,
-    equalTo,
-    query,
     update,
     updatePassword,
 } from "../../firebase/firebase"
@@ -30,52 +18,13 @@ import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view
 import { Picker } from '@react-native-picker/picker'
 import { StackActions } from '@react-navigation/native'
 import AsyncStorage from '@react-native-async-storage/async-storage'
-import { Dropdown, CLButton } from '../components'
+import { CLButton } from '../components'
 import ImageResizer from 'react-native-image-resizer';
 import i18n from '../../i18n'
 import {passRegex} from '../utilies'
+import {getUserByTokken} from '../service/UserService'
+import {checkCameraPermission} from '../service/CameraService'
 
-
-const getUserByTokken = () => {
-    return new Promise(async (resolve, reject) => {
-        try {
-            const accessToken = await AsyncStorage.getItem('token');
-            const dbRef = ref(firebaseDatabase, "users");
-            const dbQuery = query(dbRef, orderByChild("accessToken"), equalTo(accessToken));
-            const data = await get(dbQuery);
-            const userID = Object.keys(data.val())[0];
-            const snapshotObject = data.val();
-            const userData = snapshotObject[userID];
-            const user = {
-                userID: userID,
-                email: userData.email,
-                name: userData.name,
-                photo: userData.photo,
-                emailVerified: userData.emailVerified,
-            }
-            console.log("User getting OK!", user);
-            resolve(user);
-        }
-        catch (error) {
-            console.error('Error getting user:', error);
-            resolve(null);
-        }
-    });
-}
-
-
-const checkCameraPermission = async () => {
-    const cameraPermission = await Camera.getCameraPermissionStatus();
-    if (cameraPermission !== 'authorized') {
-        const newPermission = await Camera.requestCameraPermission();
-        if (newPermission !== 'authorized') {
-            //xử lý
-        }
-    }
-    else {
-        console.log("Camera already use!")
-    }
-}
 
 const Setting = (props) => {
 
@@ -245,12 +194,12 @@ const Setting = (props) => {
 
     return <KeyboardAwareScrollView
         enableResetScrollToCoords={true}
-        contentContainerStyle={{ flexGrow: 1, height: normalize(440) }}
+        contentContainerStyle={{ flexGrow: 1 }}
     >
         <View style={{
             paddingHorizontal: split.s4,
             paddingVertical: split.s5,
-            backgroundColor: primary
+            backgroundColor: primary,
         }}>
             <Text style={{
                 color: "white",
@@ -338,7 +287,7 @@ const Setting = (props) => {
                 </View>
                 <View style={{ flex: 8, justifyContent: 'center' }}>
                     {device && (
-                        <View style={styles.container}>
+                        <View style={{ flex:1,backgroundColor:'black'}}>
                             <Camera
                                 ref={camera}
                                 style={{
@@ -454,6 +403,7 @@ const Setting = (props) => {
             alignItems: 'center',
             paddingStart: 10,
             marginHorizontal: 10,
+            flex:20,
         }}>
             {/* <Text style={{ fontSize: fontSizes.h5, color: "#191970" }}>Ngôn ngữ |</Text> */}
             <Image
@@ -481,6 +431,7 @@ const Setting = (props) => {
         </View>
         <View style={{
             marginHorizontal: 10,
+            flex:15,
             //backgroundColor:"red"
         }}>
             <TouchableOpacity style={{
@@ -504,7 +455,7 @@ const Setting = (props) => {
                     fontSize: fontSizes.h6,
                     color: 'black',
                     paddingStart: 10,
-                }}>Chnage your password</Text>
+                }}>Change your password</Text>
                 <View style={{ flex: 1 }} />
                 <Icon
                     name='chevron-right'
@@ -607,6 +558,7 @@ const Setting = (props) => {
         </View>
         <View style={{
             marginHorizontal: 10,
+            flex:15,
             //backgroundColor:"red"
         }}>
             <TouchableOpacity style={{
@@ -650,6 +602,7 @@ const Setting = (props) => {
             borderColor: primary,
             borderWidth: 1,
             borderRadius: 20,
+            flex:30
         }}>
             <Text style={{
                 color: primary,
