@@ -30,13 +30,13 @@ const useMap = () => {
                 if (permissionStatus === 'granted') {
                     console.log("Location is enabled");
                 } else {
-                    return  Alert.alert(
+                    return Alert.alert(
                         "Permission ACCESS_LOCATION",
                         "Click OK to open Settings then allow app to use Location of your Device",
                         [
                             {
                                 text: "OK",
-                                onPress:async () => {
+                                onPress: async () => {
                                     await Linking.openSettings();
                                 }
                             },
@@ -49,36 +49,23 @@ const useMap = () => {
         }
     }
 
-    // const getCurrentPosition = async () => {
-    //     if (!currentLocation) {
-    //         const storageLocation = await AsyncStorage.getItem('currentLocation');
-    //         const location = await JSON.parse(storageLocation);
-    //         if (location) {
-    //             const latitude = location.latitude;
-    //             const longitude = location.longitude;
-    //             console.log(`[Storage]:latitude=${latitude},longitude=${longitude}`);
-    //             setCurrentLocation({ latitude, longitude });
-    //         }
-    //         else {
-    //             Geolocation.getCurrentPosition(
-    //                 position => {
-    //                     const latitude = position.coords.latitude;
-    //                     const longitude = position.coords.longitude;
-    //                     console.log(`[Geolocation]:latitude=${latitude},longitude=${longitude}`);
-    //                     setCurrentLocation({ latitude, longitude });
-    //                     AsyncStorage.setItem('currentLocation', JSON.stringify({ latitude, longitude }));
-    //                     console.log("Updated current location to AsyncStorage!");
-    //                     //setAddress(getAddressFromCoordinates(latitude,longitude));
-    //                 },
-    //                 error => {
-    //                     checkLocationPermission();
-    //                     //console.error('Error getting current location:', error);
-    //                 },
-    //                 //{ enableHighAccuracy: true, timeout: 15000, maximumAge: 10000 }
-    //             )
-    //         }
-    //     }
-    // }
+    const getCurrentPositionReal = async () => {
+        Geolocation.getCurrentPosition(
+            position => {
+                const latitude = position.coords.latitude;
+                const longitude = position.coords.longitude;
+                console.log(`[Geolocation]:latitude=${latitude},longitude=${longitude}`);
+                setCurrentLocation({ latitude, longitude });
+                AsyncStorage.setItem('currentLocation', JSON.stringify({ latitude, longitude }));
+                console.log("Updated current location to AsyncStorage!");
+            },
+            error => {
+                checkLocationPermission();
+                console.error('Error getting current location:', error);
+            },
+            //{ enableHighAccuracy: true, timeout: 15000, maximumAge: 10000 }
+        )
+    }
 
     const getCurrentPosition = async () => {
         if (!currentLocation) {
@@ -97,7 +84,7 @@ const useMap = () => {
         console.log("[WATCHPOSITION RUNNING] ID:");
         console.log(
             Geolocation.watchPosition(
-                (position) => {
+                position => {
                     console.log("Ready to update!Current location changed!")
                     const latitude = position.coords.latitude;
                     const longitude = position.coords.longitude;
@@ -106,14 +93,15 @@ const useMap = () => {
                     AsyncStorage.setItem('currentLocation', JSON.stringify({ latitude, longitude }));
                     console.log("Updated current location to AsyncStorage!");
                 },
-                (error) => {
+                error => {
+                    console.log(error);
                     checkLocationPermission();
                 },
                 {
-                    enableHighAccuracy: true,
+                    //enableHighAccuracy: true,
                     distanceFilter: 10,
-                    interval: 8000, //5000
-                    fastestInterval: 4000, //2000
+                    interval: 5000, //5000
+                    fastestInterval: 2000, //2000
                 }
             ))
     }
@@ -131,14 +119,14 @@ const useMap = () => {
             }
             setTimeout(() => {
                 const snapshot = mapRef.current.takeSnapshot({
-                    format: 'png', 
-                    quality: 0.5, 
-                    result: 'file', 
+                    format: 'png',
+                    quality: 0.5,
+                    result: 'file',
                 });
                 snapshot.then((uri) => {
                     setUriMap(uri);
                 });
-            }, 0); 
+            }, 0);
         }, [mapRef.current]);
 
         const calInitialRegion = () => {
@@ -146,13 +134,20 @@ const useMap = () => {
             let locationA = currentLocation;
             let locationB = geo2;
 
-            if (currentDriver)
+            if (currentDriver) {
                 locationB = currentDriver;
-            if (screen === "RequestList")
-                locationA = geo1;
+            }
             else {
-                if (type === 1 && geo1)
-                    locationB = geo1;
+                if (type === 1) {
+                    if (screen === "RequestList") {
+                        locationA = geo1;
+                    }
+                    else {
+                        if (screen === "DetailRequest") {
+                            locationB = geo1;
+                        }
+                    }
+                }
             }
 
             const minLat = Math.min(locationA.latitude, locationB.latitude);
@@ -225,7 +220,7 @@ const useMap = () => {
                         latitudeDelta: 0.008,
                         longitudeDelta: 0.011,
                     }}
-                    //onMapReady={lite?takeSnapshot:null}
+                //onMapReady={lite?takeSnapshot:null}
                 >
                     {currentLocation && screen != "RequestList" && <Marker
                         key={1}
@@ -238,7 +233,7 @@ const useMap = () => {
                             style={{ width: 35, height: 35 }} // Thiết lập kích thước của hình ảnh
                         />
                     </Marker>}
-                    {(screen != "MyRequestList" || screen != "MyRequest") && geo1 && <Marker
+                    {type === 1 && (screen != "MyRequestList" || screen != "MyRequest") && geo1 && <Marker
                         key={2}
                         coordinate={geo1}
                         tile={"aim"}
@@ -300,11 +295,13 @@ const useMap = () => {
     return {
         FullMap,
         currentLocation,
+        setCurrentLocation,
         pressLocation,
         setPressLocation,
         checkLocationPermission,
         getCurrentPosition,
         watchPosition,
+        getCurrentPositionReal,
     }
 
 

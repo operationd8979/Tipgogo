@@ -32,7 +32,7 @@ import LinearGradient from 'react-native-linear-gradient'
 import QRCode from 'react-native-qrcode-svg';
 import Icon from 'react-native-vector-icons/FontAwesome5'
 //import {getUserByUserID} from '../../service/UserService'
-import {formatNumber} from '../../utilies'
+import { formatNumber } from '../../utilies'
 
 const getUserByUserID = (userID) => {
     return new Promise(async (resolve, reject) => {
@@ -100,6 +100,7 @@ const RequestDetail = (props) => {
     const [driver, setDriver] = useState(null);
     const [currentDriver, setCurrentDriver] = useState(null);
     const [time, setTime] = useState(null);
+    const [timeGet, setTimeGet] = useState(null);
     const [stateDisplay, SetStateDisplay] = useState(1);
     const [stateRequest, SetStateRequest] = useState(status);
 
@@ -121,7 +122,7 @@ const RequestDetail = (props) => {
 
     useEffect(() => {
         //bổ xung value on tracking location of driver....
-        if (stateRequest == 1||stateRequest == -1) {
+        if (stateRequest == 1 || stateRequest == -1) {
             navigation.navigate('UItab')
         }
         else {
@@ -129,18 +130,20 @@ const RequestDetail = (props) => {
                 getDirections().then((direction) => {
                     setRoad(direction);
                     if (direction) {
-                        const time = new Date(direction.timestamp);
+                        let time = new Date(direction.timestamp);
                         setTime(time);
+                        time.setMinutes(time.getMinutes() + Math.ceil(direction.duration / 60));
+                        setTimeGet(time);
                         const dbRef = ref(firebaseDatabase, `direction/${stateRequest}/${requestId}`)
                         const unsubscribe = onValue(dbRef, async (snapshot) => {
                             console.log('Listenning this direction........');
                             if (snapshot.exists()) {
                                 let snapshotObject = snapshot.val();
-                                if(snapshotObject.state != 0){
+                                if (snapshotObject.state != 0) {
                                     console.log("This direction end!Stop listenning this direction!");
                                     unsubscribe();
                                 }
-                                else{
+                                else {
                                     console.log("Current driver is updated!");
                                     setCurrentDriver(snapshotObject.currentDriver);
                                     SetStateDisplay(2);
@@ -182,14 +185,14 @@ const RequestDetail = (props) => {
         if (!currentDriver) {
             const userRef = ref(firebaseDatabase, `request/${requestId}`);
             update(userRef, { requestStatus: -1 })
-                    .then(() => {
-                        console.log("Cancel request successfully!.");
-                    })
-                    .catch((error) => {
-                        console.error("Error cancel request: ", error);
-                    });
+                .then(() => {
+                    console.log("Cancel request successfully!.");
+                })
+                .catch((error) => {
+                    console.error("Error cancel request: ", error);
+                });
         }
-        else{
+        else {
             console.error("Cancel is denied! Request on process!");
         }
     }
@@ -252,7 +255,7 @@ const RequestDetail = (props) => {
                     color: 'black',
                     position: 'relative',
                     marginStart: 2,
-                }}>Hẹn lúc: {time.getHours()}:{time.getMinutes() + Math.ceil(road.duration / 60)} {time.getDate()}/{time.getMonth() + 1}</Text>
+                }}>Hẹn lúc: {timeGet.getHours()}:{timeGet.getMinutes()} {timeGet.getDate()}/{timeGet.getMonth() + 1}</Text>
             </View>
             <Text style={{
                 color: 'black',
@@ -404,11 +407,11 @@ const RequestDetail = (props) => {
                         <Text style={{
                             color: 'black',
                             fontSize: fontSizes.h4,
-                        }}>Khoảng cách: {Math.ceil(direction.distance/10)/100} km</Text>
+                        }}>Khoảng cách: {Math.ceil(direction.distance / 10) / 100} km</Text>
                         <Text style={{
                             color: 'black',
                             fontSize: fontSizes.h4,
-                        }}>Thời gian: {Math.ceil(direction.duration/60)} phút</Text>
+                        }}>Thời gian: {Math.ceil(direction.duration / 60)} phút</Text>
                         <Text style={{
                             color: 'black',
                             fontSize: fontSizes.h4,
@@ -459,14 +462,14 @@ const RequestDetail = (props) => {
             </TouchableOpacity>
             <TouchableOpacity
                 disabled={driver != null}
-                onPress={()=>{
+                onPress={() => {
                     return Alert.alert(
                         "Cancel request",
                         "Are you sure you want cancel this request?",
                         [
                             {
                                 text: "Yes",
-                                onPress:() => {
+                                onPress: () => {
                                     handleCancelRequest()
                                 },
                             },

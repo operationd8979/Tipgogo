@@ -21,9 +21,9 @@ import AsyncStorage from '@react-native-async-storage/async-storage'
 import { CLButton } from '../components'
 import ImageResizer from 'react-native-image-resizer';
 import i18n from '../../i18n'
-import {passRegex} from '../utilies'
-import {getUserByTokken} from '../service/UserService'
-import {checkCameraPermission} from '../service/CameraService'
+import { passRegex } from '../utilies'
+import { getUserByTokken } from '../service/UserService'
+import { checkCameraPermission } from '../service/CameraService'
 
 
 const Setting = (props) => {
@@ -40,10 +40,10 @@ const Setting = (props) => {
     const [selectedOption, setSelectedOption] = useState(i18n.locale == 'vi' ? 2 : i18n.locale == 'jp' ? 3 : 1);
     const [modalVisible, setModalVisible] = useState(false);
     const [modalPasswordVisible, setModalPasswordVisible] = useState(false);
-    const [newPassword,setNewPassword] = useState(null);
-    const [reNewPassword,setReNewPassword] = useState(null);
-    const [errorPassword,setErrorPassword] = useState(null);
-    const [errorRePassword,setErrorRePassword] = useState(null);
+    const [newPassword, setNewPassword] = useState(null);
+    const [reNewPassword, setReNewPassword] = useState(null);
+    const [errorPassword, setErrorPassword] = useState(null);
+    const [errorRePassword, setErrorRePassword] = useState(null);
 
     //data user
     const [user, setUser] = useState(null);
@@ -114,7 +114,7 @@ const Setting = (props) => {
 
     const uploadImage = async (uri) => {
         try {
-            const ref = storageRef(storage, `UserPhoto/${user.userID}.jpg`);
+            const ref = storageRef(storage, `UserPhoto/${user.userID}/${user.userID}.jpg`);
             const fileData = await fetch(uri);
             const bytes = await fileData.blob();
             const snapshot = await uploadBytes(ref, bytes, { contentType: 'image/jpeg' });
@@ -133,41 +133,41 @@ const Setting = (props) => {
         setErrorPassword(null);
         setErrorRePassword(null);
 
-        if(!newPassword){
+        if (!newPassword) {
             result = false;
             setErrorPassword(i18n.t('passErr1'))
-        }else if (passRegex.test(newPassword) !== true) {
+        } else if (passRegex.test(newPassword) !== true) {
             setErrorPassword(i18n.t('passErr2'))
             result = false
-          }
+        }
 
-        if(!reNewPassword){
+        if (!reNewPassword) {
             result = false;
             setErrorRePassword(i18n.t('repassErr1'))
-        }else if (reNewPassword !== newPassword) {
+        } else if (reNewPassword !== newPassword) {
             setErrorRePassword(i18n.t('repassErr2'))
             result = false
-          }
+        }
 
-        if(result){
+        if (result) {
             const user = auth.currentUser;
-            updatePassword(user,newPassword)
-            .then(()=>{
-                setModalPasswordVisible(false);
-                console.log("change your password successfull!");
-                return Alert.alert(
-                    "Update password",
-                    "Your password was changed successfully!",
-                    [
-                        {
-                            text: "OK",
-                        },
-                    ]
-                );
-            })
-            .catch((error)=>{
-                console.log(`Error change password:${error}`);
-            })
+            updatePassword(user, newPassword)
+                .then(() => {
+                    setModalPasswordVisible(false);
+                    console.log("change your password successfull!");
+                    return Alert.alert(
+                        "Update password",
+                        "Your password was changed successfully!",
+                        [
+                            {
+                                text: "OK",
+                            },
+                        ]
+                    );
+                })
+                .catch((error) => {
+                    console.log(`Error change password:${error}`);
+                })
         }
     }
 
@@ -287,7 +287,7 @@ const Setting = (props) => {
                 </View>
                 <View style={{ flex: 8, justifyContent: 'center' }}>
                     {device && (
-                        <View style={{ flex:1,backgroundColor:'black'}}>
+                        <View style={{ flex: 1, backgroundColor: 'black' }}>
                             <Camera
                                 ref={camera}
                                 style={{
@@ -403,7 +403,7 @@ const Setting = (props) => {
             alignItems: 'center',
             paddingStart: 10,
             marginHorizontal: 10,
-            flex:20,
+            flex: 20,
         }}>
             {/* <Text style={{ fontSize: fontSizes.h5, color: "#191970" }}>Ngôn ngữ |</Text> */}
             <Image
@@ -431,7 +431,7 @@ const Setting = (props) => {
         </View>
         <View style={{
             marginHorizontal: 10,
-            flex:15,
+            flex: 15,
             //backgroundColor:"red"
         }}>
             <TouchableOpacity style={{
@@ -470,13 +470,13 @@ const Setting = (props) => {
                 <View style={{ flex: 1, justifyContent: 'center' }}>
                     <View style={styles.container}>
                         <View>
-                            <View style={{backgroundColor:primary,padding:"5%",marginBottom:normalize(10)}}>
-                                <Text style={{color:'black',fontSize:fontSizes.h3}}>Change password</Text>
+                            <View style={{ backgroundColor: primary, padding: "5%", marginBottom: normalize(10) }}>
+                                <Text style={{ color: 'black', fontSize: fontSizes.h3 }}>Change password</Text>
                             </View>
                             <Text style={{
-                                    color: 'red',
-                                    fontSize: fontSizes.h5,
-                                    marginStart: normalize(90)
+                                color: 'red',
+                                fontSize: fontSizes.h5,
+                                marginStart: normalize(90)
                             }}>{errorPassword}</Text>
                             <View style={{
                                 alignItems: 'center',
@@ -507,9 +507,9 @@ const Setting = (props) => {
                                 />
                             </View>
                             <Text style={{
-                                    color: 'red',
-                                    fontSize: fontSizes.h5,
-                                    marginStart: normalize(90)
+                                color: 'red',
+                                fontSize: fontSizes.h5,
+                                marginStart: normalize(90)
                             }}>{errorRePassword}</Text>
                             <View style={{
                                 alignItems: 'center',
@@ -540,7 +540,7 @@ const Setting = (props) => {
                                 />
                             </View>
                         </View>
-                        
+
                         <View style={{
                             flexDirection: 'row',
                             justifyContent: 'center',
@@ -558,7 +558,7 @@ const Setting = (props) => {
         </View>
         <View style={{
             marginHorizontal: 10,
-            flex:15,
+            flex: 15,
             //backgroundColor:"red"
         }}>
             <TouchableOpacity style={{
@@ -594,7 +594,7 @@ const Setting = (props) => {
                 />
             </TouchableOpacity>
         </View>
-        {user&&<View style={{
+        {user && <View style={{
             //backgroundColor: 'purple',
             margin: split.s2,
             paddingHorizontal: split.s3,
@@ -602,7 +602,7 @@ const Setting = (props) => {
             borderColor: primary,
             borderWidth: 1,
             borderRadius: 20,
-            flex:30
+            flex: 30
         }}>
             <Text style={{
                 color: primary,
@@ -688,7 +688,7 @@ const styles = StyleSheet.create({
         backgroundColor: 'white',
         borderBottomLeftRadius: 5,
         borderBottomRightRadius: 5,
-        borderWidth:1,
+        borderWidth: 1,
         paddingBottom: '5%',
     },
 });

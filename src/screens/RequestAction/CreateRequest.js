@@ -26,8 +26,8 @@ import i18n from '../../../i18n'
 import { mapStyle, formatNumber } from '../../utilies'
 import ImageResizer from 'react-native-image-resizer';
 import useMap from '../FullMap/FullMap'
-import {getAddressFromLocation,getRouteDirection,getLocationFromAddress} from '../../service/MapService'
-import {checkCameraPermission} from '../../service/CameraService'
+import { getAddressFromLocation, getRouteDirection, getLocationFromAddress } from '../../service/MapService'
+import { checkCameraPermission } from '../../service/CameraService'
 
 
 const CreateRequest = (props) => {
@@ -107,13 +107,13 @@ const CreateRequest = (props) => {
 
     const handleMapPress = (event) => {
         if (!isLoading) {
-            if(currentRoute){
-                if(displaySearch){
+            if (currentRoute) {
+                if (displaySearch) {
                     setDisplaySearch(null);
                     setSearchAddress(null);
                 }
                 setCurrentRoute(null);
-            }   
+            }
             const { coordinate } = event.nativeEvent;
             setPressLocation(coordinate);
         }
@@ -133,12 +133,12 @@ const CreateRequest = (props) => {
                     mapRef.current.animateToRegion(region, 1000);
                 }
             }
-            else{
-                if(currentRoute){
+            else {
+                if (currentRoute) {
                     setDisplaySearch(null);
                     setSearchAddress(null);
                     setCurrentRoute(null);
-                }  
+                }
                 setPressLocation(null);
                 if (currentLocation) {
                     const { latitude, longitude } = currentLocation;
@@ -170,9 +170,9 @@ const CreateRequest = (props) => {
         }
     };
 
-    const uploadImage = async (uri) => {
+    const uploadImage = async (userID, timestamp, uri) => {
         try {
-            const ref = storageRef(storage, `${new Date().getTime()}.jpg`);
+            const ref = storageRef(storage, `UserPhoto/${userID}/${userID}-${timestamp}.jpg`);
             const fileData = await fetch(uri);
             const bytes = await fileData.blob();
             const snapshot = await uploadBytes(ref, bytes, { contentType: 'image/jpeg' });
@@ -213,7 +213,7 @@ const CreateRequest = (props) => {
                 result = false;
             }
         }
-        if (typeRequest===2 && (!address || !detailAddress)) {
+        if (typeRequest === 2 && (!address || !detailAddress)) {
             setErrorAddress(i18n.t('addressErr1'))
             result = false;
         }
@@ -233,32 +233,32 @@ const CreateRequest = (props) => {
         return result
     }
 
-    const handleLoadMap = async () =>{
+    const handleLoadMap = async () => {
         setIsLoading(true);
         setShowIndicator(true);
-        if(typeRequest===1){
-            if(currentLocation&&pressLocation){
-                try{
-                    const route = await getRouteDirection(currentLocation,pressLocation);
+        if (typeRequest === 1) {
+            if (currentLocation && pressLocation) {
+                try {
+                    const route = await getRouteDirection(currentLocation, pressLocation);
                     setCurrentRoute(route);
-                }catch(error){
+                } catch (error) {
                     console.log(error)
                 }
             }
-            else{
+            else {
                 console.log("Presslocation is not avaiable!");
             }
         }
-        else{
-            const location = pressLocation||currentLocation;
-            const response = await getAddressFromLocation(location.latitude,location.longitude);
+        else {
+            const location = pressLocation || currentLocation;
+            const response = await getAddressFromLocation(location.latitude, location.longitude);
             const address = {
-                road : response.address.road,
-                suburb : response.address.suburb,
-                district : response.address.city_district,
-                city : response.address.city,
+                road: response.address.road,
+                suburb: response.address.suburb,
+                district: response.address.city_district,
+                city: response.address.city,
             }
-            setDetailAddress(`${address.road?address.road+", ":""}${address.suburb?address.suburb+", ":""}${address.district?address.district+", ":""}${address.city}`);
+            setDetailAddress(`${address.road ? address.road + ", " : ""}${address.suburb ? address.suburb + ", " : ""}${address.district ? address.district + ", " : ""}${address.city}`);
         }
         setIsLoading(false);
         setShowIndicator(false);
@@ -269,7 +269,7 @@ const CreateRequest = (props) => {
         if (searchAddress) {
             const reponse = await getLocationFromAddress(searchAddress);
             console.log(reponse.data[0])
-            if (reponse.data.length>0) {
+            if (reponse.data.length > 0) {
                 console.log(reponse.data[0].display_name);
                 const coordinate = {
                     latitude: parseFloat(reponse.data[0].lat),
@@ -288,11 +288,11 @@ const CreateRequest = (props) => {
                     mapRef.current.animateToRegion(region, 1000);
                 }
             }
-            else{
+            else {
                 console.log("Get address fail!");
             }
         }
-        else{
+        else {
             console.log("Search String is not ")
         }
         setIsLoading(false);
@@ -303,6 +303,7 @@ const CreateRequest = (props) => {
             setIsLoading(true);
             setShowIndicator(true);
             console.log('------------Postting request------------');
+            const timestamp = (new Date()).getTime();
             const accessToken = await AsyncStorage.getItem('token');
             const dbRef = ref(firebaseDatabase, "users");
             const dbQuery = query(dbRef, orderByChild("accessToken"), equalTo(accessToken));
@@ -311,7 +312,7 @@ const CreateRequest = (props) => {
             let uploadedImageUrl = null;
             let direction = null;
             if (typeRequest === 2) {
-                uploadedImageUrl = await uploadImage(photoPath);
+                uploadedImageUrl = await uploadImage(userID, timestamp, photoPath);
                 if (!uploadedImageUrl) {
                     console.error("Image upload failed!");
                     setIsLoading(false);
@@ -319,8 +320,8 @@ const CreateRequest = (props) => {
                     return;
                 }
             }
-            if (typeRequest === 1){
-                if(currentRoute&&currentRoute.destination===pressLocation)
+            if (typeRequest === 1) {
+                if (currentRoute && currentRoute.destination === pressLocation)
                     direction = currentRoute;
                 else
                     direction = await getRouteDirection(currentLocation, pressLocation);
@@ -331,7 +332,6 @@ const CreateRequest = (props) => {
                     return;
                 }
             }
-            const timestamp = (new Date()).getTime();
             let request = {
                 title: typeRequest === 1 ? `${direction.summary}` : title,
                 des: des,
@@ -342,7 +342,7 @@ const CreateRequest = (props) => {
                 direction: direction,
                 typeRequest: typeRequest,
                 requestStatus: 0,
-                address: typeRequest===2? `${address}, ${detailAddress}` : null,
+                address: typeRequest === 2 ? `${address}, ${detailAddress}` : null,
                 timestamp: timestamp,
             }
             set(ref(firebaseDatabase, `request/${userID}-${timestamp}`), request)
@@ -601,7 +601,7 @@ const CreateRequest = (props) => {
                     onChangeText={setAddress}
                     autoCorrect={false}
                     placeholder={errorAddress ? errorAddress : "số nhà, tên đường"}
-                    placeholderTextColor={errorAddress?zalert:inactive}
+                    placeholderTextColor={errorAddress ? zalert : inactive}
                 />
             </View>}
             {typeRequest === 2 && <View style={{
@@ -626,7 +626,7 @@ const CreateRequest = (props) => {
                     width: normalize(295),
                     paddingStart: "15%",
                     color: "black",
-                    fontSize: fontSizes.h4*0.9,
+                    fontSize: fontSizes.h4 * 0.9,
                 }}
                     multiline={true}
                     editable={!isLoading}
@@ -642,7 +642,7 @@ const CreateRequest = (props) => {
                 height: normalize(typeRequest === 1 ? 280 : 180),
                 marginHorizontal: split.s5,
                 marginVertical: split.s5,
-            }}> 
+            }}>
                 <MapView
                     ref={mapRef}
                     provider={PROVIDER_GOOGLE}
@@ -658,15 +658,15 @@ const CreateRequest = (props) => {
                         latitudeDelta: 0.008,
                         longitudeDelta: 0.011,
                     }}
-                    onPress={(event)=>{
-                        if ((currentRoute||displaySearch)&&typeRequest===1) {
+                    onPress={(event) => {
+                        if ((currentRoute || displaySearch) && typeRequest === 1) {
                             return Alert.alert(
                                 "Current Route is aviable",
                                 "Are you sure you want change your route?",
                                 [
                                     {
                                         text: "Yes",
-                                        onPress:() => {
+                                        onPress: () => {
                                             setCurrentRoute(null);
                                             setDisplaySearch(null);
                                             setSearchAddress(null);
@@ -678,7 +678,7 @@ const CreateRequest = (props) => {
                                 ]
                             );
                         }
-                        else{
+                        else {
                             handleMapPress(event);
                         }
                     }}
@@ -698,7 +698,7 @@ const CreateRequest = (props) => {
                     >
                         <Image
                             source={images.markerUrGeo1}
-                            style={{ width: 35, height: 35, }} 
+                            style={{ width: 35, height: 35, }}
                         />
                     </Marker>}
                     {typeRequest === 1 && currentRoute && <Polyline
@@ -725,7 +725,7 @@ const CreateRequest = (props) => {
                     <TextInput
                         value={searchAddress}
                         onChangeText={setSearchAddress}
-                        onEndEditing={()=>{
+                        onEndEditing={() => {
                             handleSearchAddress();
                         }}
                         autoCorrect={false}
@@ -755,20 +755,20 @@ const CreateRequest = (props) => {
                     <Image source={images.iconCurrentLocation} style={{ height: 50, width: 50 }} />
                 </TouchableOpacity>
                 {typeRequest === 1 && displaySearch && <Text style={{
-                        color: 'black',
-                        fontSize: fontSizes.h4,
-                        position:'absolute',
-                        bottom: normalize(20),
-                        left: normalize(60),
-                        right: normalize(45),
-                        backgroundColor:'white'
+                    color: 'black',
+                    fontSize: fontSizes.h4,
+                    position: 'absolute',
+                    bottom: normalize(20),
+                    left: normalize(60),
+                    right: normalize(45),
+                    backgroundColor: 'white'
                 }}>{displaySearch}</Text>}
             </View>}
             {currentRoute && <View style={{
                 marginHorizontal: normalize(10),
                 alignItems: 'center',
             }}>
-                <Text style={{ fontSize: fontSizes.h3, color: primary }}>Detail route: {Math.ceil(currentRoute.distance/100)/10} km, {Math.ceil(currentRoute.duration/60)} phút</Text>
+                <Text style={{ fontSize: fontSizes.h3, color: primary }}>Detail route: {Math.ceil(currentRoute.distance / 100) / 10} km, {Math.ceil(currentRoute.duration / 60)} phút</Text>
                 <View>
                     <Text style={{
                         marginTop: normalize(5),

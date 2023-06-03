@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Text, Image, View, ImageBackground, TouchableOpacity, ActivityIndicator } from 'react-native'
 import Icon from 'react-native-vector-icons/FontAwesome5'
 import i18n from '../../i18n'
-import { images, icons, colors, fontSizes, normalize} from '../constants'
+import { images, icons, colors, fontSizes, normalize } from '../constants'
 import { CLButton, UIButton } from '../components'
 import { StackActions } from '@react-navigation/native'
 import {
@@ -19,7 +19,7 @@ import useMap from './FullMap/FullMap'
 
 const WaitingScreen = () => {
     return (
-        <View style={{ alignItems: 'center',marginTop: '50%' }}>
+        <View style={{ alignItems: 'center', marginTop: '50%' }}>
             <ActivityIndicator size="large" color="blue" />
             <Text style={{
                 color: 'black',
@@ -30,55 +30,57 @@ const WaitingScreen = () => {
     );
 };
 
+
 function Welcome(props) {
 
     //constant
-    const {navigation,route} = props;
-    const {navigate,goBack} = navigation;
+    const { navigation, route } = props;
+    const { navigate, goBack } = navigation;
     const { background } = images;
     const { primary } = colors;
     const options = [
-        {lable: i18n.t('w_item1'),value: 1},
-        {lable: i18n.t('w_item2'),value: 2},
-        {lable: i18n.t('w_item3'),value: 3},
+        { lable: i18n.t('w_item1'), value: 1 },
+        { lable: i18n.t('w_item2'), value: 2 },
+        { lable: i18n.t('w_item3'), value: 3 },
     ];
     //func
     const [selectedOption, setSelectedOption] = useState(1);
-    const { watchPosition, checkLocationPermission, currentLocation } = useMap();
-    
-    useEffect(()=>{
+    const { watchPosition, checkLocationPermission, currentLocation, setCurrentLocation, getCurrentPositionReal } = useMap();
+
+    useEffect(() => {
         console.log("----useEffect_welcomeScreen running-----")
         checkLocationPermission();
+        //getCurrentPositionReal();
         watchPosition();
         const unsubscribe = onAuthStateChanged(auth, async (responseUser) => {
             if (responseUser) {
                 console.log("Auth successfully!");
                 let oldToken = await AsyncStorage.getItem("token")
-                if(oldToken != responseUser.accessToken){
-                    AsyncStorage.setItem("token", responseUser.accessToken).then(()=>{
+                if (oldToken != responseUser.accessToken) {
+                    AsyncStorage.setItem("token", responseUser.accessToken).then(() => {
                         navigation.dispatch(StackActions.replace('UItab'))
-                        console.log("Set Token successfully!");  
-                    }).catch(()=>{
-                        console.log("Error set Token!");  
+                        console.log("Set Token successfully!");
+                    }).catch(() => {
+                        console.log("Error set Token!");
                     })
                     const userRef = ref(firebaseDatabase, `users/${responseUser.uid}`);
-                    update(userRef, { accessToken:responseUser.accessToken })
+                    update(userRef, { accessToken: responseUser.accessToken })
                         .then(() => {
                             console.log("Update accessToken's user successfully!.");
                         })
                         .catch((error) => {
                             console.error("Error updating accessToken's user: ", error);
-                        });          
+                        });
                 }
             }
-            else{
+            else {
                 console.log("Authing fail")
             }
         })
         return unsubscribe();
-    },[])
+    }, [])
 
-    return currentLocation? <View style={{
+    return currentLocation ? <View style={{
         backgroundColor: 'white',
         flex: 100
     }}>
@@ -100,7 +102,7 @@ function Welcome(props) {
                     alignItems: 'center',
                     marginStart: 10,
                 }}>
-                    
+
                     <Text style={{
                         color: "black",
                         fontSize: fontSizes.h2,
@@ -144,14 +146,14 @@ function Welcome(props) {
                 //backgroundColor: 'purple'
             }}>
                 {options.map(option =>
-                    <UIButton 
+                    <UIButton
                         key={option.value}
                         value={option.value}
                         title={option.lable}
                         isSelected={selectedOption === option.value}
                         onPress={() => {
                             setSelectedOption(option.value)
-                            i18n.locale = (option.value == 1? 'en': option.value == 2? 'vi' : 'jp')
+                            i18n.locale = (option.value == 1 ? 'en' : option.value == 2 ? 'vi' : 'jp')
                         }}
                         color={"rgba(255,255,255,0.8)"}
                     />)}
@@ -160,19 +162,19 @@ function Welcome(props) {
                 flex: 20,
                 //backgroundColor: 'purple'
             }}>
-                <CLButton 
-                    onPress={()=>{
+                <CLButton
+                    onPress={() => {
                         navigate('Login');
                     }}
-                    title={i18n.t('login').toUpperCase()} 
+                    title={i18n.t('login').toUpperCase()}
                 />
-                <TouchableOpacity 
-                    onPress={()=>{
+                <TouchableOpacity
+                    onPress={() => {
                         navigate('Register');
                     }}
                     style={{
-                        padding:5
-                }}>
+                        padding: 5
+                    }}>
                     <Text style={{
                         color: 'black',
                         fontSize: fontSizes.h5,
@@ -188,7 +190,7 @@ function Welcome(props) {
 
             </View>
         </ImageBackground>
-    </View> : <WaitingScreen/>
+    </View> : <WaitingScreen />
 }
 export default Welcome
 

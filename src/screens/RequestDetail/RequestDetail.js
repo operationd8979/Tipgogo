@@ -31,8 +31,8 @@ import { CameraQR } from '../../screens'
 import { CLButton } from '../../components'
 import LinearGradient from 'react-native-linear-gradient'
 import Icon from 'react-native-vector-icons/FontAwesome5'
-import {getUserIDByTokken} from '../../service/UserService'
-import {formatNumber} from '../../utilies'
+import { getUserIDByTokken } from '../../service/UserService'
+import { formatNumber } from '../../utilies'
 
 const getUserByUserID = (userID) => {
     return new Promise(async (resolve, reject) => {
@@ -106,7 +106,7 @@ const RequestDetail = () => {
         getCurrentPosition();
         getDirections().then((direction) => setRoad(direction));
         if (type === 1) {
-            const userId=requestId.split('-')[0];
+            const userId = requestId.split('-')[0];
             getUserByUserID(userId).then((user) => setBoss(user));
         }
         // const cleanup = () => {
@@ -194,13 +194,13 @@ const RequestDetail = () => {
                     <Text style={{ color: 'white', fontWeight: '800' }}>1</Text>
                 </Circle>
                 <Text style={{ fontSize: fontSizes.h4, color: primary, marginStart: normalize(5) }}>Pick up your item</Text>
-                <Text style={{ 
-                    fontSize: fontSizes.h4, 
-                    color: "black", 
-                    marginStart: normalize(5), 
-                    position: 'absolute', 
-                    end: normalize(20) 
-                }}>{Math.ceil(distance/10)/100}km/{Math.ceil(duration/60)}phút</Text>
+                <Text style={{
+                    fontSize: fontSizes.h4,
+                    color: "black",
+                    marginStart: normalize(5),
+                    position: 'absolute',
+                    end: normalize(20)
+                }}>{Math.ceil(distance / 10) / 100}km/{Math.ceil(duration / 60)}phút</Text>
             </View>
             <View style={{
                 flexDirection: 'row',
@@ -214,12 +214,12 @@ const RequestDetail = () => {
                     <Text style={{ color: 'white', fontWeight: '800' }}>2</Text>
                 </Circle>
                 <Text style={{ fontSize: fontSizes.h4, color: stateDisplay > 1 ? primary : inactive, marginStart: normalize(5) }}>Pay for it</Text>
-                <Text style={{ 
-                    fontSize: fontSizes.h4, 
-                    color: "black", 
-                    marginStart: normalize(5), 
-                    position: 'absolute', 
-                    end: normalize(20) 
+                <Text style={{
+                    fontSize: fontSizes.h4,
+                    color: "black",
+                    marginStart: normalize(5),
+                    position: 'absolute',
+                    end: normalize(20)
                 }}>{price == 0 ? "FREE" : `${formatNumber(price)} vnd`}</Text>
             </View>
             <View style={{ height: 1, backgroundColor: primary, marginHorizontal: normalize(50) }} />
@@ -239,7 +239,7 @@ const RequestDetail = () => {
                         marginTop: normalize(5),
                         color: 'black',
                         fontSize: fontSizes.h4,
-                    }}>Địa chỉ đến: {type===1?endAddress:address} </Text>
+                    }}>Địa chỉ đến: {type === 1 ? endAddress : address} </Text>
                 </View>
             </View>
         </View>}
@@ -261,7 +261,7 @@ const RequestDetail = () => {
                     <Text style={{ color: 'white', fontWeight: '800' }}>1</Text>
                 </Circle>
                 <Text style={{ fontSize: fontSizes.h4, color: primary, marginStart: normalize(5) }}>On going</Text>
-                <Text style={{ fontSize: fontSizes.h4, color: "black", marginStart: normalize(5), position: 'absolute', end: normalize(20) }}>{Math.ceil(distance/10)/100}km/{Math.ceil(duration/60)}phút</Text>
+                <Text style={{ fontSize: fontSizes.h4, color: "black", marginStart: normalize(5), position: 'absolute', end: normalize(20) }}>{Math.ceil(distance / 10) / 100}km/{Math.ceil(duration / 60)}phút</Text>
             </View>
             <View style={{
                 flexDirection: 'row',
@@ -275,7 +275,7 @@ const RequestDetail = () => {
                     <Text style={{ color: 'white', fontWeight: '800' }}>2</Text>
                 </Circle>
                 <Text style={{ fontSize: fontSizes.h4, color: primary, marginStart: normalize(5) }}>Hitchhiking</Text>
-                <Text style={{ fontSize: fontSizes.h4, color: "black", marginStart: normalize(5), position: 'absolute', end: normalize(20) }}>{Math.ceil(direction.distance/10)/100}km/{Math.ceil(direction.duration/60)}phút</Text>
+                <Text style={{ fontSize: fontSizes.h4, color: "black", marginStart: normalize(5), position: 'absolute', end: normalize(20) }}>{Math.ceil(direction.distance / 10) / 100}km/{Math.ceil(direction.duration / 60)}phút</Text>
             </View>
             <View style={{
                 flexDirection: 'row',
@@ -289,12 +289,12 @@ const RequestDetail = () => {
                     <Text style={{ color: 'white', fontWeight: '800' }}>3</Text>
                 </Circle>
                 <Text style={{ fontSize: fontSizes.h4, color: stateDisplay > 2 ? primary : inactive, marginStart: normalize(5) }}>Get pay</Text>
-                <Text style={{ 
-                    fontSize: fontSizes.h4, 
-                    color: "black", 
-                    marginStart: normalize(5), 
-                    position: 'absolute', 
-                    end: normalize(20) 
+                <Text style={{
+                    fontSize: fontSizes.h4,
+                    color: "black",
+                    marginStart: normalize(5),
+                    position: 'absolute',
+                    end: normalize(20)
                 }}>{price == 0 ? "FREE" : `${formatNumber(price)} vnd`}</Text>
             </View>
             <View style={{ height: 1, backgroundColor: primary, marginHorizontal: normalize(50) }} />
