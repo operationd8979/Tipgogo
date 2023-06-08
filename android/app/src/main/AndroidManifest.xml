@@ -17,11 +17,11 @@
       android:theme="@style/AppTheme">
       <meta-data
       android:name="com.google.android.geo.API_KEY"
-      android:value="AIzaSyAHeS3YAXg8sZAlsoy9eYu_yW_bnkhAJX8"/>
+      android:value="xxxxxx"/>
       <!-- react-native-background-geolocation licence(tracking location) -->
 +     <meta-data 
       android:name="com.transistorsoft.locationmanager.license" 
-      android:value="AIzaSyAHeS3YAXg8sZAlsoy9eYu_yW_bnkhAJX8" />
+      android:value="xxxxxxxxxxxxx" />
       <activity
         android:name=".MainActivity"
         android:label="@string/app_name"
