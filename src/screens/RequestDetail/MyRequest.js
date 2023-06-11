@@ -255,7 +255,7 @@ const RequestDetail = (props) => {
                     color: 'black',
                     position: 'relative',
                     marginStart: 2,
-                }}>Hẹn lúc: {timeGet.getHours()}:{timeGet.getMinutes()} {timeGet.getDate()}/{timeGet.getMonth() + 1}</Text>
+                }}>Hẹn lúc: {timeGet ? timeGet.toLocaleString() : '==/=='}</Text>
             </View>
             <Text style={{
                 color: 'black',

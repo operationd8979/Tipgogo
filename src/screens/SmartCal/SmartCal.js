@@ -97,7 +97,7 @@ const SmartCal = (props) => {
         getCurrentPosition();
     }, [])
 
-    const inside = (currentLocation, destination, geo1, geo2) => {
+    const Inbounds = (currentLocation, destination, geo1, geo2) => {
         const minLat = Math.min(currentLocation.latitude, destination.latitude);
         const maxLat = Math.max(currentLocation.latitude, destination.latitude);
         const minLong = Math.min(currentLocation.longitude, destination.longitude);
@@ -202,7 +202,7 @@ const SmartCal = (props) => {
     }
     const handleSmartDirection = async () => {
         if (requests) {
-            const requestInside = requests.filter(r=>r.status==0 && inside(currentLocation,pressLocation,r.geo1,r.geo2));
+            const requestInside = requests.filter(r=>r.status==0 && Inbounds(currentLocation,pressLocation,r.geo1,r.geo2));
             if(requestInside.length>2){
                 const result = findShortestPaths(currentLocation,requestInside,pressLocation);
                 if(result){

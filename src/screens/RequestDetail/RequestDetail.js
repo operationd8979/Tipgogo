@@ -446,9 +446,16 @@ const RequestDetail = () => {
                                     marginBottom: split.s3,
                                 }}
                             />
+                            <View style={{
+                                justifyContent: 'center',
+                                alignItems: 'center',
+                            }}>
+                                <Text style={{ color: 'white' }}>QR SCAN</Text>
+                            </View>
+                            <View style={{ height: 2, backgroundColor: primary, width: "100%" }} />
                         </View>
                     )}
-                    <CLButton title="Close Modal" onPress={() => setModalVisible(false)} />
+                    <CLButton title="Close CAMERA" onPress={() => setModalVisible(false)} />
                 </View>
             </Modal>
         </View>
