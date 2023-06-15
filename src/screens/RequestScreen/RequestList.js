@@ -4,7 +4,7 @@ import Icon from "react-native-vector-icons/FontAwesome5"
 import { colors, fontSizes, icons, images, normalize, split } from "../../constants"
 import RequestItem from "./RequestItem";
 import Category from "./Category";
-import { Dropdown, CLButton } from '../../components'
+import { Dropdown, CLButton, QuickView } from '../../components'
 import {
     firebaseDatabase,
     ref,
@@ -46,11 +46,6 @@ const RequestList = (props) => {
             url: secondHand,
             value: 2,
         },
-        // {
-        //     name: 'Your Request',
-        //     url: helpBuy,
-        //     value: 0,
-        // },
     ])
 
     //element init
@@ -58,6 +53,7 @@ const RequestList = (props) => {
     const { FullMap, currentLocation, getCurrentPosition, checkLocationPermission } = useMap();
 
     //element function
+    const [isLoading, setIsLoading] = useState(false);
     const [modalVisible, setModalVisible] = useState(false);
     const [sortModalVisible, setSortModalVisible] = useState(false);
     const [selectedRequest, setSelectedRequest] = useState(null);
@@ -68,7 +64,7 @@ const RequestList = (props) => {
     const [optionSort, setOptionSort] = useState(false);
     const filterRequest = useCallback(() => requests.filter(eachRequest =>
         eachRequest.name.toLowerCase().includes(searchText.toLowerCase())
-        && (onAvaiable|| eachRequest.accepted)
+        && ((onAvaiable&&eachRequest.status===0)|| eachRequest.accepted)
         && (typeSelected == null || eachRequest.type == typeSelected))
         .sort((a, b) => {
             if (optionSort&&currentLocation) {
@@ -167,11 +163,9 @@ const RequestList = (props) => {
 
     const handleTapRequest = async (item) => {
         if (item.accepted) {
-            console.log("1");
             navigation.navigate("RequestDetail", { request: item });
         }
         else {
-            console.log("2");
             setSelectedRequest(item);
             setModalVisible(true);
         }
@@ -183,6 +177,7 @@ const RequestList = (props) => {
     }
 
     const acceptRequest = async () => {
+        setIsLoading(true);
         if (selectedRequest) {
             const {
                 requestId,
@@ -204,7 +199,8 @@ const RequestList = (props) => {
                         if (destination != "")
                             direction = await getDirectionDriver(currentLocation, destination);
                         if (!direction) {
-                            console.error("Get direction failed!");
+                            console.log("Get direction failed!");
+                            setIsLoading(false);
                             return;
                         }
                         set(ref(firebaseDatabase, `direction/${userID}/${requestId}`), direction)
@@ -217,28 +213,29 @@ const RequestList = (props) => {
                                         console.log("Accepted request! GOGOGO TIP!.");
                                     })
                                     .catch((error) => {
-                                        console.error("Error updating request status: ", error);
+                                        console.log("Error updating request status: ", error);
                                     });
                             })
                             .catch((error) => {
-                                console.error("Error updating direction: ", error);
+                                console.log("Error updating direction: ", error);
+                                setIsLoading(false);
                             });
                     }
                 }
                 else {
-                    console.error("Current location is null!");
+                    console.log("Current location is null!");
                 }
-
             }
             else {
                 alert("Request in process!");
             }
         }
         else {
-            console.error("No request selected!");
+            console.log("No request selected!");
         }
         setModalVisible(false);
         setSelectedRequest(null);
+        setIsLoading(false);
     }
 
     return currentLocation ? <View style={{
@@ -369,90 +366,23 @@ const RequestList = (props) => {
         <Modal visible={modalVisible} animationType="fade" transparent={true}  >
             <View style={{ flex: 1, justifyContent: 'center' }}>
                 {selectedRequest && (
-                    <View style={styles.container}>
-                        <View style={{
-                            flexDirection: 'row',
-                            marginBottom: split.s4,
-                        }}>
-                            {selectedRequest.type == 2 && <Image
-                                style={{
-                                    width: normalize(130),
-                                    height: normalize(130),
-                                    resizeMode: 'cover',
-                                    borderRadius: 15,
-                                    marginRight: split.s3,
-                                }}
-                                source={{ uri: selectedRequest.url }}
-                            />}
-                            <View style={{
-                                flex: 1,
-                                //backgroundColor:'green',
-                                marginRight: split.s3,
-                            }}>
-                                <Text style={{
-                                    color: 'black',
-                                    fontSize: fontSizes.h4,
-                                    fontWeight: 'bold'
-                                }}>{selectedRequest.name}</Text>
-                                <View style={{ height: 1, backgroundColor: 'black' }} />
-                                <Text style={{
-                                    color: 'black',
-                                    fontSize: fontSizes.h4,
-                                }}>Price: {formatNumber(selectedRequest.price)} vnd</Text>
-                                {selectedRequest.type == 2 &&<View>
-                                    <Text style={{
-                                        color: 'black',
-                                        fontSize: fontSizes.h4,
-                                    }}>Address: {selectedRequest.address}</Text>
-                                    <Text style={{
-                                        color: 'black',
-                                        fontSize: fontSizes.h4,
-                                    }}>Thời gian: {selectedRequest.time} </Text>
-                                </View>}
-                                {selectedRequest.type == 1 && <View>
-                                    <Text style={{
-                                        color: 'black',
-                                        fontSize: fontSizes.h4,
-                                    }}>Distance: {Math.ceil(selectedRequest.direction.distance/10)/100} km</Text>
-                                    <Text style={{
-                                        color: 'black',
-                                        fontSize: fontSizes.h4,
-                                    }}>Duration: {Math.ceil(selectedRequest.direction.duration/60)} phút</Text>
-                                    <Text style={{
-                                        color: 'black',
-                                        fontSize: fontSizes.h4,
-                                    }}>Từ: {selectedRequest.direction.startAddress}</Text>
-                                    <Text style={{
-                                        color: 'black',
-                                        fontSize: fontSizes.h4,
-                                    }}>Tới: {selectedRequest.direction.endAddress}</Text>
-                                </View>}
-                            </View>
-                        </View>
-                        {selectedRequest.des && <View>
-                            <Text style={{
-                                color: 'black',
-                                fontSize: fontSizes.h4,
-                            }}>Mô tả: {selectedRequest.des}</Text>
-                        </View>}
-                        <View style={{ height: 1, backgroundColor: 'black' }} />
-                        <FullMap
-                            geo1={selectedRequest.type==1&&selectedRequest.geo1}
-                            geo2={selectedRequest.geo2}
-                            direction={selectedRequest.direction}
-                            type={selectedRequest.type}
-                            screen="ModalRequestList"
-                        />
-                    </View>
+                    <QuickView selectedRequest={selectedRequest}/>
                 )}
+                {isLoading && <ActivityIndicator  
+                    size={'large'} 
+                    animating={isLoading} 
+                    style={{
+                        backgroundColor:'white'
+                    }}
+                />}
                 <View style={{
                     flexDirection: 'row',
                     justifyContent: 'center',
                 }}>
                     <CLButton title="Accept" sizeBT={"35%"} height={normalize(30)}
-                        onPress={() => acceptRequest()} />
+                        onPress={() => acceptRequest()} disabled={isLoading}/>
                     <CLButton title="Close Modal" sizeBT={"35%"} height={normalize(30)}
-                        onPress={() => handleCloseRequest()} />
+                        onPress={() => handleCloseRequest()} disabled={isLoading}/>
                 </View>
             </View>
         </Modal>

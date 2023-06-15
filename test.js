@@ -1,86 +1,234 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text } from 'react-native'
+import { View, Text, Modal, StyleSheet, TouchableOpacity } from 'react-native'
+import { colors, fontSizes, normalize, split } from './src/constants'
+import { CLButton, QuickView } from './src/components'
+import Icon from 'react-native-vector-icons/FontAwesome5'
+import useMap from './src/screens/FullMap/FullMap'
 
 const Test = () => {
-  const [routes, setRoutes] = useState([
-    { id: 'route1', coordinates: [{ lat: 10.801141, lng: 106.637899 }, { lat: 10.799550, lng: 106.640956 }] },
-    { id: 'route2', coordinates: [{ lat: 10.801036, lng: 106.636887 }, { lat: 10.799159, lng: 106.637357 }] },
-    { id: 'route3', coordinates: [{ lat: 10.799125, lng: 106.641791 }, { lat: 10.797641, lng: 106.644487 }] },
-    { id: 'route4', coordinates: [{ lat: 10.795697, lng: 106.638270 }, { lat: 10.792497, lng: 106.639342 }] },
-  ]);
-  const [shortestPaths, setShortestPaths] = useState([]);
 
-  useEffect(() => {
-    findShortestPaths();
-  }, []);
+  const { primary, success, zalert, warning, inactive } = colors;
+  const [modalVisible, setModalVisible] = useState(false);
 
-  const findShortestPaths = () => {
-    let minDistance = Number.MAX_VALUE;
-    let maxDistance = Number.MIN_VALUE;
-    let shortestPath1 = [];
-    let shortestPath2 = [];
+  const { FullMap, currentLocation, getCurrentPosition, checkLocationPermission } = useMap();
 
-    for (let i = 0; i < routes.length; i++) {
-      for (let j = 0; j < routes.length; j++) {
-        if (i === j) continue;
-
-        const path1 = calculateDistance([{ lat: 10.805000, lng: 106.635414 }, ...routes[i].coordinates, ...routes[j].coordinates, { lat: 10.783812, lng: 106.661724 }]);
-        const path2 = calculateDistance([{ lat: 10.805000, lng: 106.635414 }, ...routes[i].coordinates, ...routes[j].coordinates, { lat: 10.783812, lng: 106.661724 }]);
-
-        if (path1 < minDistance) {
-          minDistance = path1;
-          shortestPath1 = [routes[i], routes[j]];
-        }
-
-        if (path2 > maxDistance) {
-          maxDistance = path2;
-          shortestPath2 = [routes[i], routes[j]];
-        }
-      }
-    }
-
-    setShortestPaths([shortestPath1, shortestPath2]);
-  };
-
-  const calculateDistance = (path) => {
-    let distance = 0;
-
-    for (let i = 0; i < path.length - 1; i++) {
-      const lat1 = path[i].lat;
-      const lng1 = path[i].lng;
-      const lat2 = path[i + 1].lat;
-      const lng2 = path[i + 1].lng;
-
-      const dLat = toRadians(lat2 - lat1);
-      const dLng = toRadians(lng2 - lng1);
-      const a =
-        Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-        Math.cos(toRadians(lat1)) * Math.cos(toRadians(lat2)) * Math.sin(dLng / 2) * Math.sin(dLng / 2);
-      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-      const segmentDistance = 6371 * c; // Earth's radius is approximately 6371 km
-
-      distance += segmentDistance;
-    }
-
-    return distance;
-  };
-
-  const toRadians = (angle) => {
-    return angle * (Math.PI / 180);
-  };
+  const handleCloseRequest = () => {
+    setModalVisible(false);
+  }
 
   return (
-    <View>
-      {shortestPaths.map((path, index) => (
-        <View key={index}>
-          <Text>Shortest Path {index + 1}:</Text>
-          {path.map((route) => (
-            <Text key={route.id}>{route.id}</Text>
-          ))}
+    <View style={{
+      backgroundColor: '#3cb371',
+      height: 500,
+      marginTop: 100,
+      borderWidth: 1,
+    }}>
+      <Modal visible={modalVisible} animationType="fade" transparent={true}  >
+        <View style={{ flex: 1, justifyContent: 'center' }}>
+          <QuickView />
+          <View style={{
+            flexDirection: 'row',
+            justifyContent: 'center',
+          }}>
+            <CLButton title="Accept" sizeBT={"35%"} height={normalize(30)}
+              onPress={() => acceptRequest()} />
+            <CLButton title="Close Modal" sizeBT={"35%"} height={normalize(30)}
+              onPress={() => handleCloseRequest()} />
+          </View>
         </View>
-      ))}
+      </Modal>
+      <View style={{
+        flexDirection: 'row',
+        justifyContent: 'center',
+      }}>
+        <TouchableOpacity style={{
+          backgroundColor: '#3cb371',
+          width: 205,
+          alignItems: 'center',
+          justifyContent: 'center',
+          height: 35,
+          borderWidth: 1,
+          borderBottomWidth: 0,
+        }}>
+          <Text style={{ color: 'black' }}>Best choice</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={{
+          backgroundColor: inactive,
+          width: 205,
+          alignItems: 'center',
+          justifyContent: 'center',
+          height: 35,
+          borderWidth: 1,
+        }}>
+          <Text style={{ color: 'black' }}>Hight profit</Text>
+        </TouchableOpacity>
+      </View>
+      <View style={{
+        marginVertical: 15,
+      }}>
+        <View style={{
+          height: 100,
+          //borderWidth: 1,
+          backgroundColor: 'white',
+          padding: 10,
+          justifyContent: 'center',
+          marginBottom: 5,
+        }}>
+          <Text style={{ color: 'black', fontWeight: 'bold' }}>TOP 1</Text>
+          <View style={{ height: 1, backgroundColor: 'black' }} />
+          <View style={{
+            flexDirection: 'row'
+          }}>
+            <View>
+              <Text style={{ color: 'black' }}>Tổng tiền: 150.000đ</Text>
+              <Text style={{ color: 'black' }}>Quảng đường phát sinh: 2.3km</Text>
+              <Text style={{ color: 'black' }}>Độ hiệu quả: 17.000đ/km</Text>
+              <Text style={{ color: 'black' }}>Số lượng yêu cầu: 2</Text>
+            </View>
+            <View style={{
+              justifyContent: 'center',
+              left: 110,
+            }}>
+              <TouchableOpacity
+                onPress={() => {
+                  setModalVisible(true);
+                }}
+                style={{
+                  backgroundColor: 'red',
+                  padding: 7,
+                }}>
+                <Text style={{
+                  fontSize: fontSizes.h4,
+                  color: success
+                }}><Icon name="hand-point-right" size={17} /> Chi tiết</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+        <View style={{
+          height: 100,
+          //borderWidth: 1,
+          backgroundColor: 'white',
+          padding: 10,
+          justifyContent: 'center',
+          marginBottom: 5,
+        }}>
+          <Text style={{ color: 'black', fontWeight: 'bold' }}>TOP 2</Text>
+          <View style={{ height: 1, backgroundColor: 'black' }} />
+          <View style={{
+            flexDirection: 'row'
+          }}>
+            <View>
+              <Text style={{ color: 'black' }}>Tổng tiền: 80.000đ</Text>
+              <Text style={{ color: 'black' }}>Quảng đường phát sinh: 4.3km</Text>
+              <Text style={{ color: 'black' }}>Độ hiệu quả: 17.000đ/km</Text>
+              <Text style={{ color: 'black' }}>Số lượng yêu cầu: 2</Text>
+            </View>
+            <View style={{
+              justifyContent: 'center',
+              left: 110,
+            }}>
+              <TouchableOpacity style={{
+                //backgroundColor:'red',
+                padding: 7,
+              }}>
+                <Text style={{
+                  fontSize: fontSizes.h4,
+                  color: success
+                }}><Icon name="hand-point-right" size={17} /> Chi tiết</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+        <View style={{
+          height: 100,
+          //borderWidth: 1,
+          backgroundColor: 'white',
+          padding: 10,
+          justifyContent: 'center',
+          marginBottom: 5,
+        }}>
+          <Text style={{ color: 'black', fontWeight: 'bold' }}>TOP 3</Text>
+          <View style={{ height: 1, backgroundColor: 'black' }} />
+          <View style={{
+            flexDirection: 'row'
+          }}>
+            <View>
+              <Text style={{ color: 'black' }}>Tổng tiền: 50.000đ</Text>
+              <Text style={{ color: 'black' }}>Quảng đường phát sinh: 1.7km</Text>
+              <Text style={{ color: 'black' }}>Độ hiệu quả: 18.000đ/km</Text>
+              <Text style={{ color: 'black' }}>Số lượng yêu cầu: 1</Text>
+            </View>
+            <View style={{
+              justifyContent: 'center',
+              left: 110,
+            }}>
+              <TouchableOpacity style={{
+                //backgroundColor:'red',
+                padding: 7,
+              }}>
+                <Text style={{
+                  fontSize: fontSizes.h4,
+                  color: success
+                }}><Icon name="hand-point-right" size={17} /> Chi tiết</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+
+        <View style={{
+          height: 100,
+          //borderWidth: 1,
+          backgroundColor: 'white',
+          padding: 10,
+          justifyContent: 'center',
+          marginBottom: 5,
+        }}>
+          <Text style={{ color: 'black', fontWeight: 'bold' }}></Text>
+          <View style={{ height: 1, backgroundColor: 'black' }} />
+          <View style={{
+            flexDirection: 'row'
+          }}>
+            <View>
+              <Text style={{ color: 'black' }}>Tổng tiền: 43.000đ</Text>
+              <Text style={{ color: 'black' }}>Quảng đường phát sinh: 2.9km</Text>
+              <Text style={{ color: 'black' }}>Độ hiệu quả: 11.000đ/km</Text>
+              <Text style={{ color: 'black' }}>Số lượng yêu cầu: 1</Text>
+            </View>
+            <View style={{
+              justifyContent: 'center',
+              left: 110,
+            }}>
+              <TouchableOpacity style={{
+                //backgroundColor:'red',
+                padding: 7,
+              }}>
+                <Text style={{
+                  fontSize: fontSizes.h4,
+                  color: success
+                }}><Icon name="hand-point-right" size={17} /> Chi tiết</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      <Text style={{ color: 'black', alignSelf:'center' }}>Smart Direction</Text>
+      </View>
     </View>
   );
 };
+
+const styles = StyleSheet.create({
+  container: {
+      height: normalize(340),
+      width: "90%",
+      backgroundColor: 'rgba(255,255,255,0.95)',
+      alignSelf: 'center',
+      padding: split.s4,
+      borderWidth: 1,
+      borderColor: 'black',
+  },
+});
+
+
 
 export default Test;

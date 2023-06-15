@@ -68,14 +68,14 @@ const userLogin = () => {
                                         console.log("Update accessToken's user successfully!.");
                                     })
                                     .catch((error) => {
-                                        console.error("Error updating accessToken's user: ", error);
+                                        console.log("Error updating accessToken's user: ", error);
                                     });
                             }
                         })
                     unsubscribe();
                 })
                 .catch((error) => {
-                    console.error("Error sign in: ", error);
+                    console.log("Error sign in: ", error);
                     Alert.alert(error.name, error.message, [{ text: 'Ok' }])
                 });
         }

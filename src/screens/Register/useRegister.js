@@ -84,7 +84,7 @@ const useRegister = () => {
             console.log('Email verification sent');
           })
           .catch((error) => {
-            console.error("Error send email verification: ", error);
+            console.log("Error send email verification: ", error);
           });
         signInWithEmailAndPassword(auth, email, password)
           .then(() => {
@@ -103,7 +103,7 @@ const useRegister = () => {
                     });
                     console.log("Set Token successfully!");
                   }).catch(() => {
-                    console.error("Error set Token!");
+                    console.log("Error set Token!");
                   })
                   let userapp = {
                     userId: responseUser.uid,
@@ -120,7 +120,7 @@ const useRegister = () => {
                       console.log("Data written to Firebase Realtime Database.");
                     })
                     .catch((error) => {
-                      console.error("Error writing data to Firebase Realtime Database: ", error);
+                      console.log("Error writing data to Firebase Realtime Database: ", error);
                     });
                 }
               })
@@ -130,7 +130,7 @@ const useRegister = () => {
             console.log(error);
           });
       }).catch((error) => {
-        console.error("Error create account: ", error);
+        console.log("Error create account: ", error);
         Alert.alert(error.name, error.message, [{ text: 'Ok' }])
       })
     }

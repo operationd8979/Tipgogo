@@ -108,11 +108,11 @@ const CreateRequest = (props) => {
     const handleMapPress = (event) => {
         if (!isLoading) {
             if (currentRoute) {
-                if (displaySearch) {
-                    setDisplaySearch(null);
-                    setSearchAddress(null);
-                }
                 setCurrentRoute(null);
+            }
+            if (displaySearch) {
+                setDisplaySearch(null);
+                setSearchAddress(null);
             }
             const { coordinate } = event.nativeEvent;
             setPressLocation(coordinate);
@@ -166,7 +166,7 @@ const CreateRequest = (props) => {
             setPhotoPath(resizedUri);
             console.log('------Close camera------');
         } catch (e) {
-            console.error(e)
+            console.log(e)
         }
     };
 
@@ -180,7 +180,7 @@ const CreateRequest = (props) => {
             console.log("Uploaded OK! URL:", url);
             return url;
         } catch (error) {
-            console.error(error);
+            console.log(error);
             return null;
         }
     };
@@ -242,7 +242,9 @@ const CreateRequest = (props) => {
                     const route = await getRouteDirection(currentLocation, pressLocation);
                     setCurrentRoute(route);
                 } catch (error) {
-                    console.log(error)
+                    console.log(error);
+                    setIsLoading(false);
+                    setShowIndicator(false);
                 }
             }
             else {
@@ -290,6 +292,7 @@ const CreateRequest = (props) => {
             }
             else {
                 console.log("Get address fail!");
+                alert("Không tìm thấy địa điểm phù hợp!");
             }
         }
         else {
@@ -314,7 +317,7 @@ const CreateRequest = (props) => {
             if (typeRequest === 2) {
                 uploadedImageUrl = await uploadImage(userID, timestamp, photoPath);
                 if (!uploadedImageUrl) {
-                    console.error("Image upload failed!");
+                    console.log("Image upload failed!");
                     setIsLoading(false);
                     setShowIndicator(false);
                     return;
@@ -326,7 +329,7 @@ const CreateRequest = (props) => {
                 else
                     direction = await getRouteDirection(currentLocation, pressLocation);
                 if (!direction) {
-                    console.error("Get direction failed!");
+                    console.log("Get direction failed!");
                     setIsLoading(false);
                     setShowIndicator(false);
                     return;
@@ -336,6 +339,7 @@ const CreateRequest = (props) => {
                 title: typeRequest === 1 ? `${direction.summary}` : title,
                 des: des,
                 price: price ? parseInt(price) : 0,
+                //geo1: currentLocation,
                 geo1: currentLocation,
                 geo2: pressLocation ? pressLocation : currentLocation,
                 photo: uploadedImageUrl,
@@ -353,7 +357,7 @@ const CreateRequest = (props) => {
                     onRefresh();
                 })
                 .catch((error) => {
-                    console.error("Error writing data to Firebase Realtime Database: ", error);
+                    console.log("Error writing data to Firebase Realtime Database: ", error);
                     setIsLoading(false);
                     setShowIndicator(false);
                     onRefresh();
@@ -659,7 +663,7 @@ const CreateRequest = (props) => {
                         longitudeDelta: 0.011,
                     }}
                     onPress={(event) => {
-                        if ((currentRoute || displaySearch) && typeRequest === 1) {
+                        if (currentRoute) {
                             return Alert.alert(
                                 "Current Route is aviable",
                                 "Are you sure you want change your route?",
@@ -668,8 +672,6 @@ const CreateRequest = (props) => {
                                         text: "Yes",
                                         onPress: () => {
                                             setCurrentRoute(null);
-                                            setDisplaySearch(null);
-                                            setSearchAddress(null);
                                         },
                                     },
                                     {

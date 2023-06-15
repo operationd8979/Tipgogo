@@ -70,7 +70,7 @@ const Setting = (props) => {
             console.log(`uri photo:${resizedUri}`);
             setPhotoPath(resizedUri);
         } catch (e) {
-            console.error(e)
+            console.log(e)
         }
     };
 
@@ -85,11 +85,11 @@ const Setting = (props) => {
                     setInit(init + 1);
                 })
                 .catch((error) => {
-                    console.error("Error updating photo's user: ", error);
+                    console.log("Error updating photo's user: ", error);
                 });
         }
         else {
-            console.error("PhotoPath is null!");
+            console.log("PhotoPath is null!");
         }
         setModalVisible(false);
     }
@@ -104,11 +104,11 @@ const Setting = (props) => {
                     setInit(init + 1);
                 })
                 .catch((error) => {
-                    console.error("Error updating name's user: ", error);
+                    console.log("Error updating name's user: ", error);
                 });
         }
         else {
-            console.error("PhotoPath is null!");
+            console.log("PhotoPath is null!");
         }
     }
 
@@ -122,7 +122,7 @@ const Setting = (props) => {
             console.log("Uploaded OK! URL:", url);
             return url;
         } catch (error) {
-            console.error(error);
+            console.log(error);
             return null;
         }
     };

@@ -10,17 +10,17 @@ const getRouteDirection = (origin, destination) => {
         return new Promise(async (resolve, reject) => {
             console.log("API direction RUNNING...................!");
             try {
-                let response = await orsDirections.calculate({
+                const apiUrl = 'https://api.openrouteservice.org/v2/directions/driving-car';
+                const requestBody = {
                     coordinates: [[origin.longitude, origin.latitude], [destination.longitude, destination.latitude]],
-                    profile: 'driving-hgv',
-                    restrictions: {
-                        height: 10,
-                        weight: 5
-                    },
-                    extra_info: ['waytype', 'steepness'],
-                    avoidables: ['highways', 'tollways', 'ferries', 'fords'],
-                    format: 'json'
-                })
+                };
+                const snapshot = await axios.post(apiUrl, requestBody, {
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': Credentials.APIKey_OpenRouteService,
+                    }
+                });
+                const response = snapshot.data;
                 const start = await getAddressFromLocation(origin.latitude, origin.longitude);
                 const end = await getAddressFromLocation(destination.latitude, destination.longitude);
                 const routes = response.routes;
@@ -42,12 +42,12 @@ const getRouteDirection = (origin, destination) => {
                     console.log("Direction OK! URL:", direction.summary);
                     resolve(direction);
                 } else {
-                    console.error('Error building directions!');
+                    console.log('Error building directions!');
                     resolve(null);
                 }
             } catch (err) {
                 console.log("An error occurred: " + err.status)
-                console.error(await err.response.json())
+                console.log(await err.response.json())
                 reject(err);
             }
         });
@@ -100,11 +100,6 @@ const getLocationFromAddress = (address) => {
                 if(response){
                     resolve(response);
                 }
-                // if (response.data && response.data.address) {
-                //     const address = response.data.address;
-                //     console.log('Address:', address);
-                //     resolve(response.data);
-                // }
                 resolve(null);
 
             } catch (error) {
@@ -133,7 +128,7 @@ const getAddress = (latitude, longitude) => {
 
             } catch (err) {
                 console.log("An error occurred: " + err.status)
-                console.error(await err.response.json())
+                console.log(await err.response.json())
                 reject(err);
             }
         });
@@ -177,11 +172,11 @@ const getDirections = (currentLocation, pressLocation) => {
                 console.log("Direction OK! URL:", direction);
                 resolve(direction);
             } else {
-                console.error('Error building directions!');
+                console.log('Error building directions!');
                 resolve(null);
             }
         } catch (error) {
-            console.error('Error fetching directions:', error);
+            console.log('Error fetching directions:', error);
             resolve(null);
         }
     });
@@ -192,17 +187,17 @@ const getDirectionDriver = (origin, destination) => {
         return new Promise(async (resolve, reject) => {
             console.log("API direction RUNNING...................!");
             try {
-                let response = await orsDirections.calculate({
+                const apiUrl = 'https://api.openrouteservice.org/v2/directions/driving-car';
+                const requestBody = {
                     coordinates: [[origin.longitude, origin.latitude], [destination.longitude, destination.latitude]],
-                    profile: 'driving-hgv',
-                    restrictions: {
-                        height: 10,
-                        weight: 5
-                    },
-                    extra_info: ['waytype', 'steepness'],
-                    avoidables: ['highways', 'tollways', 'ferries', 'fords'],
-                    format: 'json'
-                })
+                };
+                const snapshot = await axios.post(apiUrl, requestBody, {
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': Credentials.APIKey_OpenRouteService,
+                    }
+                });
+                const response = snapshot.data;
                 const start = await getAddressFromLocation(origin.latitude, origin.longitude);
                 const end = await getAddressFromLocation(destination.latitude, destination.longitude);
                 const routes = response.routes;
@@ -224,12 +219,12 @@ const getDirectionDriver = (origin, destination) => {
                     console.log("Direction OK! URL:", direction.summary);
                     resolve(direction);
                 } else {
-                    console.error('Error building directions!');
+                    console.log('Error building directions!');
                     resolve(null);
                 }
             } catch (err) {
                 console.log("An error occurred: " + err.status)
-                console.error(await err.response.json())
+                console.log(await err.response.json())
                 reject(err);
             }
         });
@@ -237,6 +232,40 @@ const getDirectionDriver = (origin, destination) => {
         return null;
 };
 
+const getMatrix = (locations) => {
+    if (locations)
+        return new Promise(async (resolve, reject) => {
+            console.log("API Matrix RUNNING...................!");
+            try {
+                const apiUrl = 'https://api.openrouteservice.org/v2/matrix/driving-car';
+                const requestBody = {
+                    locations: locations,
+                    metrics: ['distance'],
+                };
+                const snapshot = await axios.post(apiUrl, requestBody, {
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': Credentials.APIKey_OpenRouteService,
+                    }
+                });
+                const response = snapshot.data;
+                const matrix = response.distances;
+                if (matrix) {
+                    console.log("Matrix distance OK!:", matrix);
+                    resolve(matrix);
+                } else {
+                    console.log('Error getting matrix!');
+                    resolve(null);
+                }
+            } catch (err) {
+                console.log("An error occurred: " + err.status)
+                console.log(await err.response.json())
+                reject(err);
+            }
+        });
+    else
+        return null;
+};
 
 
 export {
@@ -246,4 +275,5 @@ export {
     getDirections,
     getLocationFromAddress,
     getDirectionDriver,
+    getMatrix,
 }

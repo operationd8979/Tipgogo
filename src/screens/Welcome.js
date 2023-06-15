@@ -69,7 +69,7 @@ function Welcome(props) {
                             console.log("Update accessToken's user successfully!.");
                         })
                         .catch((error) => {
-                            console.error("Error updating accessToken's user: ", error);
+                            console.log("Error updating accessToken's user: ", error);
                         });
                 }
             }

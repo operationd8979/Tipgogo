@@ -89,10 +89,14 @@ const RequestItem = ({ onPress, request: { name, url, price, des, geo1, geo2 , t
                     color:'black',
                     fontSize: fontSizes.h4,
             }}>Mô tả: {des}</Text>}
-            <Text style={{
+            {/* <Text style={{
                     color:'black',
                     fontSize: fontSizes.h4,
-            }}>Address: {type===1? `${direction.startAddress}` :`${address}`}</Text>
+            }}>Address: {type===1? `${direction.startAddress}` :`${address}`}</Text> */}
+            {type===2&&<Text style={{
+                    color:'black',
+                    fontSize: fontSizes.h4,
+            }}>Address: {address}</Text>}
             <Text style={{
                     color:'black',
                     fontSize: fontSizes.h4,
