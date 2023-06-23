@@ -25,19 +25,13 @@ import {
     update,
 } from "../../../firebase/firebase"
 import useMap from '../FullMap/FullMap'
-import axios from 'axios';
-import Geolocation from '@react-native-community/geolocation';
-import AsyncStorage from '@react-native-async-storage/async-storage'
-import Credentials from '../../../Credentials'
 import { distanceTwoGeo } from '../../utilies'
 import MapView, { PROVIDER_GOOGLE, Marker, Callout, Polyline } from 'react-native-maps'; // remove PROVIDER_GOOGLE import if not using Google Maps
 import { mapStyle, findShortestPaths, formatNumber } from '../../utilies'
-import Openrouteservice from 'openrouteservice-js'
-const orsDirections = new Openrouteservice.Directions({ api_key: Credentials.APIKey_OpenRouteService });
-const Geocode = new Openrouteservice.Geocode({ api_key: Credentials.APIKey_OpenRouteService })
 import { getDirectionDriver, getRouteDirection, getMatrix, getLocationFromAddress } from '../../service/MapService'
 import { getUserIDByTokken } from '../../service/UserService'
 import { QuickView, CLButton } from '../../components'
+import i18n from "../../../i18n";
 
 
 const WaitingScreen = () => {
@@ -47,7 +41,7 @@ const WaitingScreen = () => {
             <Text style={{
                 color: 'black',
             }}>
-                Waiting for location...</Text>
+                {i18n.t('p_waitingLocation')}</Text>
             <Image source={images.logo} style={{ height: normalize(200), width: normalize(200) }} />
         </View>
     );
@@ -60,7 +54,7 @@ const WaitingOnProcess = () => {
             <Text style={{
                 color: 'black',
             }}>
-                You on request, do it first!...</Text>
+                {i18n.t('p_waitingOnAvaiable')}</Text>
             <Image source={images.logo} style={{ height: normalize(200), width: normalize(200) }} />
         </View>
     );
@@ -539,18 +533,18 @@ const SmartCal = (props) => {
                                 <Text style={{ 
                                     color: colorText,
                                     fontWeight: hightProfit? "bold" : "normal",
-                                }}>Tổng tiền: {formatNumber(item.price)}đ</Text>
+                                }}>{i18n.t('sm_totalPrice')}: {formatNumber(item.price)}đ</Text>
                                 <Text style={{ 
                                     color: colorText,
                                     fontWeight: hightProfit? "normal" : "bold",
                                 }}>
-                                    Quảng đường phát sinh: {Math.ceil(item.cost / 100) / 10}km
+                                    {i18n.t('sm_costPath')}: {Math.ceil(item.cost / 100) / 10}km
                                 </Text>
                                 <Text style={{ 
                                     color: colorText,
                                     fontWeight: hightProfit? "bold" : "normal",
-                                }}>Độ hiệu quả: {Math.ceil(item.hight)}.000đ/km</Text>
-                                <Text style={{ color: colorText }}>Số lượng yêu cầu: {item.idb == 0 ? "1" : "2"}</Text>
+                                }}>{i18n.t('sm_quality')}: {Math.ceil(item.hight)}.000đ/km</Text>
+                                <Text style={{ color: colorText }}>{i18n.t('sm_numberRequest')}: {item.idb == 0 ? "1" : "2"}</Text>
                             </View>
                             <View style={{
                                 justifyContent: 'center',
@@ -566,7 +560,7 @@ const SmartCal = (props) => {
                                     <Text style={{
                                         fontSize: fontSizes.h4,
                                         color: colorIcon
-                                    }}><Icon name="hand-point-right" size={17} /> Chi tiết</Text>
+                                    }}><Icon name="hand-point-right" size={17} />{i18n.t('sm_detail')}</Text>
                                 </TouchableOpacity>
                             </View>
                         </View>
@@ -628,7 +622,7 @@ const SmartCal = (props) => {
                         }}
                         autoCorrect={false}
                         numberOfLines={1}
-                        placeholder="nhập địa điểm muốn đến"
+                        placeholder={i18n.t('sm_findDes')}
                         placeholderTextColor={"black"}
                         style={{
                             backgroundColor: 'rgba(255, 255, 255, 0.9)',
@@ -661,7 +655,7 @@ const SmartCal = (props) => {
                             color: 'black',
                             position: 'relative',
                             marginStart: 2,
-                        }}>Thời gian: {Math.ceil(currentRoute.duration / 60)} phút</Text>
+                        }}>{i18n.t('p_time')}: {Math.ceil(currentRoute.duration / 60)} {i18n.t('p_minute')}</Text>
                     </View>
                     <View style={{
                         flexDirection: 'row',
@@ -676,17 +670,17 @@ const SmartCal = (props) => {
                             color: 'black',
                             position: 'relative',
                             marginStart: 2,
-                        }}>Khoảng cách: {Math.ceil(currentRoute.distance / 100) / 10} km</Text>
+                        }}>{i18n.t('p_duration')}: {Math.ceil(currentRoute.distance / 100) / 10} {i18n.t('p_kilometer')}</Text>
                     </View>
                     <Text style={{
                         color: 'black',
                         position: 'relative',
 
-                    }}>Địa chỉ hiện tại: {currentRoute.startAddress}</Text>
+                    }}>{i18n.t('sm_currentLocation')}: {currentRoute.startAddress}</Text>
                     <Text style={{
                         color: 'black',
                         position: 'relative',
-                    }}>Địa chỉ tới: {currentRoute.endAddress}</Text>
+                    }}>{i18n.t('sm_aimDestination')}: {currentRoute.endAddress}</Text>
                 </View>}
                 {result ? <View style={{
                     flex: 30,
@@ -762,7 +756,7 @@ const SmartCal = (props) => {
                                     borderRightWidth: 1,
                                     borderBottomWidth: hightProfit ? 1 : 0,
                                 }}>
-                                <Text style={{ color: hightProfit ? 'white' : '#5d36bb', fontWeight: !hightProfit ? '900' : 'normal' }}>Best choice</Text>
+                                <Text style={{ color: hightProfit ? 'white' : '#5d36bb', fontWeight: !hightProfit ? '900' : 'normal' }}>{i18n.t('sm_bestChoice')}</Text>
                             </TouchableOpacity>
                             <TouchableOpacity
                                 onPress={() => {
@@ -776,7 +770,7 @@ const SmartCal = (props) => {
                                     height: 35,
                                     borderBottomWidth: hightProfit ? 0 : 1,
                                 }}>
-                                <Text style={{ color: hightProfit ? '#5d36bb' : 'white', fontWeight: hightProfit ? 'bold' : 'normal' }}>Hight profit</Text>
+                                <Text style={{ color: hightProfit ? '#5d36bb' : 'white', fontWeight: hightProfit ? 'bold' : 'normal' }}>{i18n.t('sm_hightProfit')}</Text>
                             </TouchableOpacity>
                         </View>
                         {result ? renderResultList() : <View />}
@@ -806,17 +800,17 @@ const SmartCal = (props) => {
                             onPress={(event) => {
                                 if (currentRoute) {
                                     return Alert.alert(
-                                        "Current Route is aviable",
-                                        "Are you sure you want change your route?",
+                                        i18n.t('cr_currentRouteT'),
+                                        i18n.t('cr_currentRouteD'),
                                         [
                                             {
-                                                text: "Yes",
+                                                text: i18n.t('p_yes'),
                                                 onPress: () => {
                                                     setCurrentRoute(null);
                                                 },
                                             },
                                             {
-                                                text: "No",
+                                                text: i18n.t('p_no'),
                                             },
                                         ]
                                     );
@@ -879,11 +873,11 @@ const SmartCal = (props) => {
                     onPress={() => {
                         if (currentRoute)
                             return Alert.alert(
-                                "Current Route is aviable",
-                                "Are you sure you want change your route?",
+                                i18n.t('cr_currentRouteT'),
+                                i18n.t('cr_currentRouteD'),
                                 [
                                     {
-                                        text: "Yes",
+                                        text: i18n.t('p_yes'),
                                         onPress: () => {
                                             setCurrentRoute(null);
                                             setDisplaySearch(null);
@@ -891,7 +885,7 @@ const SmartCal = (props) => {
                                         },
                                     },
                                     {
-                                        text: "No",
+                                        text: i18n.t('p_no'),
                                     },
                                 ]
                             );
@@ -915,23 +909,24 @@ const SmartCal = (props) => {
                     <Text style={{
                         fontSize: fontSizes.h3,
                         color: 'white',
-                    }}>Cập nhật đường đi</Text>
+                    }}>{i18n.t('sm_loadRoute')}</Text>
                 </TouchableOpacity>
                 <TouchableOpacity
                     onPress={() => {
                         if (result) {
                             return Alert.alert(
-                                "Clear smartDirection",
-                                "Look like your result is avaiable, do u want to detele?",
+                                i18n.t('sm_currentResultT'),
+                                i18n.t('sm_currentResultD'),
                                 [
                                     {
-                                        text: "Yes",
+                                        text: i18n.t('p_yes'),
                                         onPress: () => {
                                             setResult(null);
+                                            setHistoryPressLocation(null);
                                         },
                                     },
                                     {
-                                        text: "No",
+                                        text: i18n.t('p_no'),
                                     },
                                 ]
                             );
@@ -939,11 +934,11 @@ const SmartCal = (props) => {
                         else {
                             if (historyPressLocation === pressLocation)
                                 return Alert.alert(
-                                    "No change",
-                                    "Look like your destination same old smartDriection input, change it first?",
+                                    i18n.t('sm_historyDestinationT'),
+                                    i18n.t('sm_historyDestinationD'),
                                     [
                                         {
-                                            text: "Yes",
+                                            text: i18n.t('p_yes'),
                                             onPress: () => {
                                                 setCurrentRoute(null);
                                                 setDisplaySearch(null);
@@ -952,7 +947,7 @@ const SmartCal = (props) => {
                                             },
                                         },
                                         {
-                                            text: "No",
+                                            text: i18n.t('p_no'),
                                         },
                                     ]
                                 );
@@ -977,7 +972,7 @@ const SmartCal = (props) => {
                     <Text style={{
                         fontSize: fontSizes.h3,
                         color: 'white',
-                    }}>Smart Direction</Text>
+                    }}>{i18n.t('sm_smartDirection')}</Text>
                 </TouchableOpacity>
                 <View style={{ height: 50 }} />
             </View> : <WaitingOnProcess /> : <WaitingScreen />

@@ -1,10 +1,10 @@
 import React, {useRef, useState, useEffect} from "react";
 import { Text, Image, View, TouchableOpacity } from "react-native"
 import Icon from "react-native-vector-icons/FontAwesome5"
-
 import { colors, fontSizes, icons, images, normalize , split } from "../../constants"
 import useMap from '../FullMap/FullMap'
 import {formatNumber} from '../../utilies'
+import i18n from '../../../i18n'
 
 
 const RequestItem = ({ onPress, request: { name, url, price, des, geo1, geo2 , type, status, accepted, address, direction, mine, time}, currentLocation, screen }) => {
@@ -74,7 +74,7 @@ const RequestItem = ({ onPress, request: { name, url, price, des, geo1, geo2 , t
                 <Text style={{
                     color:'black',
                     fontSize: fontSizes.h4,
-                }}>status: </Text>
+                }}>{i18n.t('p_state')}: </Text>
                 <Text style={{
                     color: accepted? colors.zalert : _getColorFromStatus(status),
                     fontSize: fontSizes.h4,
@@ -84,11 +84,11 @@ const RequestItem = ({ onPress, request: { name, url, price, des, geo1, geo2 , t
                     color: price==0?colors.success:"red",
                     fontSize: fontSizes.h4,
                     fontWeight: 'bold',
-            }}>Price: {price==0?'Free':`${formatNumber(price)} vnd`}</Text>
+            }}>{i18n.t('p_price')}: {price==0?'Free':`${formatNumber(price)} vnd`}</Text>
             {des&&<Text style={{
                     color:'black',
                     fontSize: fontSizes.h4,
-            }}>Mô tả: {des}</Text>}
+            }}>{i18n.t('p_des')}: {des}</Text>}
             {/* <Text style={{
                     color:'black',
                     fontSize: fontSizes.h4,
@@ -96,11 +96,11 @@ const RequestItem = ({ onPress, request: { name, url, price, des, geo1, geo2 , t
             {type===2&&<Text style={{
                     color:'black',
                     fontSize: fontSizes.h4,
-            }}>Address: {address}</Text>}
+            }}>{i18n.t('p_address')}: {address}</Text>}
             <Text style={{
                     color:'black',
                     fontSize: fontSizes.h4,
-            }}>Time: {time}</Text>
+            }}>{i18n.t('p_time')}: {time}</Text>
         </View>
     </TouchableOpacity>
 }

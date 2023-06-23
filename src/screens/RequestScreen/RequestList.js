@@ -16,6 +16,7 @@ import useMap from '../FullMap/FullMap'
 import { distanceTwoGeo, formatNumber } from '../../utilies'
 import {getDirectionDriver} from '../../service/MapService'
 import {getUserIDByTokken} from '../../service/UserService'
+import i18n from '../../../i18n'
 
 const WaitingScreen = () => {
     return (
@@ -24,7 +25,7 @@ const WaitingScreen = () => {
             <Text style={{
                 color: 'black',
             }}>
-                Waiting for location...</Text>
+                {i18n.t('p_waitingLocation')}</Text>
             <Image source={images.logo} style={{ height: normalize(200), width: normalize(200) }} />
         </View>
     );
@@ -37,12 +38,12 @@ const RequestList = (props) => {
     const { primary, zalert, success, warning, inactive } = colors
     const [categories, setCategories] = useState([
         {
-            name: 'Hitchhiking',
+            name: i18n.t('p_hitchhiking'),
             url: hitchhiking,
             value: 1,
         },
         {
-            name: 'Secondhand Stuff',
+            name: i18n.t('p_secondhand'),
             url: secondHand,
             value: 2,
         },
@@ -225,7 +226,7 @@ const RequestList = (props) => {
                 }
             }
             else {
-                alert("Request in process!");
+                alert(i18n.t('lr_alertProcessOn'));
             }
         }
         else {
@@ -317,7 +318,7 @@ const RequestList = (props) => {
                             }}
                         >
                             <Icon name="history" color={optionSort? inactive : "white"}/>
-                            <Text style={{color: optionSort? inactive : "white"}}>  Sắp xếp theo thời gian</Text>
+                            <Text style={{color: optionSort? inactive : "white"}}>  {i18n.t('lr_sortTime')}</Text>
                         </TouchableOpacity>
                         
                         <View style={{height:1,backgroundColor:"black"}} />
@@ -335,7 +336,7 @@ const RequestList = (props) => {
                             }}
                         >
                             <Icon name="shoe-prints" color={optionSort? "white" : inactive}/>
-                            <Text style={{color: optionSort? "white" : inactive}}>  Sắp xếp theo khoảng cách</Text>
+                            <Text style={{color: optionSort? "white" : inactive}}>  {i18n.t('lr_sortDistance')}</Text>
                         </TouchableOpacity>
                     </View>
                 </Modal>
@@ -377,9 +378,9 @@ const RequestList = (props) => {
                     flexDirection: 'row',
                     justifyContent: 'center',
                 }}>
-                    <CLButton title="Accept" sizeBT={"35%"} height={normalize(30)}
+                    <CLButton title={i18n.t('p_accept')} sizeBT={"35%"} height={normalize(30)}
                         onPress={() => acceptRequest()} disabled={isLoading}/>
-                    <CLButton title="Close Modal" sizeBT={"35%"} height={normalize(30)}
+                    <CLButton title={i18n.t('p_close')} sizeBT={"35%"} height={normalize(30)}
                         onPress={() => handleCloseRequest()} disabled={isLoading}/>
                 </View>
             </View>

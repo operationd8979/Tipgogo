@@ -5,6 +5,7 @@ import {CLButton} from '.'
 import Icon from 'react-native-vector-icons/FontAwesome5'
 import useMap from '../screens/FullMap/FullMap'
 import {formatNumber} from '../utilies'
+import i18n from '../../i18n';
 
 const QuickView = (props) => {
 
@@ -45,34 +46,34 @@ const QuickView = (props) => {
             <Text style={{
                 color: 'black',
                 fontSize: fontSizes.h4,
-            }}>Price: {formatNumber(selectedRequest.price)} vnd</Text>
+            }}>{i18n.t('p_price')}: {formatNumber(selectedRequest.price)} vnd</Text>
             {selectedRequest.type == 2 &&<View>
                 <Text style={{
                     color: 'black',
                     fontSize: fontSizes.h4,
-                }}>Address: {selectedRequest.address}</Text>
+                }}>{i18n.t('p_des')}: {selectedRequest.address}</Text>
                 <Text style={{
                     color: 'black',
                     fontSize: fontSizes.h4,
-                }}>Thời gian: {selectedRequest.time} </Text>
+                }}>{i18n.t('p_time')}: {selectedRequest.time} </Text>
             </View>}
             {selectedRequest.type == 1 && <View>
                 <Text style={{
                     color: 'black',
                     fontSize: fontSizes.h4,
-                }}>Distance: {Math.ceil(selectedRequest.direction.distance/10)/100} km</Text>
+                }}>{i18n.t('p_distance')}: {Math.ceil(selectedRequest.direction.distance/10)/100} km</Text>
                 <Text style={{
                     color: 'black',
                     fontSize: fontSizes.h4,
-                }}>Duration: {Math.ceil(selectedRequest.direction.duration/60)} phút</Text>
+                }}>{i18n.t('p_duration')}: {Math.ceil(selectedRequest.direction.duration/60)} phút</Text>
                 <Text style={{
                     color: 'black',
                     fontSize: fontSizes.h4,
-                }}>Từ: {selectedRequest.direction.startAddress}</Text>
+                }}>{i18n.t('p_from')}: {selectedRequest.direction.startAddress}</Text>
                 <Text style={{
                     color: 'black',
                     fontSize: fontSizes.h4,
-                }}>Tới: {selectedRequest.direction.endAddress}</Text>
+                }}>{i18n.t('p_to')}: {selectedRequest.direction.endAddress}</Text>
             </View>}
         </View>
     </View>
@@ -80,7 +81,7 @@ const QuickView = (props) => {
         <Text style={{
             color: 'black',
             fontSize: fontSizes.h4,
-        }}>Mô tả: {selectedRequest.des}</Text>
+        }}>{i18n.t('p_des')}: {selectedRequest.des}</Text>
     </View>}
     <View style={{ height: 1, backgroundColor: 'black' }} />
     <FullMap

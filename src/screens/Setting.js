@@ -161,8 +161,8 @@ const Setting = (props) => {
                     setNewPassword(null);
                     setReNewPassword(null);
                     return Alert.alert(
-                        "Update password",
-                        "Your password was changed successfully!",
+                        i18n.t('st_changePasswordT'),
+                        i18n.t('st_changePasswordD'),
                         [
                             {
                                 text: "OK",
@@ -207,11 +207,11 @@ const Setting = (props) => {
 
     const showConfirmDialog = () => {
         return Alert.alert(
-            "Are your sure?",
-            "Are you sure you want to Log Out?",
+            i18n.t('st_logoutT'),
+            i18n.t('st_logoutD'),
             [
                 {
-                    text: "Yes",
+                    text: i18n.t('p_yes'),
                     onPress: async () => {
                         auth.signOut()
                         await AsyncStorage.removeItem('token');
@@ -220,7 +220,7 @@ const Setting = (props) => {
                     },
                 },
                 {
-                    text: "No",
+                    text: i18n.t('p_no'),
                 },
             ]
         );
@@ -251,7 +251,7 @@ const Setting = (props) => {
                 color: primary,
                 fontSize: fontSizes.h4,
                 fontWeight: '500'
-            }}>Update your photo</Text>
+            }}>{i18n.t('st_update')}</Text>
             <TouchableOpacity
                 onPress={() => setModalVisible(true)}
                 style={{
@@ -270,7 +270,7 @@ const Setting = (props) => {
                 <Text style={{
                     fontSize: fontSizes.h5,
                     color: 'white',
-                }}>Open camera</Text>
+                }}>{i18n.t('st_openCamera')}</Text>
             </TouchableOpacity>
             <Modal visible={modalVisible} animationType="slide">
                 <View style={{
@@ -301,7 +301,7 @@ const Setting = (props) => {
                         }}
                     />
                     <CLButton
-                        title="Update"
+                        title={i18n.t('st_updatePhoto')}
                         sizeBT="20%"
                         height="30%"
                         colorBG={photoPath != null ? primary : inactive}
@@ -358,7 +358,7 @@ const Setting = (props) => {
                             </TouchableOpacity>
                         </View>
                     )}
-                    <CLButton title="Close Modal"
+                    <CLButton title={i18n.t('p_close')}
                         onPress={() => {
                             setPhotoPath(null);
                             setModalVisible(false)
@@ -373,7 +373,7 @@ const Setting = (props) => {
             <Text style={{
                 fontSize: fontSizes.h4,
                 color: primary,
-            }}>Your name</Text>
+            }}>{i18n.t('st_displayName')}</Text>
             <View style={{
                 flexDirection: 'row',
                 alignItems: 'center',
@@ -411,7 +411,7 @@ const Setting = (props) => {
                 color: primary,
                 fontSize: fontSizes.h4,
                 fontWeight: '500'
-            }}>Theme</Text>
+            }}>{i18n.t('st_theme')}</Text>
             <View style={{
                 flexDirection: 'row',
                 margin: 5,
@@ -423,7 +423,7 @@ const Setting = (props) => {
                     fontSize: fontSizes.h5,
                     color: 'black',
                     marginStart: 5
-                }}>Enable Dark mode</Text>
+                }}>{i18n.t('st_enableDark')}</Text>
                 <View style={{ flex: 1 }} />
                 <Switch />
             </View>
@@ -489,7 +489,7 @@ const Setting = (props) => {
                     fontSize: fontSizes.h6,
                     color: 'black',
                     paddingStart: 10,
-                }}>Change your password</Text>
+                }}>{i18n.t('st_changePassword')}</Text>
                 <View style={{ flex: 1 }} />
                 <Icon
                     name='chevron-right'
@@ -505,7 +505,7 @@ const Setting = (props) => {
                     <View style={styles.container}>
                         <View>
                             <View style={{ backgroundColor: primary, padding: "5%", marginBottom: normalize(10) }}>
-                                <Text style={{ color: 'black', fontSize: fontSizes.h3 }}>Change password</Text>
+                                <Text style={{ color: 'black', fontSize: fontSizes.h3 }}>{i18n.t('st_changePassword')}</Text>
                             </View>
                             <Text style={{
                                 color: 'red',
@@ -523,7 +523,7 @@ const Setting = (props) => {
                                     fontSize: fontSizes.h5,
                                     color: "black",
                                     width: normalize(62)
-                                }}>NewPassword:</Text>
+                                }}>{i18n.t('st_newPassword')}:</Text>
                                 <TextInput style={{
                                     borderWidth: 1,
                                     borderColor: 'black',
@@ -536,7 +536,7 @@ const Setting = (props) => {
                                     value={newPassword}
                                     onChangeText={setNewPassword}
                                     autoCorrect={false}
-                                    placeholder={"mật khẩu mới"}
+                                    placeholder={i18n.t('st_newPasswordD')}
                                     placeholderTextColor={inactive}
                                 />
                             </View>
@@ -556,7 +556,7 @@ const Setting = (props) => {
                                     fontSize: fontSizes.h5,
                                     color: "black",
                                     width: normalize(62)
-                                }}>Re-Password:</Text>
+                                }}>{i18n.t('st_retypePassword')}:</Text>
                                 <TextInput style={{
                                     borderWidth: 1,
                                     borderColor: 'black',
@@ -569,7 +569,7 @@ const Setting = (props) => {
                                     value={reNewPassword}
                                     onChangeText={setReNewPassword}
                                     autoCorrect={false}
-                                    placeholder={"nhập lại mật khẩu mới"}
+                                    placeholder={i18n.t('st_reNewPasswordD')}
                                     placeholderTextColor={inactive}
                                 />
                             </View>
@@ -579,11 +579,11 @@ const Setting = (props) => {
                             flexDirection: 'row',
                             justifyContent: 'center',
                         }}>
-                            <CLButton title="Update" sizeBT={"35%"} height={normalize(30)} colorBG={primary} colorT={"white"}
+                            <CLButton title={i18n.t('st_update')} sizeBT={"35%"} height={normalize(30)} colorBG={primary} colorT={"white"}
                                 onPress={() => {
                                     handleChangePassword();
                                 }} />
-                            <CLButton title="Cancel" sizeBT={"35%"} height={normalize(30)} colorBG={primary} colorT={"white"}
+                            <CLButton title={i18n.t('st_cancel')} sizeBT={"35%"} height={normalize(30)} colorBG={primary} colorT={"white"}
                                 onPress={() => setModalPasswordVisible(false)} />
                         </View>
                     </View>
@@ -616,7 +616,7 @@ const Setting = (props) => {
                     fontSize: fontSizes.h6,
                     color: 'black',
                     paddingStart: 10,
-                }}>Change your phone number</Text>
+                }}>{i18n.t('st_changePhone')}</Text>
                 <View style={{ flex: 1 }} />
                 <Icon
                     name='chevron-right'
@@ -632,7 +632,7 @@ const Setting = (props) => {
                     <View style={styles.container}>
                         <View>
                             <View style={{ backgroundColor: primary, padding: "5%", marginBottom: normalize(10) }}>
-                                <Text style={{ color: 'black', fontSize: fontSizes.h3 }}>Change phone</Text>
+                                <Text style={{ color: 'black', fontSize: fontSizes.h3 }}>{i18n.t('st_changePhone')}</Text>
                             </View>
                             <Text style={{
                                 color: 'red',
@@ -650,7 +650,7 @@ const Setting = (props) => {
                                     fontSize: fontSizes.h5,
                                     color: "black",
                                     width: normalize(62)
-                                }}>Phone number:</Text>
+                                }}>{i18n.t('st_phone')}:</Text>
                                 <TextInput style={{
                                     borderWidth: 1,
                                     borderColor: 'black',
@@ -672,11 +672,11 @@ const Setting = (props) => {
                             flexDirection: 'row',
                             justifyContent: 'center',
                         }}>
-                            <CLButton title="Update" sizeBT={"35%"} height={normalize(30)} colorBG={primary} colorT={"white"}
+                            <CLButton title={i18n.t('st_update')} sizeBT={"35%"} height={normalize(30)} colorBG={primary} colorT={"white"}
                                 onPress={() => {
                                     handleChangePhone();
                                 }} />
-                            <CLButton title="Cancel" sizeBT={"35%"} height={normalize(30)} colorBG={primary} colorT={"white"}
+                            <CLButton title={i18n.t('st_cancel')} sizeBT={"35%"} height={normalize(30)} colorBG={primary} colorT={"white"}
                                 onPress={() => setModalPhoneVisible(false)} />
                         </View>
                     </View>
@@ -709,7 +709,7 @@ const Setting = (props) => {
                     fontSize: fontSizes.h6,
                     color: 'black',
                     paddingStart: 10,
-                }}>Sign out</Text>
+                }}>{i18n.t('st_signOut')}</Text>
                 <View style={{ flex: 1 }} />
                 <Icon
                     name='chevron-right'
@@ -737,7 +737,7 @@ const Setting = (props) => {
                 fontWeight: '500',
                 alignSelf: 'center',
                 //backgroundColor:"green"
-            }}>Your Account</Text>
+            }}>{i18n.t('st_account')}</Text>
             <View style={{
                 flexDirection: "row",
                 //backgroundColor:"red"
@@ -763,7 +763,7 @@ const Setting = (props) => {
                         color: "black",
                         fontSize: fontSizes.h4,
                         fontWeight: '600',
-                    }}>Email:</Text>
+                    }}>{i18n.t('st_email')}:</Text>
                     <Text style={{
                         color: "black",
                         fontSize: fontSizes.h4,
@@ -775,12 +775,12 @@ const Setting = (props) => {
                         color: "black",
                         fontSize: fontSizes.h4,
                         fontWeight: '600',
-                    }}>Name: {user.name || "NULL!"}</Text>
+                    }}>{i18n.t('st_name')}: {user.name || "NULL!"}</Text>
                     <Text style={{
                         color: "black",
                         fontSize: fontSizes.h4,
                         fontWeight: '600',
-                    }}>Verified-Email: {user.emailVerified ? "Yes" : "No"}</Text>
+                    }}>{i18n.t('st_verify')}: {user.emailVerified ? "Yes" : "No"}</Text>
                 </View>
             </View>
         </View>}

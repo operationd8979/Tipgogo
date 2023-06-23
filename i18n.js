@@ -1,8 +1,7 @@
 import { I18n } from "i18n-js";
 import {en} from './translations/en';
 import {vi} from './translations/vi';
-import {en as jp} from './translations/en';
-//import {jp} from './translations/jp';
+import {jp} from './translations/jp';
 
 const i18n = new I18n();
 i18n.defaultLocale = 'en';

@@ -340,7 +340,7 @@ const CreateRequest = (props) => {
             }
             else {
                 console.log("Get address fail!");
-                alert("Không tìm thấy địa điểm phù hợp!");
+                alert(i18n.t('cr_notFount'));
             }
         }
         else {
@@ -455,7 +455,7 @@ const CreateRequest = (props) => {
                     alignItems: 'center',
                     paddingStart: 10,
                 }}>
-                    <Text style={{ fontSize: fontSizes.h5, color: "#191970" }}>Danh mục |</Text>
+                    <Text style={{ fontSize: fontSizes.h5, color: "#191970" }}>{i18n.t('cr_type')} |</Text>
                     <Picker
                         selectedValue={typeRequest}
                         style={{
@@ -465,8 +465,8 @@ const CreateRequest = (props) => {
                         }}
                         onValueChange={(itemValue, itemIndex) => setTypeRequest(itemValue)}
                     >
-                        <Picker.Item label="Hitchhiking" value={1} />
-                        <Picker.Item label="Secondhand Stuff" value={2} />
+                        <Picker.Item label={i18n.t('p_hitchhiking')} value={1} />
+                        <Picker.Item label={i18n.t('p_secondhand')} value={2} />
                         {/* <Picker.Item label="Delivery" value={3} /> */}
                     </Picker>
                 </View>
@@ -484,7 +484,7 @@ const CreateRequest = (props) => {
                     position: 'absolute',
                     left: split.s1,
                     color: "black",
-                }}>Tiêu đề :</Text>
+                }}>{i18n.t('p_title')} :</Text>
                 <TextInput style={{
                     borderWidth: 1,
                     borderColor: 'black',
@@ -523,7 +523,7 @@ const CreateRequest = (props) => {
                         marginHorizontal: 10,
                         color: "black",
                     }}
-                    placeholder={!isEnabledFree ? (errorPrice ? errorPrice : "Price") : "0 VND"}
+                    placeholder={!isEnabledFree ? (errorPrice ? errorPrice : i18n.t('p_price')) : "0 VND"}
                     value={formatNumber(price)}
                     onChangeText={(text) => {
                         const filteredText = text.replace(/[^0-9]/g, '');
@@ -616,7 +616,7 @@ const CreateRequest = (props) => {
                                 {/*<Button title="Close Camera" onPress={handleCloseCamera} />*/}
                             </View>
                         )}
-                        <CLButton title="Close Modal" onPress={() => setModalVisible(false)} />
+                        <CLButton title={i18n.t('p_close')} onPress={() => setModalVisible(false)} />
                     </View>
                 </Modal>
             </View>}
@@ -634,7 +634,7 @@ const CreateRequest = (props) => {
                     position: 'absolute',
                     left: split.s1,
                     color: "black",
-                }}>Số nhà:</Text>
+                }}>{i18n.t('cr_numberAddress')}:</Text>
                 <TextInput style={{
                     borderWidth: 1,
                     borderColor: 'black',
@@ -649,7 +649,7 @@ const CreateRequest = (props) => {
                     value={address}
                     onChangeText={setAddress}
                     autoCorrect={false}
-                    placeholder={errorAddress ? errorAddress : "số nhà, tên đường"}
+                    placeholder={errorAddress ? errorAddress : i18n.t('cr_desNumberAddress')}
                     placeholderTextColor={errorAddress ? zalert : inactive}
                 />
             </View>}
@@ -667,7 +667,7 @@ const CreateRequest = (props) => {
                     position: 'absolute',
                     left: split.s1,
                     color: "black",
-                }}>Địa chỉ:</Text>
+                }}>{i18n.t('cr_commonAddress')}:</Text>
                 <TextInput style={{
                     borderWidth: 1,
                     borderColor: 'black',
@@ -682,7 +682,7 @@ const CreateRequest = (props) => {
                     value={detailAddress}
                     onChangeText={setDetailAddress}
                     autoCorrect={false}
-                    placeholder={errorAddress ? errorAddress : "phường , quận, thành phố"}
+                    placeholder={errorAddress ? errorAddress : i18n.t('cr_desCommonAddress')}
                     placeholderTextColor={errorAddress ? zalert : inactive}
                 />
             </View>}
@@ -716,17 +716,17 @@ const CreateRequest = (props) => {
                     onPress={(event) => {
                         if (currentRoute) {
                             return Alert.alert(
-                                "Current Route is aviable",
-                                "Are you sure you want change your route?",
+                                i18n.t('cr_currentRouteT'),
+                                i18n.t('cr_currentRouteD'),
                                 [
                                     {
-                                        text: "Yes",
+                                        text: i18n.t('p_yes'),
                                         onPress: () => {
                                             setCurrentRoute(null);
                                         },
                                     },
                                     {
-                                        text: "No",
+                                        text: i18n.t('p_no'),
                                     },
                                 ]
                             );
@@ -844,7 +844,7 @@ const CreateRequest = (props) => {
                 marginVertical: split.s5,
             }}>
                 <CLButton
-                    title={"Load map"}
+                    title={i18n.t('cr_loadMap')}
                     colorBG={primary}
                     colorBD={"white"}
                     colorT={"white"}
@@ -857,7 +857,7 @@ const CreateRequest = (props) => {
                     }}
                 />
                 <CLButton
-                    title={"Post request"}
+                    title={i18n.t('cr_sendRequest')}
                     colorBG={primary}
                     colorBD={"white"}
                     colorT={"white"}
@@ -884,7 +884,7 @@ const CreateRequest = (props) => {
                     right: split.s4,
                     top: split.s1,
                     color: "black",
-                }}>{typeRequest === 1 ? "| Nội dung |" : "| Ghi chú |"}</Text>
+                }}>{typeRequest === 1 ? `| ${i18n.t('cr_content')} |` : `| ${i18n.t('cr_note')} |`}</Text>
                 <TextInput
                     style={{
                         borderWidth: 1,
@@ -902,7 +902,7 @@ const CreateRequest = (props) => {
                     onChangeText={setDes}
                     autoCorrect={false}
                     multiline={true}
-                    placeholder={"không bắt buộc..."}
+                    placeholder={i18n.t('cr_optional')}
                     placeholderTextColor={inactive}
                 />
             </View>
