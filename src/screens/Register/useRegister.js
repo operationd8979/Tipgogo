@@ -1,5 +1,5 @@
 import { useState, useContext } from 'react'
-import { emailRegex, passRegex, nameRegex } from '../../utilies'
+import { emailRegex, passRegex, nameRegex, phoneRegex } from '../../utilies'
 import { useNavigation, useRoute } from '@react-navigation/native'
 import i18n from '../../../i18n'
 import { Alert } from 'react-native'
@@ -24,10 +24,12 @@ const useRegister = () => {
 
   const [email, setEmail] = useState('')
   const [fullname, setFullname] = useState('')
+  const [phone, setPhone] = useState('')
   const [password, setPassword] = useState('')
   const [repassword, setRePassword] = useState('')
   const [showPassword, setShowPassword] = useState(true)
   const [fullnameError, setFullnameError] = useState(null)
+  const [phoneError, setPhoneError] = useState(null)
   const [emailError, setEmailError] = useState(null)
   const [passwordError, setPasswordError] = useState(null)
   const [repasswordError, setRePasswordError] = useState(null)
@@ -38,6 +40,7 @@ const useRegister = () => {
     setEmailError(null)
     setPasswordError(null)
     setFullnameError(null)
+    setPhoneError(null)
     setRePasswordError(null)
 
     if (!email) {
@@ -61,6 +64,14 @@ const useRegister = () => {
       result = false
     } else if (!nameRegex.test(fullname)) {
       setFullnameError(i18n.t('fullnameErr2'))
+      result = false
+    }
+
+    if (!phone) {
+      setPhoneError(i18n.t('mobileErr1'))
+      result = false
+    } else if (!phoneRegex.test(phone)) {
+      setPhoneError(i18n.t('mobileErr2'))
       result = false
     }
 
@@ -109,6 +120,7 @@ const useRegister = () => {
                     userId: responseUser.uid,
                     email: responseUser.email,
                     name: fullname,
+                    phone: phone,
                     emailVerified: responseUser.emailVerified,
                     accessToken: responseUser.accessToken
                   }
@@ -142,6 +154,9 @@ const useRegister = () => {
     fullname,
     setFullname,
     fullnameError,
+    phone,
+    setPhone,
+    phoneError,
     password,
     setPassword,
     passwordError,

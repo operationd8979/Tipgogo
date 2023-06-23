@@ -189,38 +189,36 @@ const RequestList = (props) => {
             const userID = await getUserIDByTokken();
             if (status == 0) {
                 if (currentLocation && userID) {
-                    if (type === 2 || true) {
-                        let destination = "";
-                        let direction = null;
-                        if (type === 1)
-                            destination = geo1;
-                        if (type === 2)
-                            destination = geo2;
-                        if (destination != "")
-                            direction = await getDirectionDriver(currentLocation, destination);
-                        if (!direction) {
-                            console.log("Get direction failed!");
-                            setIsLoading(false);
-                            return;
-                        }
-                        set(ref(firebaseDatabase, `direction/${userID}/${requestId}`), direction)
-                            .then(async () => {
-                                console.log("Direction update!.");
-                                const userID = await getUserIDByTokken();
-                                const requestRef = ref(firebaseDatabase, `request/${requestId}`);
-                                update(requestRef, { requestStatus: userID })
-                                    .then(() => {
-                                        console.log("Accepted request! GOGOGO TIP!.");
-                                    })
-                                    .catch((error) => {
-                                        console.log("Error updating request status: ", error);
-                                    });
-                            })
-                            .catch((error) => {
-                                console.log("Error updating direction: ", error);
-                                setIsLoading(false);
-                            });
+                    let destination = "";
+                    let direction = null;
+                    if (type === 1)
+                        destination = geo1;
+                    if (type === 2)
+                        destination = geo2;
+                    if (destination != "")
+                        direction = await getDirectionDriver(currentLocation, destination);
+                    if (!direction) {
+                        console.log("Get direction failed!");
+                        setIsLoading(false);
+                        return;
                     }
+                    set(ref(firebaseDatabase, `direction/${userID}/${requestId}`), direction)
+                        .then(async () => {
+                            console.log("Direction update!.");
+                            // const userID = await getUserIDByTokken();
+                            const requestRef = ref(firebaseDatabase, `request/${requestId}`);
+                            update(requestRef, { requestStatus: userID })
+                                .then(() => {
+                                    console.log("Accepted request! GOGOGO TIP!.");
+                                })
+                                .catch((error) => {
+                                    console.log("Error updating request status: ", error);
+                                });
+                        })
+                        .catch((error) => {
+                            console.log("Error updating direction: ", error);
+                            setIsLoading(false);
+                        });
                 }
                 else {
                     console.log("Current location is null!");

@@ -48,6 +48,7 @@ const getUserByTokken = () => {
                 email: userData.email,
                 name: userData.name,
                 photo: userData.photo,
+                phone: userData.phone,
                 emailVerified: userData.emailVerified,
             }
             console.log("User getting OK!", user);

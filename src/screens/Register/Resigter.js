@@ -33,6 +33,9 @@ const Register = (props) => {
         fullname,
         setFullname,
         fullnameError,
+        phone,
+        setPhone,
+        phoneError,
         password,
         setPassword,
         passwordError,
@@ -155,6 +158,31 @@ const Register = (props) => {
                 <Text style={{
                     fontSize: fontSizes.h4,
                     color: primary,
+                }}>{i18n.t('r_mobile')}</Text>
+                <TextInput
+                    autoCorrect={false}
+                    placeholder={i18n.t('r_placehold_mobile')}
+                    placeholderTextColor={placeholder}
+                    style={{
+                        color: 'black'
+                    }}
+                    value={phone}
+                    onChangeText={setPhone}
+                />
+                <View style={{ height: 1, backgroundColor: primary }} />
+                <Text style={{
+                    color: 'red',
+                    fontSize: fontSizes.h5
+                }}>{phoneError}</Text>
+            </View>
+            <View style={{
+                flex: 15,
+                backgroundColor: 'white',
+                marginHorizontal: 15
+            }}>
+                <Text style={{
+                    fontSize: fontSizes.h4,
+                    color: primary,
                 }}>{i18n.t('r_password')}</Text>
                 <View style={{
                     flexDirection: 'row',
@@ -241,7 +269,7 @@ const Register = (props) => {
             </View>
 
         </View>
-        <View style={{
+        {/* <View style={{
             flex: 20,
             //backgroundColor: 'purple',
         }}>
@@ -269,7 +297,7 @@ const Register = (props) => {
                 <View style={{ width: 15 }} />
                 <Icon name='google' size={45} color={google} />
             </View>
-        </View>
+        </View> */}
     </KeyboardAwareScrollView>
 }
 

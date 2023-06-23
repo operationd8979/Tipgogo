@@ -16,7 +16,7 @@ import { useNavigation } from '@react-navigation/native';
 import {checkCameraPermission} from '../../service/CameraService'
 import {getUserIDByTokken} from '../../service/UserService'
 
-export default function CameraQR({requestId}) {
+export default function CameraQR({requestId,requestIdLite}) {
 
     //const
     const devices = useCameraDevices();
@@ -30,6 +30,13 @@ export default function CameraQR({requestId}) {
     React.useEffect(()=>{
         checkCameraPermission();
         if(barcodes[0]){
+            if(barcodes[0].content.data==requestIdLite){
+                console.log("Key good");
+                doneRequestLite(requestId);
+            }
+            else{
+                console.log("Key wrong!!");
+            }
             if(barcodes[0].content.data==requestId){
                 console.log("Key good");
                 doneRequest(requestId);
@@ -41,19 +48,62 @@ export default function CameraQR({requestId}) {
             
     },[barcodes[0]])
 
+    const doneRequestLite = (requestID) => {
+        console.log("Run Completing request!");
+        return new Promise(async (resolve, reject) => {
+            try {
+                const userID = await getUserIDByTokken();
+                const requestRef = ref(firebaseDatabase, `request/${requestID}`);
+                const timestamp = (new Date()).getTime();
+                update(requestRef, { driver: {driverID: userID, timeend:timestamp} })
+                .then(() => {
+                    console.log("Update user complete request successfully!");
+                })
+                .catch((error) => {
+                    console.error("Error Update user complete request: ", error);
+                });
+                update(requestRef, { requestStatus: 1 })
+                    .then(() => {
+                        console.log("Update status complete request successfully!");
+                    })
+                    .catch((error) => {
+                        console.error("Error Update status complete request: ", error);
+                    });
+                const directionRef = ref(firebaseDatabase, `direction/${userID}/${requestId}`)
+                update(directionRef, { state: 1 })
+                    .then(() => {
+                        console.log("Update data complete direction successfully!");
+                    })
+                    .catch((error) => {
+                        console.error("Error Update data complete direction: ", error);
+                    });
+            } catch (error) {
+                console.error('Error Completing request:', error);
+                reject(new Error('Error Completing request:'));
+            }
+        });
+    };
+
     const doneRequest = (requestID) => {
         console.log("Run Completing request!");
         return new Promise(async (resolve, reject) => {
             try {
                 const userID = await getUserIDByTokken();
                 const requestRef = ref(firebaseDatabase, `request/${requestID}`);
+                const timestamp = (new Date()).getTime();
+                update(requestRef, { driver: {driverID: userID, timeend:timestamp} })
+                .then(() => {
+                    console.log("Update user complete request successfully!");
+                })
+                .catch((error) => {
+                    console.error("Error Update user complete request: ", error);
+                });
                 update(requestRef, { requestStatus: 1 })
                     .then(() => {
-                        console.log("Update data complete request successfully!");
-                        navigation.navigate("UItab")
+                        console.log("Update status complete request successfully!");
                     })
                     .catch((error) => {
-                        console.error("Error Update data complete request: ", error);
+                        console.error("Error Update status complete request: ", error);
                     });
                 const directionRef = ref(firebaseDatabase, `direction/${userID}/${requestId}`)
                 update(directionRef, { state: 1 })

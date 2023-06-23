@@ -21,7 +21,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage'
 import { CLButton } from '../components'
 import ImageResizer from 'react-native-image-resizer';
 import i18n from '../../i18n'
-import { passRegex } from '../utilies'
+import { passRegex, phoneRegex } from '../utilies'
 import { getUserByTokken } from '../service/UserService'
 import { checkCameraPermission } from '../service/CameraService'
 
@@ -40,10 +40,13 @@ const Setting = (props) => {
     const [selectedOption, setSelectedOption] = useState(i18n.locale == 'vi' ? 2 : i18n.locale == 'jp' ? 3 : 1);
     const [modalVisible, setModalVisible] = useState(false);
     const [modalPasswordVisible, setModalPasswordVisible] = useState(false);
+    const [modalPhoneVisible, setModalPhoneVisible] = useState(false);
     const [newPassword, setNewPassword] = useState(null);
     const [reNewPassword, setReNewPassword] = useState(null);
     const [errorPassword, setErrorPassword] = useState(null);
     const [errorRePassword, setErrorRePassword] = useState(null);
+    const [newPhone, setNewPhone] = useState(null);
+    const [errorPhone, setErrorPhone] = useState(null);
 
     //data user
     const [user, setUser] = useState(null);
@@ -155,6 +158,8 @@ const Setting = (props) => {
                 .then(() => {
                     setModalPasswordVisible(false);
                     console.log("change your password successfull!");
+                    setNewPassword(null);
+                    setReNewPassword(null);
                     return Alert.alert(
                         "Update password",
                         "Your password was changed successfully!",
@@ -168,6 +173,35 @@ const Setting = (props) => {
                 .catch((error) => {
                     console.log(`Error change password:${error}`);
                 })
+        }
+    }
+
+    const handleChangePhone = () => {
+        let result = true;
+
+        setErrorPhone(null);
+
+        if (!newPhone) {
+            result = false;
+            setErrorPassword(i18n.t('mobileErr1'))
+        } else if (phoneRegex.test(newPhone) !== true) {
+            setErrorPassword(i18n.t('mobileErr2'))
+            result = false
+        }
+
+        if (result) {
+            const userRef = ref(firebaseDatabase, `users/${user.userID}`);
+            update(userRef, { phone: newPhone })
+                .then(() => {
+                    setModalPhoneVisible(false);
+                    console.log("Update phone number's user successfully!.");
+                    setNewPhone(null);
+                    setInit(init + 1);
+                })
+                .catch((error) => {
+                    console.log("Error updating phone number's user: ", error);
+                    setNewPhone(null);
+                });
         }
     }
 
@@ -551,6 +585,99 @@ const Setting = (props) => {
                                 }} />
                             <CLButton title="Cancel" sizeBT={"35%"} height={normalize(30)} colorBG={primary} colorT={"white"}
                                 onPress={() => setModalPasswordVisible(false)} />
+                        </View>
+                    </View>
+                </View>
+            </Modal>
+        </View>
+        <View style={{
+            marginHorizontal: 10,
+            flex: 15,
+            //backgroundColor:"red"
+        }}>
+            <TouchableOpacity style={{
+                marginTop: 15,
+                flexDirection: 'row',
+                paddingVertical: 10,
+                alignItems: 'center',
+                //backgroundColor:"green",
+                borderTopWidth: 1,
+                borderBottomWidth: 1,
+            }} onPress={async () => {
+                setModalPhoneVisible(true);
+            }}>
+                <Icon
+                    name='mobile-alt'
+                    style={{ marginStart: 10 }}
+                    size={16} color={'black'}
+                />
+                <Text style={{
+                    color: 'black',
+                    fontSize: fontSizes.h6,
+                    color: 'black',
+                    paddingStart: 10,
+                }}>Change your phone number</Text>
+                <View style={{ flex: 1 }} />
+                <Icon
+                    name='chevron-right'
+                    style={{
+                        paddingEnd: 10,
+                        opacity: 0.5,
+                    }}
+                    size={normalize(15)} color={'black'}
+                />
+            </TouchableOpacity>
+            <Modal visible={modalPhoneVisible} animationType="fade" transparent={true}  >
+                <View style={{ flex: 1, justifyContent: 'center' }}>
+                    <View style={styles.container}>
+                        <View>
+                            <View style={{ backgroundColor: primary, padding: "5%", marginBottom: normalize(10) }}>
+                                <Text style={{ color: 'black', fontSize: fontSizes.h3 }}>Change phone</Text>
+                            </View>
+                            <Text style={{
+                                color: 'red',
+                                fontSize: fontSizes.h5,
+                                marginStart: normalize(90)
+                            }}>{errorPhone}</Text>
+                            <View style={{
+                                alignItems: 'center',
+                                flexDirection: 'row',
+                                marginHorizontal: split.s3,
+                                marginVertical: split.s3,
+                                //backgroundColor:'red'
+                            }}>
+                                <Text style={{
+                                    fontSize: fontSizes.h5,
+                                    color: "black",
+                                    width: normalize(62)
+                                }}>Phone number:</Text>
+                                <TextInput style={{
+                                    borderWidth: 1,
+                                    borderColor: 'black',
+                                    borderRadius: 5,
+                                    width: normalize(160),
+                                    marginHorizontal: 10,
+                                    color: "black",
+                                }}
+                                    numberOfLines={1}
+                                    value={newPhone}
+                                    onChangeText={setNewPhone}
+                                    autoCorrect={false}
+                                    placeholder={user ? user.phone || "phone number" : "phone number"}
+                                    placeholderTextColor={inactive}
+                                />
+                            </View>
+                        </View>
+                        <View style={{
+                            flexDirection: 'row',
+                            justifyContent: 'center',
+                        }}>
+                            <CLButton title="Update" sizeBT={"35%"} height={normalize(30)} colorBG={primary} colorT={"white"}
+                                onPress={() => {
+                                    handleChangePhone();
+                                }} />
+                            <CLButton title="Cancel" sizeBT={"35%"} height={normalize(30)} colorBG={primary} colorT={"white"}
+                                onPress={() => setModalPhoneVisible(false)} />
                         </View>
                     </View>
                 </View>

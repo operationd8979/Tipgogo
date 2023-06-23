@@ -1,4 +1,4 @@
-import { Login, Welcome, Register, RequestDetail, MyRequest } from "../screens"
+import { Login, Welcome, Register, RequestDetail, MyRequest, DetailSmartRequest } from "../screens"
 import { NavigationContainer } from '@react-navigation/native';
 
 
@@ -23,6 +23,7 @@ const App = (props) => {
           <Stack.Screen name="RequestDetail" component={RequestDetail} />
           <Stack.Screen name="MyRequest" component={MyRequest} />
           <Stack.Screen name="UItab" component={UItab} />
+          <Stack.Screen name="DetailSmartRequest" component={DetailSmartRequest} />
         </Stack.Navigator>
       </NavigationContainer>
     </UserPositionProvider>

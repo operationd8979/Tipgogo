@@ -16,7 +16,7 @@ const RequestItem = ({ onPress, request: { name, url, price, des, geo1, geo2 , t
             case 0:
               return colors.success;
             case 1:
-              return colors.zalert;
+              return colors.primary;
             case -1:
               return colors.zalert;
             default:
@@ -78,7 +78,7 @@ const RequestItem = ({ onPress, request: { name, url, price, des, geo1, geo2 , t
                 <Text style={{
                     color: accepted? colors.zalert : _getColorFromStatus(status),
                     fontSize: fontSizes.h4,
-                }}>{accepted? "<ONING YOU>" :status==0?"AVAILABLE":(status==-1||status==1)?"ENDED":"ON PROCESS"}</Text>
+                }}>{accepted? "<ONING YOU>" :status==0?"AVAILABLE":status==-1?"ENDED":status==1?"[DONE]":"ON PROCESS"}</Text>
             </View>
             <Text style={{
                     color: price==0?colors.success:"red",

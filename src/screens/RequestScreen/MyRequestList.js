@@ -116,7 +116,7 @@ const MyRequestList = (props) => {
             navigation.navigate("MyRequest",{request:item});  
         } 
         else{
-            console.log("Your request is closed!");
+            console.log("Your request was canceled!");
         }
     }
 

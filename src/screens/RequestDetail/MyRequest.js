@@ -32,7 +32,7 @@ import LinearGradient from 'react-native-linear-gradient'
 import QRCode from 'react-native-qrcode-svg';
 import Icon from 'react-native-vector-icons/FontAwesome5'
 //import {getUserByUserID} from '../../service/UserService'
-import { formatNumber } from '../../utilies'
+import { formatNumber, sendSMS, phonecall } from '../../utilies'
 
 const getUserByUserID = (userID) => {
     return new Promise(async (resolve, reject) => {
@@ -50,6 +50,7 @@ const getUserByUserID = (userID) => {
                         email: data.email,
                         name: data.name,
                         photo: data.photo,
+                        phone: data.phone,
                     }
                     console.log("User getting OK!", user);
                     resolve(user);
@@ -101,8 +102,10 @@ const RequestDetail = (props) => {
     const [currentDriver, setCurrentDriver] = useState(null);
     const [time, setTime] = useState(null);
     const [timeGet, setTimeGet] = useState(null);
-    const [stateDisplay, SetStateDisplay] = useState(1);
-    const [stateRequest, SetStateRequest] = useState(status);
+    const [timeDone, setTimeDone] = useState(null);
+    const [stateDisplay, setStateDisplay] = useState(1);
+    const [stateRequest, setStateRequest] = useState(status);
+    const [driverDone, setDriverDone] = useState(null);
 
     useEffect(() => {
         checkLocationPermission();
@@ -112,7 +115,23 @@ const RequestDetail = (props) => {
             if (snapshot.exists()) {
                 console.log('Listenning this request........');
                 let snapshotObject = snapshot.val();
-                SetStateRequest(snapshotObject.requestStatus);
+                setStateRequest(snapshotObject.requestStatus);
+                if(snapshotObject.driver){
+                    const driverDone = snapshotObject.driver;
+                    setDriverDone(driverDone);
+                    const timedone = new Date(driverDone.timeend);
+                    setTimeDone(timedone);
+                    setStateDisplay(3);
+                    getUserByUserID(driverDone.driverID).then((user) => {
+                        setDriver(user);
+                    });
+                    getDirections(driverDone.driverID).then((direction) => {
+                        if (direction) {
+                            let time = new Date(direction.timestamp);
+                            setTime(time);
+                        }
+                    });
+                }
             } else {
                 console.log('Can not get this request!')
             }
@@ -121,19 +140,20 @@ const RequestDetail = (props) => {
     }, [])
 
     useEffect(() => {
-        //bổ xung value on tracking location of driver....
-        if (stateRequest == 1 || stateRequest == -1) {
-            navigation.navigate('UItab')
+        //đã bổ xung value on tracking location of driver....
+        if (stateRequest == -1) {
+            navigation.navigate('UItab');
         }
         else {
-            if (stateRequest != 0) {
-                getDirections().then((direction) => {
+            if (stateRequest != 0 && stateRequest != 1) {
+                getDirections(stateRequest).then((direction) => {
                     setRoad(direction);
                     if (direction) {
-                        let time = new Date(direction.timestamp);
+                        const time = new Date(direction.timestamp);
+                        let time2 = new Date(direction.timestamp);
                         setTime(time);
-                        time.setMinutes(time.getMinutes() + Math.ceil(direction.duration / 60));
-                        setTimeGet(time);
+                        time2.setMinutes(time.getMinutes() + Math.ceil(direction.duration / 60));
+                        setTimeGet(time2);
                         const dbRef = ref(firebaseDatabase, `direction/${stateRequest}/${requestId}`)
                         const unsubscribe = onValue(dbRef, async (snapshot) => {
                             console.log('Listenning this direction........');
@@ -146,7 +166,7 @@ const RequestDetail = (props) => {
                                 else {
                                     console.log("Current driver is updated!");
                                     setCurrentDriver(snapshotObject.currentDriver);
-                                    SetStateDisplay(2);
+                                    setStateDisplay(2);
                                 }
                             } else {
                                 console.log('Can not get Current driver!')
@@ -161,10 +181,10 @@ const RequestDetail = (props) => {
         }
     }, [stateRequest])
 
-    const getDirections = () => {
+    const getDirections = (driverID) => {
         return new Promise(async (resolve, reject) => {
             try {
-                const dbRef = ref(firebaseDatabase, `direction/${stateRequest}`);
+                const dbRef = ref(firebaseDatabase, `direction/${driverID}`);
                 const dbQuery = query(dbRef, orderByKey(), equalTo(requestId));
                 const data = await get(dbQuery);
                 const snapshotObject = data.val();
@@ -194,6 +214,18 @@ const RequestDetail = (props) => {
         }
         else {
             console.error("Cancel is denied! Request on process!");
+        }
+    }
+
+    const handlePressPhoneCall = ()=>{
+        if(driver.phone){
+            phonecall(driver.phone);
+        }
+    }
+
+    const handleSendSMS = ()=>{
+        if(driver.phone){
+            sendSMS(driver.phone,`Mình đang đợi bạn ở chỗ hẹn!`);
         }
     }
 
@@ -308,11 +340,11 @@ const RequestDetail = (props) => {
                     <Text style={{ color: 'white', fontWeight: '800' }}>3</Text>
                 </Circle>
                 <Text style={{ fontSize: fontSizes.h4, color: stateDisplay > 2 ? primary : inactive, marginStart: normalize(5) }}>Hoàn thành</Text>
-                <Text style={{ fontSize: fontSizes.h4, color: "black", marginStart: normalize(5), position: 'absolute', end: normalize(20) }}>==/==</Text>
+                <Text style={{ fontSize: fontSizes.h4, color: "black", marginStart: normalize(5), position: 'absolute', end: normalize(20) }}>{timeDone ? timeDone.toLocaleString() : '==/=='}</Text>
             </View>
         </View>
         <View style={{ height: 1, backgroundColor: primary, marginHorizontal: normalize(50), marginBottom: 2 }} />
-        {driver && road && <View style={{
+        {driver && <View style={{
             //backgroundColor:"green",
             //height: 400,
             marginVertical: normalize(5),
@@ -353,8 +385,10 @@ const RequestDetail = (props) => {
                     marginHorizontal: 5,
                     justifyContent: 'space-between',
                 }}>
-                    <TouchableOpacity style={{
-                        padding: 5
+                    <TouchableOpacity 
+                        onPress={handlePressPhoneCall}
+                        style={{
+                            padding: 5
                     }}>
                         <Icon
                             name={'phone'}
@@ -362,8 +396,10 @@ const RequestDetail = (props) => {
                             color={'black'}
                         />
                     </TouchableOpacity>
-                    <TouchableOpacity style={{
-                        padding: 5
+                    <TouchableOpacity 
+                        onPress={handleSendSMS}
+                        style={{
+                            padding: 5
                     }}>
                         <Icon
                             name={'rocketchat'}

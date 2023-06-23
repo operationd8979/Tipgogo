@@ -114,19 +114,24 @@ const useMap = () => {
 
         const [uriMap, setUriMap] = useState(null);
         const takeSnapshot = useCallback(() => {
-            if (!mapRef.current) {
+            if (!mapRef) {
                 return;
             }
             setTimeout(() => {
-                const snapshot = mapRef.current.takeSnapshot({
-                    format: 'png',
-                    quality: 0.5,
-                    result: 'file',
-                });
-                snapshot.then((uri) => {
-                    setUriMap(uri);
-                });
-            }, 0);
+                if (!mapRef.current) {
+                    return;
+                }
+                else{
+                    const snapshot = mapRef.current.takeSnapshot({
+                        format: 'png',
+                        quality: 0.5,
+                        result: 'file',
+                    });
+                    snapshot.then((uri) => {
+                        setUriMap(uri);
+                    });
+                }
+            }, 600);
         }, [mapRef.current]);
 
         const calInitialRegion = () => {
@@ -139,7 +144,7 @@ const useMap = () => {
             }
             else {
                 if (type === 1) {
-                    if (screen === "RequestList") {
+                    if (screen === "RequestList" || screen === "MyRequestList") {
                         locationA = geo1;
                     }
                     else {
@@ -220,9 +225,9 @@ const useMap = () => {
                         latitudeDelta: 0.008,
                         longitudeDelta: 0.011,
                     }}
-                //onMapReady={lite?takeSnapshot:null}
+                onMapReady={lite?takeSnapshot:null}
                 >
-                    {currentLocation && screen != "RequestList" && <Marker
+                    {currentLocation && screen != "RequestList" && screen != "MyRequestList" && <Marker
                         key={1}
                         coordinate={currentLocation}
                         tile={"User"}
@@ -233,14 +238,15 @@ const useMap = () => {
                             style={{ width: 35, height: 35 }} // Thiết lập kích thước của hình ảnh
                         />
                     </Marker>}
-                    {type === 1 && (screen != "MyRequestList" || screen != "MyRequest") && geo1 && <Marker
+                    {type === 1 && screen != "MyRequest" && geo1 && <Marker
                         key={2}
                         coordinate={geo1}
                         tile={"aim"}
                         description={"Location of aim.geo1"}
                     >
                         <Image
-                            source={images.markerPeople}
+                            // source={images.markerPeople}
+                            source={screen == "MyRequestList" ? images.markerUrGeo2 : images.markerPeople}
                             style={{ width: 35, height: 35 }} // Thiết lập kích thước của hình ảnh
                         />
                     </Marker>}

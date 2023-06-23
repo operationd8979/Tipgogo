@@ -32,6 +32,9 @@ import { checkCameraPermission } from '../../service/CameraService'
 
 const CreateRequest = (props) => {
 
+    //test
+    // const currentLocation = {latitude:10.7989905  , longitude:106.7068081  }
+
     //constant
     const { primary, zalert, warning, success, inactive } = colors
     const mapRef = useRef(null);
@@ -388,7 +391,6 @@ const CreateRequest = (props) => {
                     {/*const {onPress,title,colorBG,colorBD,colorT,sizeF,sizeBT,sizeB,radius,disabled,height} = props*/}
                     <CLButton title={"Re-New"} sizeBT="20%" radius={7} onPress={onRefresh} disabled={isLoading} />
                 </View>
-
                 <View style={{ height: 1, backgroundColor: primary }} />
             </View>
             <View style={{

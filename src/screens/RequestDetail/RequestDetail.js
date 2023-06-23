@@ -1,8 +1,9 @@
 import React, { useState, useRef, useEffect, useContext, useCallback, Component } from "react"
-import { View, Text, Switch, TouchableOpacity, StyleSheet, ScrollView, Modal, Alert, Platform, Image, Linking, RefreshControl } from "react-native"
+import { View, Text, Switch, TouchableOpacity, StyleSheet, ScrollView, Modal, Alert, Platform, Image, Linking, RefreshControl, ActivityIndicator } from "react-native"
 import { useRoute } from '@react-navigation/native';
 import useMap from '../FullMap/FullMap'
 import { colors, fontSizes, icons, images, normalize, split } from "../../constants"
+import { StackActions } from '@react-navigation/native'
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view'
 import { orderByKey } from "firebase/database";
 import {
@@ -32,7 +33,7 @@ import { CLButton } from '../../components'
 import LinearGradient from 'react-native-linear-gradient'
 import Icon from 'react-native-vector-icons/FontAwesome5'
 import { getUserIDByTokken } from '../../service/UserService'
-import { formatNumber } from '../../utilies'
+import { formatNumber, sendSMS, phonecall } from '../../utilies'
 
 const getUserByUserID = (userID) => {
     return new Promise(async (resolve, reject) => {
@@ -50,6 +51,7 @@ const getUserByUserID = (userID) => {
                         email: data.email,
                         name: data.name,
                         photo: data.photo,
+                        phone: data.phone,
                     }
                     console.log("User getting OK!", user);
                     resolve(user);
@@ -68,8 +70,23 @@ const getUserByUserID = (userID) => {
     });
 }
 
+const WaitingScreen = () => {
+    return (
+        <View style={{ alignItems: 'center', marginTop: '50%' }}>
+            <ActivityIndicator size="large" color="blue" />
+            <Text style={{
+                color: 'black',
+            }}>
+                Loading!...</Text>
+            <Image source={images.logo} style={{ height: normalize(200), width: normalize(200) }} />
+        </View>
+    );
+};
 
-const RequestDetail = () => {
+
+const RequestDetail = (props) => {
+
+    const { navigation } = props;
 
     //init
     const route = useRoute();
@@ -98,17 +115,37 @@ const RequestDetail = () => {
     const [modalVisible, setModalVisible] = useState(false);
     const [road, setRoad] = useState("");
     const [boss, setBoss] = useState(null);
+    const [time, setTime] = useState(null);
     const [stateDisplay, SetStateDisplay] = useState(1);
     const { distance, duration, endAddress, startAddress, summary } = road;
 
     useEffect(() => {
         checkLocationPermission();
         getCurrentPosition();
-        getDirections().then((direction) => setRoad(direction));
-        if (type === 1) {
-            const userId = requestId.split('-')[0];
-            getUserByUserID(userId).then((user) => setBoss(user));
-        }
+        getDirections().then((direction) => {
+            if (direction.smart) {
+                let ida = "";
+                let idb = "";
+                if (direction.smart.index === 1) {
+                    ida = requestId;
+                    idb = direction.smart.id;
+                }
+                else {
+                    ida = direction.smart.id;
+                    idb = requestId;
+                }
+                navigation.dispatch(StackActions.replace('DetailSmartRequest', { ida: ida, idb: idb }))
+                // navigation.navigate('DetailSmartRequest',{ requestID:idIndex });
+            }
+            else {
+                setRoad(direction);
+                let time = new Date(direction.timestamp);
+                time.setMinutes(time.getMinutes() + Math.ceil(direction.duration / 60));
+                setTime(time);
+            }
+        });
+        const userId = requestId.split('-')[0];
+        getUserByUserID(userId).then((user) => setBoss(user));
         // const cleanup = () => {
         //     LocationService.stop();
         // };
@@ -152,6 +189,18 @@ const RequestDetail = () => {
         });
     }
 
+    const handlePressPhoneCall = ()=>{
+        if(boss.phone){
+            phonecall(boss.phone);
+        }
+    }
+
+    const handleSendSMS = ()=>{
+        if(boss.phone&&time){
+            sendSMS(boss.phone,`Mình đang trên đường đến. Hẹn gặp lúc ${time.toLocaleTimeString()}`);
+        }
+    }
+
     const Circle = ({ children, color, size, style }) => {
         return (
             <View
@@ -171,10 +220,27 @@ const RequestDetail = () => {
         )
     }
 
-    return <KeyboardAwareScrollView
+    return road ? <KeyboardAwareScrollView
         scrollEnabled={true}
         contentContainerStyle={{ flexGrow: 1 }}
     >
+        <View style={{
+            flex: 6,
+            paddingHorizontal: split.s4,
+            paddingVertical: split.s5,
+            backgroundColor: primary,
+        }}>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+                <Text style={{
+                    color: "white",
+                    fontSize: normalize(18),
+                    fontWeight: 'bold',
+                    padding: 10,
+                }}>Deital Request</Text>
+                {/*const {onPress,title,colorBG,colorBD,colorT,sizeF,sizeBT,sizeB,radius,disabled,height} = props*/}
+            </View>
+            <View style={{ height: 1, backgroundColor: primary }} />
+        </View>
         {currentLocation && road && <FullMap geo1={geo1} geo2={geo2} direction={road} direction2={direction} type={type} request={request} screen="DetailRequest" />}
         {road && type === 2 && <View style={{
             //backgroundColor:"green",
@@ -288,7 +354,7 @@ const RequestDetail = () => {
                     size={30}>
                     <Text style={{ color: 'white', fontWeight: '800' }}>3</Text>
                 </Circle>
-                <Text style={{ fontSize: fontSizes.h4, color: stateDisplay > 2 ? primary : inactive, marginStart: normalize(5) }}>Get pay</Text>
+                <Text style={{ fontSize: fontSizes.h4, color: stateDisplay > 1 ? primary : inactive, marginStart: normalize(5) }}>Get pay</Text>
                 <Text style={{
                     fontSize: fontSizes.h4,
                     color: "black",
@@ -387,8 +453,10 @@ const RequestDetail = () => {
                     marginHorizontal: 5,
                     justifyContent: 'space-between',
                 }}>
-                    <TouchableOpacity style={{
-                        padding: 5
+                    <TouchableOpacity 
+                        onPress={handlePressPhoneCall}
+                        style={{
+                            padding: 5
                     }}>
                         <Icon
                             name={'phone'}
@@ -396,8 +464,10 @@ const RequestDetail = () => {
                             color={'black'}
                         />
                     </TouchableOpacity>
-                    <TouchableOpacity style={{
-                        padding: 5
+                    <TouchableOpacity 
+                        onPress={handleSendSMS}
+                        style={{
+                            padding: 5
                     }}>
                         <Icon
                             name={'rocketchat'}
@@ -459,7 +529,7 @@ const RequestDetail = () => {
                 </View>
             </Modal>
         </View>
-    </KeyboardAwareScrollView>
+    </KeyboardAwareScrollView> : <WaitingScreen />
 }
 
 

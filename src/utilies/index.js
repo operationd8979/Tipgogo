@@ -2,6 +2,7 @@ import {distanceTwoGeo,findShortestPaths,calculateDistance,toRadians} from './ma
 import { emailRegex, passRegex, phoneRegex, nameRegex } from './regx'
 import * as mapStyle from './mapStyle'
 import {formatNumber} from './format'
+import {sendSMS,phonecall} from './communication'
 export{
     emailRegex,
     passRegex,
@@ -13,4 +14,6 @@ export{
     calculateDistance,
     toRadians,
     formatNumber,
+    sendSMS,
+    phonecall
 }

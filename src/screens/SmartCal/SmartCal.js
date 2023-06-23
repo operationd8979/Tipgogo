@@ -35,7 +35,7 @@ import { mapStyle, findShortestPaths, formatNumber } from '../../utilies'
 import Openrouteservice from 'openrouteservice-js'
 const orsDirections = new Openrouteservice.Directions({ api_key: Credentials.APIKey_OpenRouteService });
 const Geocode = new Openrouteservice.Geocode({ api_key: Credentials.APIKey_OpenRouteService })
-import { getAddressFromLocation, getRouteDirection, getMatrix, getLocationFromAddress } from '../../service/MapService'
+import { getDirectionDriver, getRouteDirection, getMatrix, getLocationFromAddress } from '../../service/MapService'
 import { getUserIDByTokken } from '../../service/UserService'
 import { QuickView, CLButton } from '../../components'
 
@@ -83,12 +83,6 @@ const SmartCal = (props) => {
 
     const [modalVisible, setModalVisible] = useState(false);
     const [hightProfit, setHightProfit] = useState(false);
-    const handleCloseRequest = () => {
-        setModalVisible(false);
-    }
-    const acceptRequest = () => {
-        console.log("press accept");
-    }
 
     //constant
     const [currentRoute, setCurrentRoute] = useState(null);
@@ -123,6 +117,7 @@ const SmartCal = (props) => {
         console.log("__________Init SmartDirection__________");
         checkLocationPermission();
         getCurrentPosition();
+        //handleSmartDirection();
     }, [])
 
     const Inbounds = (currentLocation, destination, geo1, geo2) => {
@@ -138,7 +133,7 @@ const SmartCal = (props) => {
             geo2.latitude >= minLat &&
             geo2.latitude <= maxLat &&
             geo2.longitude >= minLong &&
-            geo2.longitude <= maxLong &&
+            geo2.longitude <= maxLong && 
             distanceTwoGeo(geo1, currentLocation) < distanceTwoGeo(geo2, currentLocation)
         );
     };
@@ -283,16 +278,18 @@ const SmartCal = (props) => {
         setIsLoading(false);
     }
 
-
-
     const handleSmartDirection = async () => {
         //lưu history tránh gọi matrix nhiều lần 1 kết quả
         setHistoryPressLocation(pressLocation);
-        
-        // const testLocation = { latitude: 10.856801472746513, longitude: 106.78506564549127 };
-        // const testPressLocation = { latitude: 10.800080072142539, longitude: 106.71194005777636 };
+
+        const orgin = currentLocation;
+        const destination = pressLocation;
+        //dữ liệu test
+        // const orgin = { latitude: 10.80225935, longitude: 106.7148688};
+        // const destination = { latitude: 10.7551377, longitude: 106.6643887};
+
         const aimRequest = requests.filter(r => r.status == 0 && r.type === 1
-            && Inbounds(currentLocation, pressLocation, r.geo1, r.geo2));
+            && Inbounds(orgin, destination, r.geo1, r.geo2));
         //kiểm tra request đã lọc
         const size = aimRequest.length;
         console.log('-----------List aimRequest----------');
@@ -314,29 +311,17 @@ const SmartCal = (props) => {
         let count = 0;
         let locations = [];
         //nạp currentLocaiton
-        locations[count++] = [currentLocation.longitude, currentLocation.latitude];
+        locations[count++] = [orgin.longitude, orgin.latitude];
         for (let i = 0; i < size; i++) {
             locations[count++] = [aimRequest[i].geo1.longitude, aimRequest[i].geo1.latitude];
             locations[count++] = [aimRequest[i].geo2.longitude, aimRequest[i].geo2.latitude];
         }
         //nạp pressLocation
-        locations[count++] = [pressLocation.longitude, pressLocation.latitude];
+        locations[count++] = [destination.longitude, destination.latitude];
         //kiểm tra locations
         console.log(locations);
         //get matrix api
         const matrix = await getMatrix(locations);
-        //lỗi get matrix
-        if(matrix[0].length>0){
-            return Alert.alert(
-                "No request is aviable!",
-                "There is no claim to match your route!",
-                [
-                    {
-                        text: "OK",
-                    },
-                ]
-            );
-        }
         //smartDirection
         setMatrix(matrix);
         //init price array
@@ -399,6 +384,131 @@ const SmartCal = (props) => {
         
     }
 
+    const acceptRequest = async () => {
+        const testorgin = { latitude: 10.80225935, longitude: 106.7148688};
+        const testdestination = { latitude: 10.7551377, longitude: 106.6643887};
+        setIsLoading(true);
+        if (selectedResult) {
+            const{
+                ida,
+                idb,
+            } = selectedResult;
+            const userID = await getUserIDByTokken();
+            if (currentLocation && userID) {
+                let origin = "";
+                let destination = "";
+                let direction1 = null;
+                let direction2 = null;
+                let direction3 = null;
+                // origin = currentLocation;
+                origin = testorgin;
+                destination = selectedRequest1.geo1;
+                if (destination != "" && origin != "")
+                    direction1 = await getDirectionDriver(origin, destination);
+                if (!direction1) {
+                    console.log("Get direction [1] failed!");
+                    setIsLoading(false);
+                    return;
+                }
+                if(selectedRequest2){
+                    direction1 = {...direction1,smart:{index:1,id:idb}};
+                    origin = selectedRequest1.geo2;
+                    destination = selectedRequest2.geo1;
+                    if (destination != "" && origin != "")
+                        direction2 = await getDirectionDriver(origin, destination);
+                    if (!direction2) {
+                        console.log("Get direction [2] failed!");
+                        setIsLoading(false);
+                        return;
+                    }
+                    else{
+                        direction2.duration+= direction1.duration;
+                        direction2.currentDriver = currentLocation;
+                        direction2 = {...direction2,smart:{index:2,id:ida}};
+                    }
+                    origin = selectedRequest2.geo2;
+                    // destination = pressLocation;
+                    destination=testdestination;
+                    if (destination != "" && origin != "")
+                        direction3 = await getDirectionDriver(origin, destination);
+                    if (!direction3) {
+                        console.log("Get direction [3] failed!");
+                        setIsLoading(false);
+                        return;
+                    }
+                    else{
+                        direction3.duration+= direction2.duration;
+                        direction3.currentDriver = currentLocation;
+                    }
+                }
+                set(ref(firebaseDatabase, `direction/${userID}/${selectedRequest1.requestId}`), direction1)
+                    .then(async () => {
+                        console.log("Direction update[1]!.");
+                        // const userID = await getUserIDByTokken();
+                        const requestRef = ref(firebaseDatabase, `request/${selectedRequest1.requestId}`);
+                        update(requestRef, { requestStatus: userID })
+                            .then(() => {
+                                console.log("Accepted request[1]! GOGOGO TIP!.");
+                            })
+                            .catch((error) => {
+                                console.log("Error updating request[1] status: ", error);
+                            });
+                    })
+                    .catch((error) => {
+                        console.log("Error updating direction[1]: ", error);
+                        setIsLoading(false);
+                    });
+                if(selectedRequest2){
+                    set(ref(firebaseDatabase, `direction/${userID}/${selectedRequest2.requestId}`), direction2)
+                    .then(async () => {
+                        console.log("Direction update[2]!.");
+                        // const userID = await getUserIDByTokken();
+                        const requestRef = ref(firebaseDatabase, `request/${selectedRequest2.requestId}`);
+                        update(requestRef, { requestStatus: userID })
+                            .then(() => {
+                                console.log("Accepted request[2]! GOGOGO TIP!.");
+                            })
+                            .catch((error) => {
+                                console.log("Error updating request[2] status: ", error);
+                            });
+                    })
+                    .catch((error) => {
+                        console.log("Error updating direction[2]: ", error);
+                        setIsLoading(false);
+                    });
+                    set(ref(firebaseDatabase, `direction/${userID}/${selectedRequest1.requestId}-${selectedRequest2.requestId}`), direction3)
+                    .then(async () => {
+                        console.log("Direction update[3]!.");
+                    })
+                    .catch((error) => {
+                        console.log("Error updating direction[3]: ", error);
+                        setIsLoading(false);
+                    });
+                }
+                
+            }
+            else {
+                console.log("Current location is null!");
+            }
+        }
+        else {
+            console.log("No request selected!");
+        }
+        setSelectedResult(null);
+        setSelectedRequest1(null);
+        setSelectedRequest2(null);
+        setModalVisible(false);
+        setIsLoading(false);
+    }
+
+    const handleCloseRequest = () => {
+        setSelectedResult(null);
+        setSelectedRequest1(null);
+        setSelectedRequest2(null);
+        setModalVisible(false);
+    }
+
+
     const renderResultList = () => {
         return (
             <FlatList
@@ -426,11 +536,20 @@ const SmartCal = (props) => {
                             <View style={{
                                 width: 280,
                             }}>
-                                <Text style={{ color: colorText }}>Tổng tiền: {formatNumber(item.price)}đ</Text>
-                                <Text style={{ color: colorText }}>
+                                <Text style={{ 
+                                    color: colorText,
+                                    fontWeight: hightProfit? "bold" : "normal",
+                                }}>Tổng tiền: {formatNumber(item.price)}đ</Text>
+                                <Text style={{ 
+                                    color: colorText,
+                                    fontWeight: hightProfit? "normal" : "bold",
+                                }}>
                                     Quảng đường phát sinh: {Math.ceil(item.cost / 100) / 10}km
                                 </Text>
-                                <Text style={{ color: colorText }}>Độ hiệu quả: {Math.ceil(item.hight)}.000đ/km</Text>
+                                <Text style={{ 
+                                    color: colorText,
+                                    fontWeight: hightProfit? "bold" : "normal",
+                                }}>Độ hiệu quả: {Math.ceil(item.hight)}.000đ/km</Text>
                                 <Text style={{ color: colorText }}>Số lượng yêu cầu: {item.idb == 0 ? "1" : "2"}</Text>
                             </View>
                             <View style={{
@@ -466,9 +585,6 @@ const SmartCal = (props) => {
         setDisplayRequest1(true);
         setModalVisible(true);
     }
-
-
-
 
 
     return currentLocation ?
@@ -620,6 +736,7 @@ const SmartCal = (props) => {
                                 <View style={{
                                     flexDirection: 'row',
                                     justifyContent: 'center',
+                                    backgroundColor: 'white'
                                 }}>
                                     <CLButton title="Accept" sizeBT={"35%"} height={normalize(30)}
                                         onPress={() => acceptRequest()} />
@@ -637,7 +754,7 @@ const SmartCal = (props) => {
                                     setHightProfit(false);
                                 }}
                                 style={{
-                                    backgroundColor: hightProfit ? '#5d36bb' : colorTheme,
+                                    backgroundColor: hightProfit ? inactive : colorTheme,
                                     width: 205,
                                     alignItems: 'center',
                                     justifyContent: 'center',
@@ -652,7 +769,7 @@ const SmartCal = (props) => {
                                     setHightProfit(true);
                                 }}
                                 style={{
-                                    backgroundColor: hightProfit ? colorTheme : '#5d36bb',
+                                    backgroundColor: hightProfit ? colorTheme : inactive,
                                     width: 205,
                                     alignItems: 'center',
                                     justifyContent: 'center',
@@ -803,8 +920,21 @@ const SmartCal = (props) => {
                 <TouchableOpacity
                     onPress={() => {
                         if (result) {
-                            setResult(null);
-                            console.log("smartDirection")
+                            return Alert.alert(
+                                "Clear smartDirection",
+                                "Look like your result is avaiable, do u want to detele?",
+                                [
+                                    {
+                                        text: "Yes",
+                                        onPress: () => {
+                                            setResult(null);
+                                        },
+                                    },
+                                    {
+                                        text: "No",
+                                    },
+                                ]
+                            );
                         }
                         else {
                             if (historyPressLocation === pressLocation)
