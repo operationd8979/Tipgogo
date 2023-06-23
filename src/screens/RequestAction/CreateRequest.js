@@ -19,6 +19,7 @@ import {
     storage,
     equalTo,
     query,
+    onValue,
 } from "../../../firebase/firebase"
 import { Camera, useCameraDevices } from 'react-native-vision-camera'
 import MapView, { PROVIDER_GOOGLE, Marker, Callout, Polyline } from 'react-native-maps';
@@ -28,7 +29,7 @@ import ImageResizer from 'react-native-image-resizer';
 import useMap from '../FullMap/FullMap'
 import { getAddressFromLocation, getRouteDirection, getLocationFromAddress } from '../../service/MapService'
 import { checkCameraPermission } from '../../service/CameraService'
-
+import {getUserIDByTokken} from '../../service/UserService'
 
 const CreateRequest = (props) => {
 
@@ -47,6 +48,7 @@ const CreateRequest = (props) => {
     } = useMap();
 
     //request's const
+    const [requests, setRequests] = useState(null);
     const [typeRequest, setTypeRequest] = useState(1);
     const [title, setTitle] = useState("");
     const [price, setPrice] = useState(null);
@@ -62,6 +64,7 @@ const CreateRequest = (props) => {
     const [errorTitle, setErrorTitle] = useState(null);
     const [errorPrice, setErrorPrice] = useState(null);
     const [errorAddress, setErrorAddress] = useState(null);
+    const [errorOnHitchhiking, setErrorOnHitchhiking] = useState(null);
 
     //function's const
     const [isLoading, setIsLoading] = useState(false);
@@ -76,6 +79,7 @@ const CreateRequest = (props) => {
     const [showIndicator, setShowIndicator] = useState(false);
     const [searchAddress, setSearchAddress] = useState(null);
     const [displaySearch, setDisplaySearch] = useState(null);
+    const [onHitchhiking, setOnHitchhiking] = useState(false);
 
     const onRefresh = useCallback(() => {
         console.log("-------On refreshing------");
@@ -94,6 +98,14 @@ const CreateRequest = (props) => {
             setTitleAmount("Pay");
             setIsEnabledFree(false);
             setDes("");
+            setErrorPhotoUri(null);
+            setErrorCurrentLocation(null);
+            setErrorPressLocation(null);
+            setErrorTypeRequest(null);
+            setErrorTitle(null);
+            setErrorPrice(null);
+            setErrorAddress(null);
+            setErrorOnHitchhiking(null);
             handleGetCurrentLocation();
             setRefreshing(false);
             setIsLoading(false);
@@ -106,6 +118,32 @@ const CreateRequest = (props) => {
         checkCameraPermission();
         checkLocationPermission();
         getCurrentPosition();
+        //lấy request
+        const dbRef = ref(firebaseDatabase, 'request') 
+        const unsubscribe = onValue(dbRef, async (snapshot) => {
+            if (snapshot.exists()) {
+                console.log('Read data to listRequest (MyRequestList)');
+                setOnHitchhiking(false);
+                const userID = await getUserIDByTokken();
+                let snapshotObject = snapshot.val()
+                Object.keys(snapshotObject).filter(k=>k.split('-')[0]==userID)
+                    .map(eachKey => {
+                        let eachObject = snapshotObject[eachKey];
+                        if(eachObject.typeRequest===1){
+                            if(eachObject.requestStatus!=1&&eachObject.requestStatus!=-1){
+                                setOnHitchhiking(true);
+                            }
+                            else{
+                                setOnHitchhiking(false);
+                            }
+                        }
+                    })
+            } else {
+                console.log('No data available')
+            }
+        })
+        console.log(onHitchhiking);
+        return unsubscribe;
     }, [])
 
     const handleMapPress = (event) => {
@@ -204,33 +242,40 @@ const CreateRequest = (props) => {
         setErrorCurrentLocation(null);
         setErrorPressLocation(null);
         setErrorTypeRequest(null);
+        setErrorOnHitchhiking(null);
         if (typeRequest === 2 && !title) {
-            setErrorTitle(i18n.t('titleErr1'))
+            setErrorTitle(i18n.t('titleErr1'));
             result = false;
         }
         if (!price) {
             if (isEnabledFree)
                 setPrice("0");
             else {
-                setErrorPrice(i18n.t('priceErr1'))
+                setErrorPrice(i18n.t('priceErr1'));
                 result = false;
             }
         }
         if (typeRequest === 2 && (!address || !detailAddress)) {
-            setErrorAddress(i18n.t('addressErr1'))
+            setErrorAddress(i18n.t('addressErr1'));
             result = false;
         }
         if (typeRequest === 2 && !photoPath) {
-            setErrorPhotoUri(i18n.t('photoErr1'))
+            setErrorPhotoUri(i18n.t('photoErr1'));
             result = false;
         }
         if (!currentLocation) {
-            setErrorCurrentLocation(i18n.t('locationErr1'))
+            setErrorCurrentLocation(i18n.t('locationErr1'));
             result = false;
         }
         if (typeRequest === 1 && !pressLocation) {
-            setErrorPressLocation(i18n.t('locationErr1'))
+            setErrorPressLocation(i18n.t('locationErr1'));
             result = false;
+        }
+        if (typeRequest === 1){
+            if(onHitchhiking){
+                setErrorOnHitchhiking(i18n.t('hitchhikingErr'));
+                result = false;
+            }
         }
 
         return result
@@ -524,18 +569,16 @@ const CreateRequest = (props) => {
                     colorT="#000080"
                     disabled={isLoading}
                 />
-                {
-                    photoPath && <Image
-                        style={{
-                            width: "20%",
-                            height: "100%",
-                            alignSelf: "center",
-                            borderRadius: 10
-                        }}
-                        defaultSource={require('../../assets/helpbuy.jpg')}
-                        source={{ uri: "file://" + photoPath }}
-                    />
-                }
+                {photoPath && <Image
+                    style={{
+                        width: "20%",
+                        height: "100%",
+                        alignSelf: "center",
+                        borderRadius: 10
+                    }}
+                    defaultSource={require('../../assets/helpbuy.jpg')}
+                    source={{ uri: "file://" + photoPath }}
+                />}
                 <Modal visible={modalVisible} animationType="slide">
                     <View style={{ flex: 1, justifyContent: 'center' }}>
                         {modalVisible && device && (
@@ -643,6 +686,12 @@ const CreateRequest = (props) => {
                     placeholderTextColor={errorAddress ? zalert : inactive}
                 />
             </View>}
+            {typeRequest===1&&errorOnHitchhiking&&<Text style={{
+                color: 'red',
+                alignSelf:'center',
+                fontSize: fontSizes.h4
+                }}>{errorOnHitchhiking}
+            </Text>}
             {currentLocation && <View style={{
                 flex: 30,
                 height: normalize(typeRequest === 1 ? 280 : 180),

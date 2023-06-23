@@ -131,6 +131,7 @@ const RequestDetail = (props) => {
                             setTime(time);
                         }
                     });
+                    setModalVisible(false);
                 }
             } else {
                 console.log('Can not get this request!')

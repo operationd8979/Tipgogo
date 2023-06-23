@@ -100,8 +100,8 @@ const useMap = () => {
                 {
                     //enableHighAccuracy: true,
                     distanceFilter: 10,
-                    interval: 5000, //5000
-                    fastestInterval: 2000, //2000
+                    interval: 5000,
+                    fastestInterval: 2000, 
                 }
             ))
     }

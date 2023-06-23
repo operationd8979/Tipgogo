@@ -42,4 +42,5 @@ export const en = {
     photoErr2: 'Invalid Photo!',
     locationErr1: 'Location is required!',
     locationErr2: 'Invalid Location',
+    hitchhikingErr: 'You on hitchhing request!Done it first!',
 }

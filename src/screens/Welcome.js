@@ -50,7 +50,7 @@ function Welcome(props) {
     useEffect(() => {
         console.log("----useEffect_welcomeScreen running-----")
         checkLocationPermission();
-        //getCurrentPositionReal();
+        // getCurrentPositionReal();
         watchPosition();
         const unsubscribe = onAuthStateChanged(auth, async (responseUser) => {
             if (responseUser) {
