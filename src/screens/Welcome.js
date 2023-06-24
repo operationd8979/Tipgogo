@@ -15,6 +15,10 @@ import {
 } from "../../firebase/firebase"
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import useMap from './FullMap/FullMap'
+import {requestUserPermission} from '../../firebase/notification'
+import messaging from '@react-native-firebase/messaging';
+
+
 
 
 const WaitingScreen = () => {
@@ -50,8 +54,9 @@ function Welcome(props) {
     useEffect(() => {
         console.log("----useEffect_welcomeScreen running-----")
         checkLocationPermission();
+        requestUserPermission();
         // getCurrentPositionReal();
-        watchPosition();
+        //watchPosition();
         const unsubscribe = onAuthStateChanged(auth, async (responseUser) => {
             if (responseUser) {
                 console.log("Auth successfully!");
