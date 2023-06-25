@@ -301,7 +301,7 @@ const Setting = (props) => {
                         }}
                     />
                     <CLButton
-                        title={i18n.t('st_updatePhoto')}
+                        title={i18n.t('st_update')}
                         sizeBT="20%"
                         height="30%"
                         colorBG={photoPath != null ? primary : inactive}

@@ -65,21 +65,14 @@ const getUserByUserID = (userID) => {
     return new Promise(async (resolve, reject) => {
         try {
             if (userID) {
-                const dbRef = ref(firebaseDatabase, 'users');
-                const dbQuery = query(dbRef, orderByKey(), equalTo(userID));
+                const dbRef = ref(firebaseDatabase, `users/${userID}`);
+                const dbQuery = query(dbRef);
                 const data = await get(dbQuery);
                 const snapshotObject = data.val();
                 console.log(userID)
                 if (snapshotObject) {
-                    const data = snapshotObject[userID];
-                    const user = {
-                        userID: userID,
-                        email: data.email,
-                        name: data.name,
-                        photo: data.photo,
-                    }
-                    console.log("User getting OK!", user);
-                    resolve(user);
+                    console.log("User getting OK!", snapshotObject);
+                    resolve(snapshotObject);
                 }
                 resolve(null);
             }

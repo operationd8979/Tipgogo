@@ -32,6 +32,7 @@ import { getDirectionDriver, getRouteDirection, getMatrix, getLocationFromAddres
 import { getUserIDByTokken } from '../../service/UserService'
 import { QuickView, CLButton } from '../../components'
 import i18n from "../../../i18n";
+import { sendNotification } from '../../../firebase/notification'
 
 
 const WaitingScreen = () => {
@@ -127,7 +128,7 @@ const SmartCal = (props) => {
             geo2.latitude >= minLat &&
             geo2.latitude <= maxLat &&
             geo2.longitude >= minLong &&
-            geo2.longitude <= maxLong && 
+            geo2.longitude <= maxLong &&
             distanceTwoGeo(geo1, currentLocation) < distanceTwoGeo(geo2, currentLocation)
         );
     };
@@ -288,9 +289,9 @@ const SmartCal = (props) => {
         const size = aimRequest.length;
         console.log('-----------List aimRequest----------');
         console.log(aimRequest);
-        aimRequest.map(r=>console.log(r.name));
+        aimRequest.map(r => console.log(r.name));
         //không đủ request
-        if(size<2){
+        if (size < 2) {
             return Alert.alert(
                 "No request is aviable!",
                 "There is no claim to match your route!",
@@ -375,15 +376,15 @@ const SmartCal = (props) => {
         console.log("--------------------------------------");
         console.log(requestPair);
         setResult(requestPair);
-        
+
     }
 
     const acceptRequest = async () => {
-        const testorgin = { latitude: 10.80225935, longitude: 106.7148688};
-        const testdestination = { latitude: 10.7551377, longitude: 106.6643887};
+        const testorgin = { latitude: 10.80225935, longitude: 106.7148688 };
+        const testdestination = { latitude: 10.7551377, longitude: 106.6643887 };
         setIsLoading(true);
         if (selectedResult) {
-            const{
+            const {
                 ida,
                 idb,
             } = selectedResult;
@@ -404,8 +405,8 @@ const SmartCal = (props) => {
                     setIsLoading(false);
                     return;
                 }
-                if(selectedRequest2){
-                    direction1 = {...direction1,smart:{index:1,id:idb}};
+                if (selectedRequest2) {
+                    direction1 = { ...direction1, smart: { index: 1, id: idb } };
                     origin = selectedRequest1.geo2;
                     destination = selectedRequest2.geo1;
                     if (destination != "" && origin != "")
@@ -415,14 +416,14 @@ const SmartCal = (props) => {
                         setIsLoading(false);
                         return;
                     }
-                    else{
-                        direction2.duration+= direction1.duration;
+                    else {
+                        direction2.duration += direction1.duration;
                         direction2.currentDriver = currentLocation;
-                        direction2 = {...direction2,smart:{index:2,id:ida}};
+                        direction2 = { ...direction2, smart: { index: 2, id: ida } };
                     }
                     origin = selectedRequest2.geo2;
                     // destination = pressLocation;
-                    destination=testdestination;
+                    destination = testdestination;
                     if (destination != "" && origin != "")
                         direction3 = await getDirectionDriver(origin, destination);
                     if (!direction3) {
@@ -430,8 +431,8 @@ const SmartCal = (props) => {
                         setIsLoading(false);
                         return;
                     }
-                    else{
-                        direction3.duration+= direction2.duration;
+                    else {
+                        direction3.duration += direction2.duration;
                         direction3.currentDriver = currentLocation;
                     }
                 }
@@ -441,8 +442,14 @@ const SmartCal = (props) => {
                         // const userID = await getUserIDByTokken();
                         const requestRef = ref(firebaseDatabase, `request/${selectedRequest1.requestId}`);
                         update(requestRef, { requestStatus: userID })
-                            .then(() => {
+                            .then(async () => {
                                 console.log("Accepted request[1]! GOGOGO TIP!.");
+                                const senderID = selectedRequest1.requestId.split('-')[0];
+                                const sender = await getUserByUserID(senderID);
+                                const token = sender.fcmToken;
+                                const title = "tipgogo";
+                                const body = "Yêu cầu của bạn đã được nhận";
+                                sendNotification(token, title, body);
                             })
                             .catch((error) => {
                                 console.log("Error updating request[1] status: ", error);
@@ -452,34 +459,40 @@ const SmartCal = (props) => {
                         console.log("Error updating direction[1]: ", error);
                         setIsLoading(false);
                     });
-                if(selectedRequest2){
+                if (selectedRequest2) {
                     set(ref(firebaseDatabase, `direction/${userID}/${selectedRequest2.requestId}`), direction2)
-                    .then(async () => {
-                        console.log("Direction update[2]!.");
-                        // const userID = await getUserIDByTokken();
-                        const requestRef = ref(firebaseDatabase, `request/${selectedRequest2.requestId}`);
-                        update(requestRef, { requestStatus: userID })
-                            .then(() => {
-                                console.log("Accepted request[2]! GOGOGO TIP!.");
-                            })
-                            .catch((error) => {
-                                console.log("Error updating request[2] status: ", error);
-                            });
-                    })
-                    .catch((error) => {
-                        console.log("Error updating direction[2]: ", error);
-                        setIsLoading(false);
-                    });
+                        .then(async () => {
+                            console.log("Direction update[2]!.");
+                            // const userID = await getUserIDByTokken();
+                            const requestRef = ref(firebaseDatabase, `request/${selectedRequest2.requestId}`);
+                            update(requestRef, { requestStatus: userID })
+                                .then(async () => {
+                                    console.log("Accepted request[2]! GOGOGO TIP!.");
+                                    const senderID = selectedRequest2.requestId.split('-')[0];
+                                    const sender = await getUserByUserID(senderID);
+                                    const token = sender.fcmToken;
+                                    const title = "tipgogo";
+                                    const body = "Yêu cầu của bạn đã được nhận";
+                                    sendNotification(token, title, body);
+                                })
+                                .catch((error) => {
+                                    console.log("Error updating request[2] status: ", error);
+                                });
+                        })
+                        .catch((error) => {
+                            console.log("Error updating direction[2]: ", error);
+                            setIsLoading(false);
+                        });
                     set(ref(firebaseDatabase, `direction/${userID}/${selectedRequest1.requestId}-${selectedRequest2.requestId}`), direction3)
-                    .then(async () => {
-                        console.log("Direction update[3]!.");
-                    })
-                    .catch((error) => {
-                        console.log("Error updating direction[3]: ", error);
-                        setIsLoading(false);
-                    });
+                        .then(async () => {
+                            console.log("Direction update[3]!.");
+                        })
+                        .catch((error) => {
+                            console.log("Error updating direction[3]: ", error);
+                            setIsLoading(false);
+                        });
                 }
-                
+
             }
             else {
                 console.log("Current location is null!");
@@ -530,19 +543,19 @@ const SmartCal = (props) => {
                             <View style={{
                                 width: 280,
                             }}>
-                                <Text style={{ 
+                                <Text style={{
                                     color: colorText,
-                                    fontWeight: hightProfit? "bold" : "normal",
+                                    fontWeight: hightProfit ? "bold" : "normal",
                                 }}>{i18n.t('sm_totalPrice')}: {formatNumber(item.price)}đ</Text>
-                                <Text style={{ 
+                                <Text style={{
                                     color: colorText,
-                                    fontWeight: hightProfit? "normal" : "bold",
+                                    fontWeight: hightProfit ? "normal" : "bold",
                                 }}>
                                     {i18n.t('sm_costPath')}: {Math.ceil(item.cost / 100) / 10}km
                                 </Text>
-                                <Text style={{ 
+                                <Text style={{
                                     color: colorText,
-                                    fontWeight: hightProfit? "bold" : "normal",
+                                    fontWeight: hightProfit ? "bold" : "normal",
                                 }}>{i18n.t('sm_quality')}: {Math.ceil(item.hight)}.000đ/km</Text>
                                 <Text style={{ color: colorText }}>{i18n.t('sm_numberRequest')}: {item.idb == 0 ? "1" : "2"}</Text>
                             </View>

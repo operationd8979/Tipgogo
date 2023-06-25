@@ -1,14 +1,23 @@
 import { Login, Welcome, Register, RequestDetail, MyRequest, DetailSmartRequest } from "../screens"
+import UItab from './UITab'
 import { NavigationContainer } from '@react-navigation/native';
-
-
-import UItab from "./UITab";
+import { UserPositionProvider } from '../context/UserPositionContext';
+import react from 'react';
+import { Alert } from 'react-native'
+import messaging from '@react-native-firebase/messaging'
 const { createNativeStackNavigator } = require("@react-navigation/native-stack")
 
-import { UserPositionProvider } from '../context/UserPositionContext';
-
 const App = (props) => {
+
   const Stack = createNativeStackNavigator();
+
+  react.useEffect(() => {
+    const unsubscribe = messaging().onMessage(async remoteMessage => {
+      Alert.alert('A new FCM message arrived!', JSON.stringify(remoteMessage));
+    });
+    return unsubscribe;
+  }, [])
+
   return (
     <UserPositionProvider>
       <NavigationContainer>

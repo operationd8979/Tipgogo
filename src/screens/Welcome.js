@@ -15,10 +15,7 @@ import {
 } from "../../firebase/firebase"
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import useMap from './FullMap/FullMap'
-import {requestUserPermission} from '../../firebase/notification'
-import messaging from '@react-native-firebase/messaging';
-
-
+import { requestUserPermission } from '../../firebase/notification'
 
 
 const WaitingScreen = () => {
@@ -53,14 +50,15 @@ function Welcome(props) {
 
     useEffect(() => {
         console.log("----useEffect_welcomeScreen running-----")
-        checkLocationPermission();
         requestUserPermission();
+        checkLocationPermission();
         // getCurrentPositionReal();
-        //watchPosition();
+        watchPosition();
         const unsubscribe = onAuthStateChanged(auth, async (responseUser) => {
             if (responseUser) {
                 console.log("Auth successfully!");
-                let oldToken = await AsyncStorage.getItem("token")
+                const oldToken = await AsyncStorage.getItem("token");
+                const fcmToken = await AsyncStorage.getItem("fcmToken");
                 if (oldToken != responseUser.accessToken) {
                     AsyncStorage.setItem("token", responseUser.accessToken).then(() => {
                         navigation.dispatch(StackActions.replace('UItab'))
@@ -68,13 +66,22 @@ function Welcome(props) {
                     }).catch(() => {
                         console.log("Error set Token!");
                     })
-                    const userRef = ref(firebaseDatabase, `users/${responseUser.uid}`);
-                    update(userRef, { accessToken: responseUser.accessToken })
+                }
+                const userRef = ref(firebaseDatabase, `users/${responseUser.uid}`);
+                update(userRef, { accessToken: responseUser.accessToken })
+                    .then(() => {
+                        console.log("Update accessToken's user successfully!.");
+                    })
+                    .catch((error) => {
+                        console.log("Error updating accessToken's user: ", error);
+                    });
+                if (fcmToken) {
+                    update(userRef, { fcmToken: fcmToken })
                         .then(() => {
-                            console.log("Update accessToken's user successfully!.");
+                            console.log("Update fcmToken's user successfully!.");
                         })
                         .catch((error) => {
-                            console.log("Error updating accessToken's user: ", error);
+                            console.log("Error updating fcmToken's user: ", error);
                         });
                 }
             }

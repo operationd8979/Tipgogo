@@ -2126,7 +2126,7 @@
   dependencies:
     invariant "^2.2.4"
 
-"@react-native-firebase/app@18.1.0":
+"@react-native-firebase/app@^18.1.0", "@react-native-firebase/app@18.1.0":
   version "18.1.0"
   resolved "https://registry.npmjs.org/@react-native-firebase/app/-/app-18.1.0.tgz"
   integrity sha512-GZSlkNjSZlyB6I2t/5MmD9uDvnteyPOzvYNshaffS/hzRK6LL+3xYTnxqwPl6Kntm8z28FdaQM06OIlkPGQ3+g==

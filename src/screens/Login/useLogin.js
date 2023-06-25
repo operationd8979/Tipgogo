@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Alert } from "react-native";
 import i18n from '../../../i18n';
-import { useNavigation,StackActions } from '@react-navigation/native'
+import { useNavigation, StackActions } from '@react-navigation/native'
 import {
     auth,
     onAuthStateChanged,
@@ -25,33 +25,31 @@ const userLogin = () => {
     const [registeredEmail, setRegisteredEmail] = useState(false)
 
     function validateCredentials() {
-        let result = true
+        let result = true;
 
-        setEmailError(null)
-        setPasswordError(null)
+        setEmailError(null);
+        setPasswordError(null);
 
         if (!email) {
-            setEmailError(i18n.t('emailErr1'))
-            result = false
+            setEmailError(i18n.t('emailErr1'));
+            result = false;
         }
         if (!password) {
-            setPasswordError(i18n.t('passErr1'))
-            result = false
+            setPasswordError(i18n.t('passErr1'));
+            result = false;
         }
-        return result
+        return result;
     }
 
     function signInAction() {
         if (validateCredentials()) {
             signInWithEmailAndPassword(auth, email, password)
                 .then(() => {
-                    const unsubscribe = onAuthStateChanged(auth, (responseUser) => {
-                            if (responseUser) {
-                                console.log("Auth successfully!");
-                                AsyncStorage.setItem(
-                                    'token',
-                                    responseUser.accessToken,
-                                ).then(() => {
+                    const unsubscribe = onAuthStateChanged(auth, async (responseUser) => {
+                        if (responseUser) {
+                            console.log("Auth successfully!");
+                            AsyncStorage.setItem('token', responseUser.accessToken)
+                                .then(() => {
                                     console.log("Logined to app");
                                     navigation.reset({
                                         index: 0,
@@ -62,16 +60,26 @@ const userLogin = () => {
                                 }).catch(() => {
                                     console.log("Error set Token!");
                                 })
-                                const userRef = ref(firebaseDatabase, `users/${responseUser.uid}`);
-                                update(userRef, { accessToken:responseUser.accessToken })
+                            const fcmToken = await AsyncStorage.getItem("fcmToken");
+                            const userRef = ref(firebaseDatabase, `users/${responseUser.uid}`);
+                            update(userRef, { accessToken: responseUser.accessToken })
+                                .then(() => {
+                                    console.log("Update accessToken's user successfully!.");
+                                })
+                                .catch((error) => {
+                                    console.log("Error updating accessToken's user: ", error);
+                                });
+                            if (fcmToken) {
+                                update(userRef, { fcmToken: fcmToken })
                                     .then(() => {
-                                        console.log("Update accessToken's user successfully!.");
+                                        console.log("Update fcmToken's user successfully!.");
                                     })
                                     .catch((error) => {
-                                        console.log("Error updating accessToken's user: ", error);
+                                        console.log("Error updating fcmToken's user: ", error);
                                     });
                             }
-                        })
+                        }
+                    })
                     unsubscribe();
                 })
                 .catch((error) => {

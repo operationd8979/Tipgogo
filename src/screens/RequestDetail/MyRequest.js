@@ -38,22 +38,14 @@ const getUserByUserID = (userID) => {
     return new Promise(async (resolve, reject) => {
         try {
             if (userID) {
-                const dbRef = ref(firebaseDatabase, 'users');
-                const dbQuery = query(dbRef, orderByKey(), equalTo(userID));
+                const dbRef = ref(firebaseDatabase, `users/${userID}`);
+                const dbQuery = query(dbRef);
                 const data = await get(dbQuery);
                 const snapshotObject = data.val();
                 console.log(userID)
                 if (snapshotObject) {
-                    const data = snapshotObject[userID];
-                    const user = {
-                        userID: userID,
-                        email: data.email,
-                        name: data.name,
-                        photo: data.photo,
-                        phone: data.phone,
-                    }
-                    console.log("User getting OK!", user);
-                    resolve(user);
+                    console.log("User getting OK!", snapshotObject);
+                    resolve(snapshotObject);
                 }
                 resolve(null);
             }
@@ -116,7 +108,7 @@ const RequestDetail = (props) => {
                 console.log('Listenning this request........');
                 let snapshotObject = snapshot.val();
                 setStateRequest(snapshotObject.requestStatus);
-                if(snapshotObject.driver){
+                if (snapshotObject.driver) {
                     const driverDone = snapshotObject.driver;
                     setDriverDone(driverDone);
                     const timedone = new Date(driverDone.timeend);
@@ -218,15 +210,15 @@ const RequestDetail = (props) => {
         }
     }
 
-    const handlePressPhoneCall = ()=>{
-        if(driver.phone){
+    const handlePressPhoneCall = () => {
+        if (driver.phone) {
             phonecall(driver.phone);
         }
     }
 
-    const handleSendSMS = ()=>{
-        if(driver.phone){
-            sendSMS(driver.phone,`Mình đang đợi bạn ở chỗ hẹn!`);
+    const handleSendSMS = () => {
+        if (driver.phone) {
+            sendSMS(driver.phone, `Mình đang đợi bạn ở chỗ hẹn!`);
         }
     }
 
@@ -386,22 +378,22 @@ const RequestDetail = (props) => {
                     marginHorizontal: 5,
                     justifyContent: 'space-between',
                 }}>
-                    <TouchableOpacity 
+                    <TouchableOpacity
                         onPress={handlePressPhoneCall}
                         style={{
                             padding: 5
-                    }}>
+                        }}>
                         <Icon
                             name={'phone'}
                             size={normalize(28)}
                             color={'black'}
                         />
                     </TouchableOpacity>
-                    <TouchableOpacity 
+                    <TouchableOpacity
                         onPress={handleSendSMS}
                         style={{
                             padding: 5
-                    }}>
+                        }}>
                         <Icon
                             name={'rocketchat'}
                             size={normalize(28)}

@@ -14,9 +14,33 @@ import {
 } from "../../../firebase/firebase"
 import useMap from '../FullMap/FullMap'
 import { distanceTwoGeo, formatNumber } from '../../utilies'
-import {getDirectionDriver} from '../../service/MapService'
-import {getUserIDByTokken} from '../../service/UserService'
+import { getDirectionDriver } from '../../service/MapService'
+import { getUserIDByTokken } from '../../service/UserService'
 import i18n from '../../../i18n'
+import { sendNotification } from '../../../firebase/notification'
+
+const getUserByUserID = (userID) => {
+    return new Promise(async (resolve, reject) => {
+        try {
+            if (userID) {
+                const dbRef = ref(firebaseDatabase, `users/${userID}`);
+                const dbQuery = query(dbRef);
+                const data = await get(dbQuery);
+                const snapshotObject = data.val();
+                console.log(userID)
+                if (snapshotObject) {
+                    console.log("User getting OK!", snapshotObject);
+                    resolve(snapshotObject);
+                }
+                resolve(null);
+            }
+        }
+        catch (error) {
+            console.error('Error getting user:', error);
+            resolve(null);
+        }
+    });
+}
 
 const WaitingScreen = () => {
     return (
@@ -51,7 +75,7 @@ const RequestList = (props) => {
 
     //element init
     const { navigation } = props
-    const { FullMap, currentLocation, getCurrentPosition, checkLocationPermission } = useMap();
+    const { FullMap, currentLocation, setCurrentLocation, getCurrentPosition, checkLocationPermission } = useMap();
 
     //element function
     const [isLoading, setIsLoading] = useState(false);
@@ -65,10 +89,10 @@ const RequestList = (props) => {
     const [optionSort, setOptionSort] = useState(false);
     const filterRequest = useCallback(() => requests.filter(eachRequest =>
         eachRequest.name.toLowerCase().includes(searchText.toLowerCase())
-        && ((onAvaiable&&eachRequest.status===0)|| eachRequest.accepted)
+        && ((onAvaiable && eachRequest.status === 0) || eachRequest.accepted)
         && (typeSelected == null || eachRequest.type == typeSelected))
         .sort((a, b) => {
-            if (optionSort&&currentLocation) {
+            if (optionSort && currentLocation) {
                 const distanceA = distanceTwoGeo(currentLocation, a.type === 1 ? a.geo1 : a.geo2);
                 const distanceB = distanceTwoGeo(currentLocation, b.type === 1 ? b.geo1 : b.geo2);
                 if (distanceA < distanceB)
@@ -143,7 +167,7 @@ const RequestList = (props) => {
             </View>
         );
     };
-    
+
     const renderRequestList = () => {
         return (
             <FlatList
@@ -209,8 +233,14 @@ const RequestList = (props) => {
                             // const userID = await getUserIDByTokken();
                             const requestRef = ref(firebaseDatabase, `request/${requestId}`);
                             update(requestRef, { requestStatus: userID })
-                                .then(() => {
+                                .then(async () => {
                                     console.log("Accepted request! GOGOGO TIP!.");
+                                    const senderID = requestId.split('-')[0];
+                                    const sender = await getUserByUserID(senderID);
+                                    const token = sender.fcmToken;
+                                    const title = "tipgogo";
+                                    const body = "Yêu cầu của bạn đã được nhận";
+                                    sendNotification(token, title, body);
                                 })
                                 .catch((error) => {
                                     console.log("Error updating request status: ", error);
@@ -291,52 +321,52 @@ const RequestList = (props) => {
                 />
                 <Modal visible={sortModalVisible} animationType="fade" transparent={true}>
                     <TouchableOpacity
-                        onPress={()=>{setSortModalVisible(false)}}
+                        onPress={() => { setSortModalVisible(false) }}
                         style={{
-                            flex:1,
+                            flex: 1,
                             //backgroundColor:'green'
                         }}
                     />
                     <View style={{
-                        backgroundColor:"green",
-                        position:'absolute',
+                        backgroundColor: "green",
+                        position: 'absolute',
                         width: 200,
                         right: 0,
                         top: 110,
                         borderWidth: 1,
                     }}>
                         <TouchableOpacity style={{
-                            height:25,
-                            flexDirection:'row',
-                            alignItems:'center',
+                            height: 25,
+                            flexDirection: 'row',
+                            alignItems: 'center',
                             paddingStart: 5,
-                            backgroundColor: optionSort? 'white' : primary
-                            }}
+                            backgroundColor: optionSort ? 'white' : primary
+                        }}
                             onPress={() => {
                                 setOptionSort(false);
                                 setSortModalVisible(false);
                             }}
                         >
-                            <Icon name="history" color={optionSort? inactive : "white"}/>
-                            <Text style={{color: optionSort? inactive : "white"}}>  {i18n.t('lr_sortTime')}</Text>
+                            <Icon name="history" color={optionSort ? inactive : "white"} />
+                            <Text style={{ color: optionSort ? inactive : "white" }}>  {i18n.t('lr_sortTime')}</Text>
                         </TouchableOpacity>
-                        
-                        <View style={{height:1,backgroundColor:"black"}} />
+
+                        <View style={{ height: 1, backgroundColor: "black" }} />
 
                         <TouchableOpacity style={{
-                            height:25,
-                            flexDirection:'row',
-                            alignItems:'center',
+                            height: 25,
+                            flexDirection: 'row',
+                            alignItems: 'center',
                             paddingStart: 5,
-                            backgroundColor: optionSort? primary : 'white'
-                            }}
+                            backgroundColor: optionSort ? primary : 'white'
+                        }}
                             onPress={() => {
                                 setOptionSort(true);
                                 setSortModalVisible(false);
                             }}
                         >
-                            <Icon name="shoe-prints" color={optionSort? "white" : inactive}/>
-                            <Text style={{color: optionSort? "white" : inactive}}>  {i18n.t('lr_sortDistance')}</Text>
+                            <Icon name="shoe-prints" color={optionSort ? "white" : inactive} />
+                            <Text style={{ color: optionSort ? "white" : inactive }}>  {i18n.t('lr_sortDistance')}</Text>
                         </TouchableOpacity>
                     </View>
                 </Modal>
@@ -365,13 +395,13 @@ const RequestList = (props) => {
         <Modal visible={modalVisible} animationType="fade" transparent={true}  >
             <View style={{ flex: 1, justifyContent: 'center' }}>
                 {selectedRequest && (
-                    <QuickView selectedRequest={selectedRequest}/>
+                    <QuickView selectedRequest={selectedRequest} />
                 )}
-                {isLoading && <ActivityIndicator  
-                    size={'large'} 
-                    animating={isLoading} 
+                {isLoading && <ActivityIndicator
+                    size={'large'}
+                    animating={isLoading}
                     style={{
-                        backgroundColor:'white'
+                        backgroundColor: 'white'
                     }}
                 />}
                 <View style={{
@@ -379,9 +409,9 @@ const RequestList = (props) => {
                     justifyContent: 'center',
                 }}>
                     <CLButton title={i18n.t('p_accept')} sizeBT={"35%"} height={normalize(30)}
-                        onPress={() => acceptRequest()} disabled={isLoading}/>
+                        onPress={() => acceptRequest()} disabled={isLoading} />
                     <CLButton title={i18n.t('p_close')} sizeBT={"35%"} height={normalize(30)}
-                        onPress={() => handleCloseRequest()} disabled={isLoading}/>
+                        onPress={() => handleCloseRequest()} disabled={isLoading} />
                 </View>
             </View>
         </Modal>
