@@ -122,6 +122,7 @@ const useRegister = () => {
                   phone: phone,
                   emailVerified: responseUser.emailVerified,
                   accessToken: responseUser.accessToken,
+                  expirationTime: responseUser.stsTokenManager.expirationTime,
                   fcmToken: fcmToken,
                 }
                 set(ref(firebaseDatabase, `users/${userapp.userId}`), userapp)

@@ -11,6 +11,8 @@ import {
     set,
     onValue,
     update,
+    query,
+    get,
 } from "../../../firebase/firebase"
 import useMap from '../FullMap/FullMap'
 import { distanceTwoGeo, formatNumber } from '../../utilies'

@@ -5,17 +5,9 @@ import i18n from '../../i18n'
 import { images, icons, colors, fontSizes, normalize } from '../constants'
 import { CLButton, UIButton } from '../components'
 import { StackActions } from '@react-navigation/native'
-import {
-    auth,
-    onAuthStateChanged,
-    firebaseDatabase,
-    ref,
-    set,
-    update,
-} from "../../firebase/firebase"
-import AsyncStorage from '@react-native-async-storage/async-storage'
 import useMap from './FullMap/FullMap'
 import { requestUserPermission } from '../../firebase/notification'
+import {getUserByTokken} from '../service/UserService'
 
 
 const WaitingScreen = () => {
@@ -52,45 +44,29 @@ function Welcome(props) {
         console.log("----useEffect_welcomeScreen running-----")
         requestUserPermission();
         checkLocationPermission();
-        // getCurrentPositionReal();
+        //getCurrentPositionReal();
         watchPosition();
-        const unsubscribe = onAuthStateChanged(auth, async (responseUser) => {
-            if (responseUser) {
-                console.log("Auth successfully!");
-                const oldToken = await AsyncStorage.getItem("token");
-                const fcmToken = await AsyncStorage.getItem("fcmToken");
-                if (oldToken != responseUser.accessToken) {
-                    AsyncStorage.setItem("token", responseUser.accessToken).then(() => {
-                        navigation.dispatch(StackActions.replace('UItab'))
-                        console.log("Set Token successfully!");
-                    }).catch(() => {
-                        console.log("Error set Token!");
-                    })
-                }
-                const userRef = ref(firebaseDatabase, `users/${responseUser.uid}`);
-                update(userRef, { accessToken: responseUser.accessToken })
-                    .then(() => {
-                        console.log("Update accessToken's user successfully!.");
-                    })
-                    .catch((error) => {
-                        console.log("Error updating accessToken's user: ", error);
-                    });
-                if (fcmToken) {
-                    update(userRef, { fcmToken: fcmToken })
-                        .then(() => {
-                            console.log("Update fcmToken's user successfully!.");
-                        })
-                        .catch((error) => {
-                            console.log("Error updating fcmToken's user: ", error);
-                        });
-                }
-            }
-            else {
-                console.log("Authing fail")
-            }
-        })
-        return unsubscribe();
+        authToken();
     }, [])
+
+    const authToken = async () =>{
+        const user = await getUserByTokken();
+        if(user){
+            const time = new Date(user.expirationTime);
+            const timeNow = new Date();
+            time.setHours(time.getHours()+4);
+            console.log(time);
+            console.log(timeNow);
+            const result = (time.getTime()>timeNow.getTime());
+            if(result){
+                console.log('auth: successfully!');
+                navigation.dispatch(StackActions.replace('UItab'));
+            }
+        }
+        else{
+            console.log('auth: fail!');
+        }
+    }
 
     return currentLocation ? <View style={{
         backgroundColor: 'white',

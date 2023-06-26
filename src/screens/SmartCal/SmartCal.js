@@ -34,6 +34,28 @@ import { QuickView, CLButton } from '../../components'
 import i18n from "../../../i18n";
 import { sendNotification } from '../../../firebase/notification'
 
+const getUserByUserID = (userID) => {
+    return new Promise(async (resolve, reject) => {
+        try {
+            if (userID) {
+                const dbRef = ref(firebaseDatabase, `users/${userID}`);
+                const dbQuery = query(dbRef);
+                const data = await get(dbQuery);
+                const snapshotObject = data.val();
+                console.log(userID)
+                if (snapshotObject) {
+                    console.log("User getting OK!", snapshotObject);
+                    resolve(snapshotObject);
+                }
+                resolve(null);
+            }
+        }
+        catch (error) {
+            console.error('Error getting user:', error);
+            resolve(null);
+        }
+    });
+}
 
 const WaitingScreen = () => {
     return (

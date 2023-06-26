@@ -50,12 +50,13 @@ const getUserByTokken = () => {
                 photo: userData.photo,
                 phone: userData.phone,
                 emailVerified: userData.emailVerified,
+                expirationTime: userData.expirationTime,
             }
             console.log("User getting OK!", user);
             resolve(user);
         }
         catch (error) {
-            console.error('Error getting user:', error);
+            console.log('Error getting user:', error);
             resolve(null);
         }
     });

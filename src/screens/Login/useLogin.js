@@ -69,6 +69,20 @@ const userLogin = () => {
                                 .catch((error) => {
                                     console.log("Error updating accessToken's user: ", error);
                                 });
+                            update(userRef, { expirationTime: responseUser.stsTokenManager.expirationTime })
+                            .then(() => {
+                                console.log("Update expirationTime's user successfully!.");
+                            })
+                            .catch((error) => {
+                                console.log("Error updating expirationTime's user: ", error);
+                            });
+                            update(userRef, { emailVerified: responseUser.emailVerified })
+                            .then(() => {
+                                console.log("Update emailVerified's user successfully!.");
+                            })
+                            .catch((error) => {
+                                console.log("Error updating emailVerified's user: ", error);
+                            });
                             if (fcmToken) {
                                 update(userRef, { fcmToken: fcmToken })
                                     .then(() => {

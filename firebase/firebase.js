@@ -2,6 +2,7 @@ import {initializeApp}  from 'firebase/app'
 import {
     getAuth,
     onAuthStateChanged,
+    onIdTokenChanged,
     createUserWithEmailAndPassword,
     sendEmailVerification,
     signInWithEmailAndPassword,
@@ -54,6 +55,7 @@ export {
     signInWithEmailAndPassword,
     sendEmailVerification,
     onAuthStateChanged,
+    onIdTokenChanged,
     firebaseDatabase,
     ref,
     set,

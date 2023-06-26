@@ -13,7 +13,8 @@ const App = (props) => {
 
   react.useEffect(() => {
     const unsubscribe = messaging().onMessage(async remoteMessage => {
-      Alert.alert('A new FCM message arrived!', JSON.stringify(remoteMessage));
+      console.log(remoteMessage);
+      Alert.alert('A new FCM message arrived!', JSON.stringify(remoteMessage.notification.body));
     });
     return unsubscribe;
   }, [])

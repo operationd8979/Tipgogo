@@ -1,14 +1,25 @@
 import { RequestList, Setting, CreateRequest, MyRequestList, SmartCal } from '../screens'
 import { colors, fontSizes, normalize } from '../constants'
 import Icon from 'react-native-vector-icons/FontAwesome5'
-import { StyleSheet, View, Image } from 'react-native'
+import { StyleSheet, View, Image, Alert } from 'react-native'
+import react from 'react'
 import LinearGradient from 'react-native-linear-gradient';
 const { createBottomTabNavigator } = require("@react-navigation/bottom-tabs")
+import messaging from '@react-native-firebase/messaging'
 
 const UItab = (props) => {
 
     const { navigation, route } = props
     const { primary, inactive, success, zalert, warning } = colors
+
+    // react.useEffect(() => {
+    //     const unsubscribe = messaging().onMessage(async remoteMessage => {
+    //         console.log(remoteMessage);
+    //         Alert.alert('A new FCM message arrived!', JSON.stringify(remoteMessage));
+    //     });
+    //     return unsubscribe;
+    //   }, [])
+
 
     const Tab = createBottomTabNavigator();
     const screenOptions = ({ route }) => ({
