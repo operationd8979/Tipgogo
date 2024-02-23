@@ -1,12 +1,16 @@
 # About The Project!
 ---
-<img src="/resource/images/shots/001.jpg" align="left" width="200">
-<img src="/resource/images/shots/002.jpg" align="left" width="200">
-<img src="/resource/images/shots/003.jpg" align="left" width="200">
-<img src="/resource/images/shots/004.jpg" width="200">
-<img src="/resource/images/shots/006.jpg" align="left" width="200">
-<img src="/resource/images/shots/007.jpg" align="left" width="200">
-<img src="/resource/images/shots/009.jpg" width="200">
+<p float="left">
+  <img src="/resource/images/shots/001.jpg" width="220">
+  <img src="/resource/images/shots/002.jpg" width="220">
+  <img src="/resource/images/shots/003.jpg" width="220">
+  <img src="/resource/images/shots/004.jpg" width="220">
+</p>
+<p float="left">
+  <img src="/resource/images/shots/006.jpg" width="220">
+  <img src="/resource/images/shots/007.jpg" width="220">
+  <img src="/resource/images/shots/009.jpg" width="220">
+</p>
 
 This project, TipGoGo falls under the category of transportation applications, enabling users to send and receive requests for ridesharing and advertise used items for sale.
 
