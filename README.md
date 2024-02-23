@@ -1,5 +1,4 @@
 # About The Project!
----
 <p float="left">
   <img src="/resource/images/shots/001.jpg" width="200">
   <img src="/resource/images/shots/002.jpg" width="200">
