@@ -19,7 +19,6 @@ The application is built using React Native and utilizes Firebase for real-time 
 
 
 ## Features:
----
 - Find destinations by name or select on the map.
 - Display a list of requests near the current location.
 - Calculate proposed routes to accommodate multiple requests simultaneously.
