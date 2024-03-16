@@ -11,7 +11,7 @@
   <img src="/resource/images/shots/009.jpg" width="200">
 </p>
 
-This project, TipGoGo falls under the category of transportation applications, enabling users to send and receive requests for ridesharing and advertise used items for sale.
+An application for handling hitchhike requests with notifications, user location tracking, and smart suggesting receiving two requests simultaneously along user’s route.
 
 ## Build with
   
